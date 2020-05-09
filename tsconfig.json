@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist/",
+    "module": "es6",
+    "target": "es5",
+    "lib": ["es5", "es6", "es7", "es2017", "dom"],
+    "sourceMap": true,
+    "allowJs": false,
+    "jsx": "react",
+    "moduleResolution": "node",
+    "rootDirs": ["src", "stories"],
+    "baseUrl": "src",
+    "declaration": true,
+    "esModuleInterop": true,
+
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "build", "scripts"]
+}
