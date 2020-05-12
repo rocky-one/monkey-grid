@@ -1,15 +1,15 @@
-export function addEvent(ele, type){
+export function addEvent(ele, type, fn){
     if(ele.addEventListener){
-        ele.addEventListener(type,fun)
+        ele.addEventListener(type, fn)
     }else if(ele.attachEvent){
-        ele.attachEvent("on"+type,fun)
+        ele.attachEvent('on'+type, fn)
     }
 }
 
-export function removeEvent(ele, type){
+export function removeEvent(ele, type, fn){
     if(ele.addEventListener){
-        ele.removeEventListener(type,fun)
+        ele.removeEventListener(type, fn)
     }else if(ele.attachEvent){
-        ele.detachEvent("on"+type,fun)
+        ele.detachEvent('on'+type, fn)
     }
 }
