@@ -1,0 +1,13 @@
+.horizontal-scroll-box {
+  background: #eaeaea;
+  padding: 0 1px ;
+}
+.vertical-scroll-box {
+  background: #eaeaea;
+  padding: 1px 0;
+}
+.right-scroll-bar,
+.right-scroll-bar {
+  background: #fff;
+  background: #ababab;
+}

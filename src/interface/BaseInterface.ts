@@ -1,3 +1,6 @@
 export interface OptionsInterface {
-    container: HTMLElement
+    container: HTMLElement,
+    width: Number,
+    height: Number,
+    data: Array<any>,
 }
