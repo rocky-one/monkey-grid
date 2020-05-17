@@ -1,13 +1,11 @@
 import {
     createDom,
     getScrollBarPx,
-} from '../utils'
-import { SCROLL_SIZE } from '../tableConst'
+    calcVerticalSliderSize,
+    calcHorizontalSliderSize
+} from './utils'
 import './scrollBar.less'
-// ele: this.container,
-// direction: vertical,
-// containerHeight: this.tableBodyHeight,
-// contentHeight: this.tableHeight,
+export const SCROLL_SIZE = 16 // 滚动条大小
 /**
  *  原生滚动条局限性 鼠标必须在滚动条区域内才能触发滚动事件 且 区域必须得到事件的焦点
  */
@@ -15,30 +13,28 @@ class ScrollBar {
     constructor(option) {
         this.setOption(option)
         this.init()
-        // 滚动条未绑定mousemove mouseup 事件 此处使用table中的mouse事件
-        // EventEmitter.on('mousemove', this.handleMouseMove)
-        // EventEmitter.on('mouseup', this.handleMouseUp)
         document.body.addEventListener('mousemove', this.handleMouseMove)
         document.body.addEventListener('mouseup', this.handleMouseUp)
     }
-    setOption = (option) => {
+    setOption(option) {
         Object.keys(option).forEach(k => {
             this[k] = option[k]
         })
     }
-    init = () => {
+    init() {
         this.initScrollTop()
         this.initScrollLeft()
         this.isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().indexOf('firefox') > -1
         this.verticalScrollInfo = {
             height: 0,
+            surplusHeight: 0,
             percentage: 1
         }
         this.createScroll()
         this.bindWheelEvent()
         this.initShow()
     }
-    initScrollTop = () => {
+    initScrollTop() {
         let maxScrollTop = this.vertical.contentPx - this.vertical.containerPx
         this.maxScrollTop = maxScrollTop > 0 ? maxScrollTop : 0
         this.scrollTop = 0
@@ -47,7 +43,7 @@ class ScrollBar {
         this.vDistance = 0
         this.moveScrollTop = 0
     }
-    initScrollLeft = () => {
+    initScrollLeft() {
         let maxScrollLeft = this.horizontal.contentPx - this.horizontal.containerPx
         this.maxScrollLeft = maxScrollLeft > 0 ? maxScrollLeft : 0
         this.scrollLeft = 0
@@ -56,7 +52,7 @@ class ScrollBar {
         this.hDistance = 0
         this.moveScrollLeft = 0
     }
-    createScroll = () => {
+    createScroll() {
         const direction = this.direction
         direction.forEach(val => {
             const ele = this[`${val}Scroll`]()
@@ -64,13 +60,13 @@ class ScrollBar {
         })
 
     }
-    eventBind = (ele, val) => {
+    eventBind(ele, val){
         if (!ele) return
 
         ele.addEventListener('mousedown', this[`${val}Down`])
         // ele.addEventListener('mouseup', this[`${val}Up`])
     }
-    initShow = () => {
+    initShow() {
         if (this.maxScrollLeft === 0) {
             this.horizontalScrollBox.style.display = 'none'
         } else {
@@ -83,28 +79,28 @@ class ScrollBar {
         }
     }
     // 是否有横向滚动条
-    hasHScroll = () => {
+    hasHScroll() {
         return this.maxScrollLeft > 0
     }
     // 是否有纵向滚动条
-    hasVScroll = () => {
+    hasVScroll() {
         return this.maxScrollTop > 0
     }
     // 获取横向滚动条大小
-    getHScrollSize = () => {
+    getHScrollSize() {
         if (this.hasHScroll()) {
             return SCROLL_SIZE
         }
         return 0
     }
     // 获取纵向滚动条大小
-    getVScrollSize = () => {
+    getVScrollSize() {
         if (this.hasVScroll()) {
             return SCROLL_SIZE
         }
         return 0
     }
-    verticalScroll = () => {
+    verticalScroll() {
         const maxScrollTop = this.maxScrollTop
         //if (maxScrollTop === 0) return
         let oldBox = document.getElementById('verticalScrollBox')
@@ -112,16 +108,8 @@ class ScrollBar {
             this.ele.removeChild(oldBox)
             this.verticalScrollBox = oldBox = null
         }
-        // this.verticalScrollOuter = createDom('div', 'verticalScrollOuter', 'vertical-scroll-outer', {
-        //     position: 'absolute',
-        //     right: 0,
-        //     top: 0,
-        //     width: `${this.vertical.width}px`,
-        //     height: `${this.vertical.height}px`,
-        //     overflow: 'hidden',
-        // })
 
-        this.verticalScrollInfo = getScrollBarPx(this.vertical.containerPx, this.vertical.contentPx)
+        
         this.verticalScrollBox = createDom('div', 'verticalScrollBox', 'vertical-scroll-box', {
             position: 'absolute',
             right: 0,
@@ -132,22 +120,31 @@ class ScrollBar {
             zIndex: 9,
             ...(this.vertical.style || {})
         })
+        this.verticalScrollInfo = calcVerticalSliderSize({
+            scrollHeight: this.vertical.contentPx,
+            clientHeight: this.vertical.containerPx
+        }, {
+            clientHeight: this.vertical.containerPx
+        })
+        // this.verticalScrollInfo = getScrollBarPx(this.vertical.containerPx, this.vertical.contentPx)
+        console.log(this.verticalScrollInfo,'this.verticalScrollInfo')
+
         this.verticalScrollBar = createDom('div', 'verticalScrollBar', 'right-scroll-bar', {
             position: 'absolute',
             top: 0,
             left: '2px',
             width: `${this.vertical.width - 6}px`,
-            height: `${this.verticalScrollInfo.px}px`,
+            height: `${this.verticalScrollInfo.height}px`,
             borderRadius: '5px',
         })
-        this.verticalScrollSpeed = this.verticalScrollInfo.percentage
+        // this.verticalScrollSpeed = this.verticalScrollInfo.percentage
         this.verticalScrollBox.appendChild(this.verticalScrollBar)
         // this.verticalScrollOuter.appendChild(this.verticalScrollBox)
         this.ele.appendChild(this.verticalScrollBox)
         this.verticalScrollBarRect = this.verticalScrollBar.getBoundingClientRect()
         return this.verticalScrollBar
     }
-    horizontalScroll = () => {
+    horizontalScroll() {
         const maxScrollLeft = this.maxScrollLeft
         //if (maxScrollLeft === 0) return
         let oldBox = document.getElementById('horizontalScrollBox')
@@ -181,7 +178,7 @@ class ScrollBar {
         this.horizontalScrollBarRect = this.horizontalScrollBar.getBoundingClientRect()
         return this.horizontalScrollBar
     }
-    verticalDown = (e) => {
+    verticalDown(e) {
         this.vDownX = e.pageX
         this.vDownY = e.pageY
         this.vDown = true
@@ -193,7 +190,7 @@ class ScrollBar {
      * @param {Number} pageY
      * @param {Boolean} 
      */
-    verticalMove = (pageY, auto) => {
+    verticalMove(pageY, auto){
         if (!this.hasVScroll()) return
         if (Math.abs(pageY - this.vDownY) < 3) {
             this.vMoving = false
@@ -202,7 +199,7 @@ class ScrollBar {
         this.vMoving = true
         this.preVy = this.vMoveY || 0
         this.vMoveY = pageY
-        const surplusHeight = this.verticalScrollInfo.surplusPx
+        const surplusHeight = this.verticalScrollInfo.surplusHeight
         if (auto) {
             pageY = calcScorllPxByAutoPx(surplusHeight, this.maxScrollTop, pageY)
         }
@@ -266,14 +263,14 @@ class ScrollBar {
             this.verticalScrollCb(this.moveScrollTop)
         }
     }
-    verticalUp = (pageX, pageY) => {
+    verticalUp(pageX, pageY) {
         if (!this.vDown) return
         this.vDown = false
         if (!this.vMoving) return
         this.vUpX = pageX
         this.vUpY = pageY
         if (this.vBound === 1) {
-            this._updateScrollBarTop(this.verticalScrollInfo.surplusPx)
+            this._updateScrollBarTop(this.verticalScrollInfo.surplusHeight)
             this.setScrollTop(this.maxScrollTop)
         } else if (this.vBound === 2) {
             this._updateScrollBarTop(0)
@@ -285,7 +282,7 @@ class ScrollBar {
         // this.moveScrollTop = 0
         this.vDistance = 0
     }
-    horizontalDown = (e) => {
+    horizontalDown(e) {
         this.hDownX = e.pageX
         this.hDownY = e.pageY
         this.hDown = true
@@ -293,7 +290,7 @@ class ScrollBar {
         this.startHScrollBar = this.scrollBarLeft
         this.startHScrollTop = this.scrollLeft
     }
-    horizontalMove = (pageX, auto) => {
+    horizontalMove(pageX, auto) {
         if (!this.hasHScroll()) return
         if (Math.abs(pageX - this.hDownX) < 3) {
             this.hMoving = false
@@ -362,7 +359,7 @@ class ScrollBar {
             this.horizontalScrollCb(this.moveScrollLeft)
         }
     }
-    horizontalUp = (pageX, pageY) => {
+    horizontalUp(pageX, pageY) {
         if (!this.hDown) return
         this.hDown = false
         if (!this.hMoving) return
@@ -384,13 +381,24 @@ class ScrollBar {
 
     }
 
-    bindWheelEvent = () => {
+    bindWheelEvent() {
         if (!this.eventBindEle) return
         this.eventBindEle.addEventListener(this.isFirefox ? 'DOMMouseScroll' : 'mousewheel', (e) => {
-            const { wheelDelta } = e,
-                wheelDelta2 = wheelDelta < 0 ? 100 : -100,
+            const { wheelDeltaX, wheelDeltaY } = e,
+                wheelDelta2 = wheelDeltaY < 0 ? 100 : -100,
                 maxScrollTop = this.maxScrollTop
             let scrollTop = this.scrollTop
+            if(wheelDeltaY < 0){
+                console.log('向下滚动')
+            }else if(wheelDeltaY > 0){
+                console.log('向上滚动')
+            }
+            if(wheelDeltaX < 0){
+                console.log('向右滚动')
+            }else if(wheelDeltaX > 0){
+                console.log('向左滚动')
+            }
+            console.log(e,'e')
             if (maxScrollTop <= 0) return
             // 向下临界
             if (maxScrollTop <= scrollTop && wheelDelta2 > 0) return
@@ -411,66 +419,66 @@ class ScrollBar {
                 scrollP = 1
             }
             this.setScrollTop(relScrollTop)
-            this._updateScrollBarTop(scrollP * this.verticalScrollInfo.surplusPx)
+            this._updateScrollBarTop(scrollP * this.verticalScrollInfo.surplusHeight)
             this.setVerticalScrollBarPosi(this.scrollBarTop)
             this.verticalScrollCb(this.scrollTop)
         })
     }
-    setScrollTop = (scrollTop = 0) => {
+    setScrollTop(scrollTop = 0) {
         this.scrollTop = scrollTop
     }
-    setScrollLeft = (scrollLeft = 0) => {
+    setScrollLeft(scrollLeft = 0) {
         this.scrollLeft = scrollLeft
     }
     // 根据scrollTop重绘纵向滚动条
-    vScrollChangeUpdate = (scrollTop) => {
+    vScrollChangeUpdate(scrollTop) {
         this.setScrollTop(scrollTop)
         this._updateScrollBarTop()
         this.setVerticalScrollBarPosi(this.scrollBarTop)
         this.verticalScrollCb(scrollTop)
     }
     // 根据scrollLeft重绘横向滚动条
-    hScrollChangeUpdate = (scrollLeft) => {
+    hScrollChangeUpdate (scrollLeft) {
         this.setScrollLeft(scrollLeft)
         this._updateScrollLeftBarTop()
         this.setHorizontalScrollBarPosi(this.scrollBarLeft)
         this.horizontalScrollCb(scrollLeft)
     }
-    setVerticalScrollBarPosi = (top = 0) => {
+    setVerticalScrollBarPosi(top = 0) {
         if (this.verticalScrollBar) {
             this.scrollIngBarTop = top
             this.verticalScrollBar.style.top = `${top}px`
         }
     }
-    setHorizontalScrollBarPosi = (left = 0) => {
+    setHorizontalScrollBarPosi(left = 0) {
         if (this.horizontalScrollBar) {
             this.scrollIngBarLeft = left
             this.horizontalScrollBar.style.left = `${left}px`
         }
 
     }
-    handleMouseMove = (e) => {
+    handleMouseMove(e) {
         if (this.autoScroll) return
         this.vDown && this.verticalMove(e.pageY)
         this.hDown && this.horizontalMove(e.pageX)
     }
-    getMouseDownStatus = () => {
+    getMouseDownStatus() {
         return this.vDown || this.hDown
     }
-    handleMouseUp = (e) => {
+    handleMouseUp(e) {
         this.autoScroll = false
         this.verticalUp(e.pageX, e.pageY)
         this.horizontalUp(e.pageX, e.pageY)
     }
 
-    startAutoScrollH = () => {
+    startAutoScrollH() {
         this.autoScroll = true
         const center = calcCenterXy(this.horizontalScrollBarRect)
         this.horizontalDown(center)
         return center
     }
 
-    startAutoScrollV = () => {
+    startAutoScrollV() {
         this.autoScroll = true
         const center = calcCenterXy(this.verticalScrollBarRect)
         this.verticalDown(center)
@@ -478,20 +486,20 @@ class ScrollBar {
     }
 
     // 根据内容高度更新滚动条
-    updateScrollTopByNodeSize = (opt) => {
+    updateScrollTopByNodeSize(opt) {
         this.vertical.contentPx = opt.vertical.contentPx
         if (opt.vertical.containerPx) {
             this.vertical.containerPx = opt.vertical.containerPx
         }
         this.verticalScrollInfo = getScrollBarPx(this.vertical.containerPx, this.vertical.contentPx)
-        this.verticalScrollSpeed = this.verticalScrollInfo.percentage
+        // this.verticalScrollSpeed = this.verticalScrollInfo.percentage
         let maxScrollTop = this.vertical.contentPx - this.vertical.containerPx
         this.maxScrollTop = maxScrollTop > 0 ? maxScrollTop : 0
         this._updateScrollBarTop(undefined)
         this.setVerticalScrollBarPosi(this.scrollBarTop)
         this.initShow()
         this.verticalScrollBox.style.height = this.vertical.containerPx + 'px'
-        this.verticalScrollBar.style.height = this.verticalScrollInfo.px + 'px'
+        this.verticalScrollBar.style.height = this.verticalScrollInfo.height + 'px'
         this.verticalScrollBarRect = this.verticalScrollBar.getBoundingClientRect()
         if (this.maxScrollTop === 0) {
             this.setScrollTop(0)
@@ -501,12 +509,12 @@ class ScrollBar {
             scrollTop: this.scrollTop
         }
     }
-    _updateScrollBarTop = (top) => {
-        this.scrollBarTop = top >= 0 ? top : Math.abs(this.scrollTop) / this.maxScrollTop * this.verticalScrollInfo.surplusPx
+    _updateScrollBarTop(top) {
+        this.scrollBarTop = top >= 0 ? top : Math.abs(this.scrollTop) / this.maxScrollTop * this.verticalScrollInfo.surplusHeight
     }
 
     // 根据内容宽度更新滚动条
-    updateScrollLeftByNodeSize = (opt) => {
+    updateScrollLeftByNodeSize(opt) {
         this.horizontal.contentPx = opt.horizontal.contentPx
         this.horizontal.style = opt.horizontal.style
         if (opt.horizontal.containerPx) {
@@ -534,10 +542,10 @@ class ScrollBar {
         }
 
     }
-    _updateScrollLeftBarTop = (left) => {
+    _updateScrollLeftBarTop(left) {
         this.scrollBarLeft = left || Math.abs(this.scrollLeft) / this.maxScrollLeft * this.horizontalScrollInfo.surplusPx
     }
-    destroy = () => {
+    destroy() {
         document.body.removeEventListener('mousemove', this.handleMouseMove)
         document.body.removeEventListener('mouseup', this.handleMouseUp)
     }

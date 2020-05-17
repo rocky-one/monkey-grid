@@ -7,6 +7,8 @@ export function layout(container: HTMLElement, width: Number, height: Number){
     const canvas = domCore.createCanvas({width, height})
     containerBox.appendChild(canvas)
     container.appendChild(containerBox)
+
+    return containerBox
 }
 
 function createContainer(attrs: Object): HTMLElement {

@@ -12,10 +12,11 @@ for(let i = 0;i<100;i++){
 			id: `${i},${j}`
 		})
 	}
+	data.push(row)
 }
 new Base({
 	container: document.getElementById('app'),
 	width: 600,
 	height: 600,
-	data
+	data: data
 });
