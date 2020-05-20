@@ -62,6 +62,20 @@ export function calcVerticalSliderSize(container, scrollBarContainer) {
     }
 }
 /**
+ * @desc 计算纵向slider位置
+ * @param {*} container 
+ * @param {*} scrollBarContainer 
+ * @param {*} slider 
+ * @param {*} scrollTop 
+ */
+export function calcVerticalSliderTop(container, scrollBarContainer, slider, scrollTop = 0) {
+    const canScrollTopPx = container.scrollHeight - container.clientHeight
+    const scrollPercentage = scrollTop / canScrollTopPx
+    const canScrollBarPx = scrollBarContainer.clientHeight - slider.clientHeight
+    const top = canScrollBarPx * scrollPercentage
+    return top
+}
+/**
  * @desc 计算横行滚动条滑块大小
  * @param {*} container 
  * @param {*} scrollBarContainer 
@@ -76,4 +90,18 @@ export function calcHorizontalSliderSize(container, scrollBarContainer) {
         width,
         surplusWidth: barContainerClientWid - width
     }
+}
+/**
+ * @desc 计算横行滚动条slider位置
+ * @param {*} container 
+ * @param {*} scrollBarContainer 
+ * @param {*} slider 
+ * @param {*} scrollLeft 
+ */
+export function calcHorizontalSliderLeft(container, scrollBarContainer, slider, scrollLeft = 0) {
+    const canScrollLeftPx = container.scrollWidth - container.clientWidth
+    const scrollPercentage = scrollLeft / canScrollLeftPx
+    const canScrollBarPx = scrollBarContainer.clientWidth - slider.clientWidth
+    const left = canScrollBarPx * scrollPercentage
+    return left
 }
