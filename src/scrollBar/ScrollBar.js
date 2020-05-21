@@ -4,6 +4,7 @@ import {
     calcVerticalSliderSize,
     calcHorizontalSliderSize
 } from './utils'
+import { createVerticalScroll } from './create'
 import './scrollBar.less'
 export const SCROLL_SIZE = 16 // 滚动条大小
 /**
@@ -22,6 +23,12 @@ class ScrollBar {
         })
     }
     init() {
+        createVerticalScroll(this.ele, {
+            scrollHeight: 1000,
+            clientHeight: 400
+        },{
+            clientHeight: 400
+        })
         this.initScrollTop()
         this.initScrollLeft()
         this.isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().indexOf('firefox') > -1
