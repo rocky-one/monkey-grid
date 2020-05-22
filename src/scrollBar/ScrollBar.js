@@ -4,9 +4,16 @@ import {
     calcVerticalSliderSize,
     calcHorizontalSliderSize
 } from './utils'
-import { createVerticalScroll } from './create'
+import { createVerticalScroll, updateVerticalSliderPos } from './create'
 import './scrollBar.less'
 export const SCROLL_SIZE = 16 // 滚动条大小
+const container = {
+    scrollHeight: 1000,
+    clientHeight: 400
+}
+const scrollBarContainer = {
+    clientHeight: 400
+}
 /**
  *  原生滚动条局限性 鼠标必须在滚动条区域内才能触发滚动事件 且 区域必须得到事件的焦点
  */
@@ -23,7 +30,7 @@ class ScrollBar {
         })
     }
     init() {
-        createVerticalScroll(this.ele, {
+        this.verticalScrollView = createVerticalScroll(this.ele, {
             scrollHeight: 1000,
             clientHeight: 400
         },{
@@ -62,6 +69,8 @@ class ScrollBar {
     createScroll() {
         const direction = this.direction
         direction.forEach(val => {
+        console.log(val)
+
             const ele = this[`${val}Scroll`]()
             this.eventBind(ele, val)
         })
@@ -395,17 +404,17 @@ class ScrollBar {
                 wheelDelta2 = wheelDeltaY < 0 ? 100 : -100,
                 maxScrollTop = this.maxScrollTop
             let scrollTop = this.scrollTop
-            if(wheelDeltaY < 0){
-                console.log('向下滚动')
-            }else if(wheelDeltaY > 0){
-                console.log('向上滚动')
-            }
-            if(wheelDeltaX < 0){
-                console.log('向右滚动')
-            }else if(wheelDeltaX > 0){
-                console.log('向左滚动')
-            }
-            console.log(e,'e')
+            // if(wheelDeltaY < 0){
+            //     console.log('向下滚动')
+            // }else if(wheelDeltaY > 0){
+            //     console.log('向上滚动')
+            // }
+            // if(wheelDeltaX < 0){
+            //     console.log('向右滚动')
+            // }else if(wheelDeltaX > 0){
+            //     console.log('向左滚动')
+            // }
+            // console.log(e,'e')
             if (maxScrollTop <= 0) return
             // 向下临界
             if (maxScrollTop <= scrollTop && wheelDelta2 > 0) return
@@ -425,6 +434,7 @@ class ScrollBar {
                 relScrollTop = maxScrollTop
                 scrollP = 1
             }
+            updateVerticalSliderPos(container, scrollBarContainer, this.verticalScrollView.vSlider, scrollTop)
             this.setScrollTop(relScrollTop)
             this._updateScrollBarTop(scrollP * this.verticalScrollInfo.surplusHeight)
             this.setVerticalScrollBarPosi(this.scrollBarTop)
