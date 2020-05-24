@@ -1,11 +1,8 @@
 import { createDom, setDomCss } from '../utils/dom'
 import { calcVerticalSliderSize, calcVerticalSliderTop } from './utils'
+import { ContainerV } from './ScrollInterface'
 
-interface ContainerVertical {
-    scrollHeight?: number,
-    clientHeight?: number
-}
-export function createVerticalScroll(ele: HTMLElement, container: ContainerVertical, scrollBarContainer: ContainerVertical) {
+export function createVerticalScroll(ele: HTMLElement, container: ContainerV, scrollBarContainer: ContainerV) {
     const vScrollBox = createDom('div')
     setDomCss(vScrollBox, {
         position: 'absolute',
@@ -23,26 +20,29 @@ export function createVerticalScroll(ele: HTMLElement, container: ContainerVerti
         right: 0,
         top: 0,
         width: '10px',
-        height: `${sliderSize.height}px`,
+        height: `${sliderSize.sliderHeight}px`,
         border: '1px solid red'
     })
     vScrollBox.appendChild(vSlider)
     ele.appendChild(vScrollBox)
     
     return {
-        vScroll: vScrollBox,
-        vSlider: vSlider
+        viewScroll: vScrollBox,
+        viewSlider: vSlider,
+        maxScrollTop: container.scrollHeight - container.clientHeight,
+        ...sliderSize
     }
 }
 
 export function updateVerticalSliderPos(
-    container: ContainerVertical,
-    scrollBarContainer: ContainerVertical,
+    container: ContainerV,
+    scrollBarContainer: ContainerV,
     slider: HTMLElement,
-    scrollTop: Number = 0
-){
-    const top = calcVerticalSliderTop(container, scrollBarContainer, slider, scrollTop)
-    console.log(top, scrollTop)
-    slider.style.top = `${top}px`
-
+    scrollTop: number = 0
+):object{
+    const sliderTop = calcVerticalSliderTop(container, scrollBarContainer, slider, scrollTop)
+    slider.style.top = `${sliderTop}px`
+    return {
+        sliderTop
+    }
 }

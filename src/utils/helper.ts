@@ -1,5 +1,3 @@
-import { Row } from "antd"
-
 // 延迟执行
 export function defer(callback){
     setTimeout(callback, 0)
@@ -24,3 +22,24 @@ export function initData(data = [], rowHeight = 24, colWidth = 100) {
     
     return data
 }
+
+export function getExploreType() {
+    var explorer = window.navigator.userAgent
+    if (explorer.indexOf("MSIE") >= 0) {
+        return 'IE'
+    }
+    else if (explorer.indexOf("Firefox") >= 0) {
+        return 'Firefox'
+    }
+    else if(explorer.indexOf("Chrome") >= 0){
+        return 'Chrome'
+    }
+    else if(explorer.indexOf("Opera") >= 0){
+        return 'Opera'
+    }
+    else if(explorer.indexOf("Safari") >= 0){
+        return 'Safari'
+    }
+}
+
+export const explorerType = getExploreType()

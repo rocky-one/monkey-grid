@@ -17,28 +17,12 @@ class Base {
         this.container = layout(this.optContainer, this.options.width, this.options.height)
         new ScrollBar({
             ele: this.container,
-            direction: ['vertical', 'horizontal'],
-            vertical: {
-                ele: this.container,
-                containerPx: 400,
-                contentPx: 1000,
-                width: 14,
-                height: 400,
-                style: {
-                    top: `${40}px`,
-                }
-            },
-            horizontal: {
-                containerPx: 400,
-                contentPx: 1000,
-                height: 14,
-                style: {
-                    left: `${100}px`,
-                    // bottom: '-17px'
-                }
-            },
+            clientHeight: 400,
+            scrollHeight: 1200,
+            clientWidth: 300,
+            scrollWidth: 1200,
             eventBindEle:  this.container,
-            verticalScrollCb: this.verticalScrollCb,
+            // verticalScrollCb: this.verticalScrollCb,
             // horizontalScrollCb: horizontalScrollCb
         })
     }
