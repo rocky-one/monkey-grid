@@ -1,12 +1,10 @@
 import {
-    createDom,
-    getScrollBarPx,
     calcVerticalSliderSize,
     calcHorizontalSliderSize,
-} from './utils'
-    
+} from './calc'
 import { explorerType } from '../utils/helper'
-import { createVerticalScroll, updateVerticalSliderPos } from './create'
+import { createVerticalScroll } from './create'
+import { updateVerticalScrollTop, updateVerticalSliderTop, } from './update'
 import { ScrollBarOptions, Vertical } from './ScrollInterface'
 class ScrollBar {
     constructor(options: ScrollBarOptions) {
@@ -37,7 +35,9 @@ class ScrollBar {
                 if(this.vertical.sliderTop <= 0) return
             }else if(deltaY > 0){
                 console.log('向下滚动')
-                if(this.vertical.sliderTop >= this.vertical.sliderMaxTop) return
+                if(this.vertical.sliderTop >= this.vertical.sliderMaxTop) {
+                    return
+                }
 
             }
             // if(deltaX < 0){
@@ -45,8 +45,9 @@ class ScrollBar {
             // }else if(deltaX > 0){
             //     console.log('向左滚动')
             // }
-            this.vertical.scrollTop = this.vertical.scrollTop + deltaY * 10;
-            const sliderTop = updateVerticalSliderPos(
+            // this.vertical.scrollTop = this.vertical.scrollTop + deltaY * 10;
+            updateVerticalScrollTop(this.vertical, deltaY * 10)
+            const sliderTop = updateVerticalSliderTop(
                 {
                 scrollHeight: this.options.scrollHeight,
                 clientHeight: this.options.clientHeight
@@ -54,8 +55,7 @@ class ScrollBar {
                 {
                     clientHeight: this.options.clientHeight
                 },
-                this.vertical.viewSlider,
-                this.vertical.scrollTop
+                this.vertical
             )
             this.updateVertical(sliderTop)
             console.log(this.vertical)

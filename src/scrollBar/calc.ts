@@ -1,6 +1,7 @@
 import {
     ContainerV,
-    ContainerH
+    ContainerH,
+    Vertical
 } from './ScrollInterface'
 /**
  * @desc 计算纵向滚动条滑块大小
@@ -70,3 +71,4 @@ export function calcHorizontalSliderLeft(container, scrollBarContainer, slider, 
     const left = canScrollBarPx * scrollPercentage
     return left
 }
+
