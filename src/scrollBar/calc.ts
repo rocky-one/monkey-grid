@@ -8,20 +8,20 @@ import {
  * @param {*} container 
  * @param {*} scrollBarContainer 
  */
-export function calcVerticalSliderSize(container: ContainerV, scrollBarContainer: ContainerV) {
+export function calcVerticalSliderSize(vertival: Vertical) {
     // 计算方式 可视区域高/内容高 = 滚动条区域高/滚动条内容总高
     // scrollBarContainer.clientHeight是创建scrollBarContainer是容器的高度，这个高度可以和container容器一样高，也可以自定义，公式是成立的
     // container.clientHeight / container.scrollHeight = bar.height / scrollBarContainer.clientHeight
     // container.clientHeight / container.scrollHeight = x / scrollBarContainer.clientHeight  //求x的值
     // x = container.clientHeight * scrollBarContainer.clientHeight / container.scrollHeight
-    const barContainerClientHei = scrollBarContainer.clientHeight
-    let sliderHeight = container.clientHeight * barContainerClientHei / container.scrollHeight
+    const scrollClientHeight = vertival.scrollClientHeight
+    let sliderHeight = vertival.clientHeight * scrollClientHeight / vertival.scrollHeight
     if(sliderHeight < 20) {
         sliderHeight = 20
     }
     return {
         sliderHeight,
-        sliderMaxTop: barContainerClientHei - sliderHeight
+        sliderMaxTop: scrollClientHeight - sliderHeight
     }
 }
 

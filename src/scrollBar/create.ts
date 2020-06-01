@@ -1,27 +1,27 @@
 import { createDom, setDomCss } from '../utils/dom'
 import { calcVerticalSliderSize, calcVerticalSliderTop } from './calc'
-import { ContainerV } from './ScrollInterface'
+import { Vertical } from './ScrollInterface'
 
-export function createVerticalScroll(ele: HTMLElement, container: ContainerV, scrollBarContainer: ContainerV) {
+export function createVerticalScroll(ele: HTMLElement, vertical: Vertical) {
     const vScrollBox = createDom('div')
     setDomCss(vScrollBox, {
         position: 'absolute',
         right: 0,
         top: 0,
         width: '14px',
-        height: `${container.clientHeight}px`,
+        height: `${vertical.clientHeight}px`,
         zIndex: 20,
-        border: '1px solid red'
+        border: '1px solid #ccc'
     })
-    const sliderSize = calcVerticalSliderSize(container, scrollBarContainer)
+    const sliderSize = calcVerticalSliderSize(vertical)
     const vSlider = createDom('div')
     setDomCss(vSlider, {
         position: 'absolute',
-        right: 0,
+        right: "1px",
         top: 0,
         width: '10px',
         height: `${sliderSize.sliderHeight}px`,
-        border: '1px solid red'
+        border: '1px solid #ccc'
     })
     vScrollBox.appendChild(vSlider)
     ele.appendChild(vScrollBox)
@@ -29,7 +29,7 @@ export function createVerticalScroll(ele: HTMLElement, container: ContainerV, sc
     return {
         viewScroll: vScrollBox,
         viewSlider: vSlider,
-        maxScrollTop: container.scrollHeight - container.clientHeight,
+        maxScrollTop: vertical.scrollHeight - vertical.clientHeight,
         ...sliderSize
     }
 }
