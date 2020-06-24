@@ -1,5 +1,6 @@
 export interface ContainerV {
     clientHeight: number,
+    verticalScrollCb: Function
     scrollHeight?: number,
 }
 

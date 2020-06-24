@@ -8,7 +8,10 @@ export function layout(container: HTMLElement, width: Number, height: Number){
     containerBox.appendChild(canvas)
     container.appendChild(containerBox)
 
-    return containerBox
+    return {
+        container: containerBox,
+        canvas
+    }
 }
 
 function createContainer(attrs: Object): HTMLElement {

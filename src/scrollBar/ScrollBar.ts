@@ -49,7 +49,8 @@ class ScrollBar {
                 }
             }
             if(deltaY !== 0 && !verticalBoundary) {
-                updateVerticalScroll(this.vertical, -deltaY * 40)
+                this.vertical = updateVerticalScroll(this.vertical, -deltaY * 40)
+                this.options.verticalScrollCb(this.vertical)
             }
         })
         // this.options.eventBindEle.addEventListener(evetType, (e: WheelEvent) => {
