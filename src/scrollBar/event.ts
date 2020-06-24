@@ -1,6 +1,7 @@
 import { explorerType } from '../utils/helper'
 import { addEvent, removeEvent } from '../utils/event'
 import { VerticalEventRecord } from './ScrollInterface'
+
 /**
  * @desc 鼠标滚轮事件
  * @param ele 事件绑定给的元素
