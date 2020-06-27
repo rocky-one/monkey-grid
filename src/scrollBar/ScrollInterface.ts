@@ -23,7 +23,8 @@ export interface Vertical {
     viewSlider?: HTMLElement,
     scrollHeight?: number,
     clientHeight?: number,
-    scrollClientHeight?: number
+    scrollClientHeight?: number,
+    sliderHeight?: number
 }
 
 export interface VerticalEventRecord {
@@ -31,4 +32,8 @@ export interface VerticalEventRecord {
     mouseDownPageY: number,
     mouseMoveIng: Boolean,
     mouseMoveY: number
+}
+
+export interface Horizontal {
+
 }

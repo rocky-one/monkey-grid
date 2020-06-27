@@ -34,3 +34,8 @@ export function createVerticalScroll(ele: HTMLElement, vertical: Vertical) {
     }
 }
 
+export function setNodeStyle(node: HTMLElement, style: object) {
+    Object.keys(style).forEach(key => {
+        node.style[key] = style[key]
+    })
+}

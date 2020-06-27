@@ -19,9 +19,8 @@ const mG = new MonkeyGrid({
 	width: 600,
 	height: 600,
 	data: data
-});
-const sheet = mG.getSheet(0)
-sheet.setRowColCount(10, 4)
+})
+const sheet = mG.addSheet('sheet1', 50, 4)
 sheet.addTable('table1', 0, 0, data)
 sheet.point()
 // const box = document.getElementById('app')

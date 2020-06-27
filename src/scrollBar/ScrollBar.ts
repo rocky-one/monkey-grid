@@ -3,11 +3,11 @@ import {
     calcHorizontalSliderSize,
 } from './calc'
 import { explorerType } from '../utils/helper'
-import { createVerticalScroll } from './create'
+import { createVerticalScroll, setNodeStyle } from './create'
 import { updateVerticalScroll } from './update'
 import { addEvent, removeEvent } from '../utils/event'
-import { mousewheel, mouseDownSlider } from './event'
-import { ScrollBarOptions, Vertical, VerticalEventRecord } from './ScrollInterface'
+import { mousewheel, removeMousewheel, mouseDownSlider } from './event'
+import { ScrollBarOptions, Vertical, VerticalEventRecord, Horizontal } from './ScrollInterface'
 class ScrollBar {
     constructor(options: ScrollBarOptions) {
         this.options = options
@@ -25,6 +25,10 @@ class ScrollBar {
         scrollHeight: 0,
         clientHeight: 0,
         scrollClientHeight: 0,
+        sliderHeight: 0
+    }
+    horizontal: Horizontal = {
+
     }
     verticalEventRecord: VerticalEventRecord = {
         mouseDownPageX: 0,
@@ -75,6 +79,17 @@ class ScrollBar {
         //     // this.vertical.scrollTop = this.vertical.scrollTop + deltaY * 10;
             
     }
+    public resetScrollBar = (scrollHeight: number, scrollWidth: number) => {
+        this.vertical.scrollHeight = scrollHeight
+        this.updateVertical(calcVerticalSliderSize(this.vertical))
+        setNodeStyle(this.vertical.viewSlider, {
+            height: `${this.vertical.sliderHeight}px`,
+            top: '0'
+        })
+    }
+    public getVertical = () => {
+        return this.vertical
+    }
     private updateVertical = (vertical: Vertical = {}) => {
         this.vertical = Object.assign(this.vertical, vertical);
     }
@@ -86,8 +101,10 @@ class ScrollBar {
         removeEvent(this.vertical.viewSlider,'mousedown', this.mouseDownSlider)
     }
     destroy = () => {
-        this.vertical = null
+        removeMousewheel(this.options.eventBindEle, () => {})
         this.removeMouseDownSlider()
+        this.options.ele.removeChild(this.vertical.viewScroll)
+        // this.vertical = null
     }
 }
 

@@ -10,37 +10,24 @@ class MonkeyGrid {
     constructor(options: OptionsInterface){
         this.options = options
         this.optContainer = options.container
+        this.width = options.width || options.container.offsetWidth
+        this.height = options.height || options.container.offsetHeight
+        const layoutObj = layout(this.optContainer, this.width, this.height)
+        this.container = layoutObj.container
+        this.canvas = layoutObj.canvas
+
         this.init()
-        this.point()
-        this.sheets = [new Sheet({
-            canvas: this.canvas,
-            canvasContext: this.canvasContext
-        })]
-        // setTimeout(() => {
-            
-        // })
+        
     }
     options: OptionsInterface
     optContainer: HTMLElement
     container: HTMLElement
-    sheets: any[]
+    width: number
+    height: number
+    sheets: any[] = []
     canvas: HTMLCanvasElement
     canvasContext: any
-    private init = () => {
-        const layoutObj = layout(this.optContainer, this.options.width, this.options.height)
-        this.container = layoutObj.container
-        this.canvas = layoutObj.canvas
-        new ScrollBar({
-            ele: this.container,
-            clientHeight: 400,
-            scrollHeight: 1200,
-            clientWidth: 300,
-            scrollWidth: 1200,
-            eventBindEle:  this.container,
-            verticalScrollCb: this.verticalScrollCb,
-            // horizontalScrollCb: horizontalScrollCb
-        })
-    }
+    scrollBar: ScrollBar = null
     private verticalScrollCb = (vertical) => {
         // console.log(vertical, 'vertical')
         const sheet = this.sheets[0]
@@ -48,10 +35,42 @@ class MonkeyGrid {
         sheet.setPointStartRow(startRowIndex)
         sheet.point()
     }
-    public getSheet = index => {
-        return this.sheets[index]
+    public addSheet = (name: string, rowCount: number, colCount: number) => {
+        const sheet = new Sheet({
+            name,
+            rowCount,
+            colCount,
+            canvas: this.canvas,
+            canvasContext: this.canvasContext
+        })
+        if(this.scrollBar){
+            this.scrollBar.resetScrollBar(sheet.getScrollHeight(), sheet.getScrollWidth())
+        }else {
+            this.scrollBar = new ScrollBar({
+                ele: this.container,
+                clientHeight: this.height,
+                scrollHeight: sheet.getScrollHeight(),
+                clientWidth: this.width,
+                scrollWidth: sheet.getScrollWidth(),
+                eventBindEle:  this.container,
+                verticalScrollCb: this.verticalScrollCb,
+                // horizontalScrollCb: horizontalScrollCb
+            })
+            sheet.setScrollBar(this.scrollBar)
+        }
+        this.sheets.push(sheet)
+        return sheet
     }
-    private point = () => {
+    public getSheet = (name: string) => {
+        // return this.sheets[index]
+    }
+    public removeSheet = (name: string) => {
+
+    }
+    public setSelectSheet = () => {
+
+    }
+    private init = () => {
         const canvasContext = this.canvas.getContext('2d')
         const ratio = getPixelRatio(canvasContext)
         const oldWidth = this.canvas.width
@@ -61,7 +80,7 @@ class MonkeyGrid {
         this.canvas.style.width = oldWidth + 'px'
         this.canvas.style.height = oldHeight + 'px'
         canvasContext.scale(ratio, ratio)
-        canvasContext.translate(ratio, ratio)
+        // canvasContext.translate(ratio, ratio)
         this.canvasContext = canvasContext
     }
 }

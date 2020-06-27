@@ -17,6 +17,16 @@ export function mousewheel(ele: HTMLElement, cb: Function):void {
     })
 }
 
+export function removeMousewheel(ele: HTMLElement, cb: Function):void {
+    const evetType = explorerType === 'Firefox' ? 'DOMMouseScroll' : 'mousewheel'
+    ele.removeEventListener(evetType, (e: WheelEvent) => {
+        let deltaX = 0
+        let deltaY = 0
+        deltaY = (e.wheelDelta) ? e.wheelDelta / 120 : -(e.detail || 0) / 3
+        cb && cb(e, {deltaX, deltaY})
+    })
+}
+
 export function mouseDownSlider(verticalEventRecord: VerticalEventRecord): Function {
     return function(e: MouseEvent) {
         console.log('down')
