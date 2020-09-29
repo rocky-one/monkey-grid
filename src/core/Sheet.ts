@@ -64,6 +64,9 @@ class Sheet{
     public setScrollBar = (scrollBar: ScrollBar) => {
         this.scrollBar = scrollBar
     }
+    /**
+     * 绘制整个sheet画布
+     */
     public point = () => {
         const scrollTop = this.scrollBar.getVertical().scrollTop
         const canvasContext = this.options.canvasContext
@@ -82,13 +85,20 @@ class Sheet{
 				// 竖线
 				canvasContext.moveTo(cell.x, y)
                 canvasContext.lineTo(cell.x, y+cell.height)
-                // value
-                cell.value && canvasContext.fillText(cell.value, cell.x + 4, y + (cell.height / 2) + (this.font / 2))
+
+                this.pointCell(cell)
             }
         }
         canvasContext.strokeStyle = "#ccc"
         canvasContext.stroke()
 		canvasContext.closePath()
+    }
+    private pointCell = (cell: any) => {
+        if(cell.value) {
+            const scrollTop = this.scrollBar.getVertical().scrollTop
+            const canvasContext = this.options.canvasContext
+            canvasContext.fillText(cell.value, cell.x + 4, cell.y - scrollTop + (cell.height / 2) + (this.font / 2))
+        }
     }
     private updateScrollHeight() {
 

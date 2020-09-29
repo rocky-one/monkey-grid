@@ -4,7 +4,6 @@ import ScrollBar from '../scrollBar/ScrollBar'
 import Sheet from './Sheet'
 import { initSheetData } from './utils/sheetUtils'
 import { getPixelRatio, calcStartRowIndex } from '../utils/helper'
-
 import '../style/app.less'
 class MonkeyGrid {
     constructor(options: OptionsInterface){
@@ -28,6 +27,7 @@ class MonkeyGrid {
     canvas: HTMLCanvasElement
     canvasContext: any
     scrollBar: ScrollBar = null
+    hooks: Object = {}
     private verticalScrollCb = (vertical) => {
         // console.log(vertical, 'vertical')
         const sheet = this.sheets[0]
@@ -82,6 +82,9 @@ class MonkeyGrid {
         canvasContext.scale(ratio, ratio)
         // canvasContext.translate(ratio, ratio)
         this.canvasContext = canvasContext
+    }
+    public onHooks = (hookName, fn) => {
+
     }
 }
 
