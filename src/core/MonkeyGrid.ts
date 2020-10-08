@@ -3,7 +3,7 @@ import { OptionsInterface } from '../interface/BaseInterface'
 import ScrollBar from '../scrollBar/ScrollBar'
 import Sheet from './Sheet'
 import { initSheetData } from './utils/sheetUtils'
-import { getPixelRatio, calcStartRowIndex } from '../utils/helper'
+import { getPixelRatio, calcStartRowIndex, calcStartColIndex } from '../utils/helper'
 import '../style/app.less'
 class MonkeyGrid {
     constructor(options: OptionsInterface){
@@ -29,10 +29,15 @@ class MonkeyGrid {
     scrollBar: ScrollBar = null
     hooks: Object = {}
     private verticalScrollCb = (vertical) => {
-        // console.log(vertical, 'vertical')
         const sheet = this.sheets[0]
-        const startRowIndex = calcStartRowIndex(vertical.scrollTop, sheet.getSheetData())
-        sheet.setPointStartRow(startRowIndex)
+        // const startRowIndex = calcStartRowIndex(vertical.scrollTop, sheet.getSheetData())
+        // sheet.setPointStartRow(startRowIndex)
+        sheet.point()
+    }
+    private horizontalScrollCb = (horizontal) => {
+        const sheet = this.sheets[0]
+        // const startColIndex = calcStartColIndex(horizontal.scrollLeft, sheet.getSheetData())
+        // sheet.setPoinStartCol(startColIndex)
         sheet.point()
     }
     public addSheet = (name: string, rowCount: number, colCount: number) => {
@@ -41,7 +46,9 @@ class MonkeyGrid {
             rowCount,
             colCount,
             canvas: this.canvas,
-            canvasContext: this.canvasContext
+            canvasContext: this.canvasContext,
+            clientHeight: this.height,
+            clientWidth: this.width,
         })
         if(this.scrollBar){
             this.scrollBar.resetScrollBar(sheet.getScrollHeight(), sheet.getScrollWidth())
@@ -54,7 +61,7 @@ class MonkeyGrid {
                 scrollWidth: sheet.getScrollWidth(),
                 eventBindEle:  this.container,
                 verticalScrollCb: this.verticalScrollCb,
-                // horizontalScrollCb: horizontalScrollCb
+                horizontalScrollCb: this.horizontalScrollCb
             })
             sheet.setScrollBar(this.scrollBar)
         }

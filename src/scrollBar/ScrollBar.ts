@@ -3,8 +3,8 @@ import {
     calcHorizontalSliderSize,
 } from './calc'
 import { explorerType } from '../utils/helper'
-import { createVerticalScroll, setNodeStyle } from './create'
-import { updateVerticalScroll } from './update'
+import { createVerticalScroll, createHorizontalScroll, setNodeStyle } from './create'
+import { updateVerticalScroll, updateHorizotalScroll } from './update'
 import { addEvent, removeEvent } from '../utils/event'
 import { mousewheel, removeMousewheel, mouseDownSlider } from './event'
 import { ScrollBarOptions, Vertical, VerticalEventRecord, Horizontal } from './ScrollInterface'
@@ -14,7 +14,13 @@ class ScrollBar {
         this.vertical.clientHeight = this.options.clientHeight
         this.vertical.scrollHeight = this.options.scrollHeight
         this.vertical.scrollClientHeight = this.options.clientHeight
+
+        this.horizontal.clientWidth = this.options.clientWidth
+        this.horizontal.scrollWidth = this.options.scrollWidth
+        this.horizontal.scrollClientWidth = this.options.clientWidth
+
         this.updateVertical(createVerticalScroll(this.options.ele, this.vertical))
+        this.updateHorizontal(createHorizontalScroll(this.options.ele, this.horizontal))
         this.onMousewheel()
         this.onMouseDownSlider()
     }
@@ -28,7 +34,12 @@ class ScrollBar {
         sliderHeight: 0
     }
     horizontal: Horizontal = {
-
+        scrollLeft: 0,
+        maxScrollLeft: 0,
+        scrollWidth: 0,
+        clientWidth: 0,
+        scrollClientWidth: 0,
+        sliderWidth: 0
     }
     verticalEventRecord: VerticalEventRecord = {
         mouseDownPageX: 0,
@@ -38,6 +49,8 @@ class ScrollBar {
     }
     mouseDownSlider: Function
     private onMousewheel = () => {
+        // 需要判断是否有滚动条 如果没有滚动条 事件需要不触发
+
         mousewheel(this.options.eventBindEle, (e, {deltaX, deltaY}) => {
             // 是否超出边界标记
             let verticalBoundary = false
@@ -56,27 +69,24 @@ class ScrollBar {
                 this.vertical = updateVerticalScroll(this.vertical, -deltaY * 40)
                 this.options.verticalScrollCb(this.vertical)
             }
+
+            let horitovalBoundary = false
+            if(deltaX < 0) {
+                console.log('向右滚动')
+                if(this.horizontal.sliderLeft >= this.horizontal.sliderMaxLeft) {
+                    horitovalBoundary = true
+                }
+            }else if(deltaX > 0) {
+                console.log('向左滚动')
+                if(this.horizontal.sliderLeft <= 0) {
+                    horitovalBoundary = true
+                }
+            }
+            if(deltaX !== 0 && !horitovalBoundary) {
+                this.horizontal = updateHorizotalScroll(this.horizontal, -deltaX * 40)
+                this.options.horizontalScrollCb(this.horizontal)
+            }
         })
-        // this.options.eventBindEle.addEventListener(evetType, (e: WheelEvent) => {
-        //     const { deltaX, deltaY } = e
-        //     let  delta = 0
-        //     delta = (e.wheelDelta) ? e.wheelDelta / 120 : -(e.detail || 0) / 3
-        //     console.log(delta,'delta')
-        //     if(delta < 0){
-        //         console.log('向下滚动')
-        //         if(this.vertical.sliderTop >= this.vertical.sliderMaxTop) {
-        //             return
-        //         }
-        //     }else if(delta > 0){
-        //         console.log('向上滚动')
-        //         if(this.vertical.sliderTop <= 0) return
-        //     }
-        //     // if(deltaX < 0){
-        //     //     console.log('向右滚动')
-        //     // }else if(deltaX > 0){
-        //     //     console.log('向左滚动')
-        //     // }
-        //     // this.vertical.scrollTop = this.vertical.scrollTop + deltaY * 10;
             
     }
     public resetScrollBar = (scrollHeight: number, scrollWidth: number) => {
@@ -90,8 +100,14 @@ class ScrollBar {
     public getVertical = () => {
         return this.vertical
     }
+    public getHorizontal = () => {
+        return this.horizontal
+    }
     private updateVertical = (vertical: Vertical = {}) => {
         this.vertical = Object.assign(this.vertical, vertical);
+    }
+    private updateHorizontal = (horizontal: Horizontal) => {
+        this.horizontal = Object.assign(this.horizontal, horizontal)
     }
     private onMouseDownSlider = () => {
         this.mouseDownSlider = mouseDownSlider(this.verticalEventRecord)

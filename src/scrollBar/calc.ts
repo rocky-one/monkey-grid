@@ -1,12 +1,10 @@
 import {
     ContainerV,
     ContainerH,
-    Vertical
+    Vertical, Horizontal
 } from './ScrollInterface'
 /**
  * @desc 计算纵向滚动条滑块大小
- * @param {*} container 
- * @param {*} scrollBarContainer 
  */
 export function calcVerticalSliderSize(vertival: Vertical) {
     // 计算方式 可视区域高/内容高 = 滚动条区域高/滚动条内容总高
@@ -15,8 +13,13 @@ export function calcVerticalSliderSize(vertival: Vertical) {
     // container.clientHeight / container.scrollHeight = x / scrollBarContainer.clientHeight  //求x的值
     // x = container.clientHeight * scrollBarContainer.clientHeight / container.scrollHeight
     const scrollClientHeight = vertival.scrollClientHeight
-    let sliderHeight = vertival.clientHeight * scrollClientHeight / vertival.scrollHeight
-    if(sliderHeight < 20) {
+    let sliderHeight = 0
+    // 当内容高度大于可视区域高度时才会有滚动条
+    if (vertival.scrollHeight > vertival.clientHeight) {
+        sliderHeight = vertival.clientHeight * scrollClientHeight / vertival.scrollHeight
+    }
+    // 滑块要给一个最小值
+    if (sliderHeight > 0 && sliderHeight < 20) {
         sliderHeight = 20
     }
     return {
@@ -42,18 +45,19 @@ export function calcVerticalSliderTop(container, scrollBarContainer, slider, scr
 
 /**
  * @desc 计算横行滚动条滑块大小
- * @param {*} container 
- * @param {*} scrollBarContainer 
  */
-export function calcHorizontalSliderSize(container, scrollBarContainer) {
-    const barContainerClientWid = scrollBarContainer.clientWidth
-    let width = container.clientWidth * barContainerClientWid / container.scrollWidth
-    if(width < 20) {
-        width = 20
+export function calcHorizontalSliderSize(horizontal: Horizontal) {
+    const scrollClientHeight = horizontal.scrollClientWidth
+    let sliderWidth = 0
+    if (horizontal.scrollWidth > horizontal.clientWidth) {
+        horizontal.clientWidth * scrollClientHeight / horizontal.scrollWidth
+    }
+    if (sliderWidth > 0 && sliderWidth < 20) {
+        sliderWidth = 20
     }
     return {
-        width,
-        surplusWidth: barContainerClientWid - width
+        sliderWidth,
+        sliderMaxTop: scrollClientHeight - sliderWidth
     }
 }
 

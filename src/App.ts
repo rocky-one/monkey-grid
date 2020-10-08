@@ -20,7 +20,7 @@ const mG = new MonkeyGrid({
 	height: 600,
 	data: data
 })
-const sheet = mG.addSheet('sheet1', 50, 4)
+const sheet = mG.addSheet('sheet1', 10, 4)
 sheet.addTable('table1', 0, 0, data)
 sheet.point()
 // const box = document.getElementById('app')

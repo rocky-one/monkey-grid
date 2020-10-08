@@ -12,7 +12,8 @@ export function mousewheel(ele: HTMLElement, cb: Function):void {
     ele.addEventListener(evetType, (e: WheelEvent) => {
         let deltaX = 0
         let deltaY = 0
-        deltaY = (e.wheelDelta) ? e.wheelDelta / 120 : -(e.detail || 0) / 3
+        deltaX = (e.wheelDeltaX) ? e.wheelDeltaX / 120 : - (e.detailX || 0) / 3
+        deltaY = (e.wheelDeltaY) ? e.wheelDeltaY / 120 : - (e.detailY || 0) / 3
         cb && cb(e, {deltaX, deltaY})
     })
 }
@@ -22,7 +23,8 @@ export function removeMousewheel(ele: HTMLElement, cb: Function):void {
     ele.removeEventListener(evetType, (e: WheelEvent) => {
         let deltaX = 0
         let deltaY = 0
-        deltaY = (e.wheelDelta) ? e.wheelDelta / 120 : -(e.detail || 0) / 3
+        deltaX = (e.wheelDeltaX) ? e.wheelDeltaX / 120 : - (e.detailX || 0) / 3
+        deltaY = (e.wheelDeltaY) ? e.wheelDeltaY / 120 : - (e.detailY || 0) / 3
         cb && cb(e, {deltaX, deltaY})
     })
 }

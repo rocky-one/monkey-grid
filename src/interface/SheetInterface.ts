@@ -5,7 +5,9 @@ export interface SheetOptions {
     rowCount: number,
     colCount: number,
     canvas: HTMLCanvasElement,
-    canvasContext: any
+    canvasContext: any,
+    clientHeight: number,
+    clientWidth: number
 }
 export interface TableOptions{
 

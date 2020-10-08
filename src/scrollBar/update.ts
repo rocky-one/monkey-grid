@@ -1,5 +1,5 @@
-import { Vertical } from './ScrollInterface'
-import { calcVerticalSliderTop } from './calc'
+import { Vertical, Horizontal } from './ScrollInterface'
+import { calcVerticalSliderTop, calcHorizontalSliderLeft } from './calc'
 
 export function updateVerticalSliderTop(vertical: Vertical):Vertical {
     const sliderTop = calcVerticalSliderTop(
@@ -35,4 +35,39 @@ export function updateVerticalScroll(vertical: Vertical, scrollTop: number):Vert
     updateVerticalScrollTop(vertical, scrollTop)
     updateVerticalSliderTop(vertical)
     return vertical
+}
+
+
+
+export function updateHorizotalSliderLeft(horizotal: Horizontal):Horizontal {
+    const sliderLeft = calcHorizontalSliderLeft(
+        {
+            scrollWidth: horizotal.scrollWidth,
+            clientWidth: horizotal.clientWidth
+        },
+        {
+            clientWidth: horizotal.scrollClientWidth
+        }, 
+        horizotal.viewSlider, 
+        horizotal.scrollLeft
+    )
+    horizotal.viewSlider.style.left = `${sliderLeft}px`
+    horizotal.sliderLeft = sliderLeft;
+    return horizotal
+}
+
+export function updateHorizotalScrollLeft(horizotal: Horizontal, scrollLeft: number = 0):Horizontal {
+    horizotal.scrollLeft += scrollLeft
+    if(horizotal.scrollLeft >= horizotal.maxScrollLeft){
+        horizotal.scrollLeft = horizotal.maxScrollLeft
+    }else if(horizotal.scrollLeft <= 0){
+        horizotal.scrollLeft = 0
+    }
+    return horizotal
+}
+
+export function updateHorizotalScroll(horizotal: Horizontal, scrollLeft: number): Horizontal {
+    updateHorizotalScrollLeft(horizotal, scrollLeft)
+    updateHorizotalSliderLeft(horizotal)
+    return horizotal
 }

@@ -2,6 +2,7 @@ import Table from './Table'
 import { SheetOptions } from '../interface/SheetInterface'
 import { initSheetData, insertTableDataToSheet } from './utils/sheetUtils'
 import ScrollBar from 'scrollBar/ScrollBar'
+import { calcStartRowIndex, calcEndRowIndex, calcStartColIndex, calcEndColIndex } from '../utils/helper'
 class Sheet{
     constructor(options: SheetOptions) {
         this.tables = []
@@ -19,6 +20,8 @@ class Sheet{
     sheetData: any[]
     font: number = 12
     pointStartRow: number = 0
+    pointEndRow: number = 0
+    pointStartCol: number = 0
     scrollBar: ScrollBar
     sheetName: string
     scrollHeight: number = 0
@@ -43,9 +46,12 @@ class Sheet{
         this.sheetData = initSheetData(this.sheetData, rowCount, colCount, 80, 20)
         this.rowCount = rowCount
         this.colCount = colCount
-        const lastRow = this.sheetData[rowCount - 1] || []
+        this.calcScrollWidthHeight()
+    }
+    public calcScrollWidthHeight() {
+        const lastRow = this.sheetData[this.rowCount - 1] || []
         // 更新内容宽高 用来创建滚动条
-        if(lastRow[0]) {
+        if(lastRow.length) {
             this.scrollHeight = lastRow[0].y + lastRow[0].height
         }
         const lastCell = lastRow[lastRow.length - 1]
@@ -61,6 +67,12 @@ class Sheet{
     public setPointStartRow = (row: number) => {
         this.pointStartRow = row
     }
+    public setPointEndRow = (row: number) => {
+        this.pointEndRow = row
+    }
+    public setPoinStartCol = (col: number) => {
+        this.pointStartCol = col
+    }
     public setScrollBar = (scrollBar: ScrollBar) => {
         this.scrollBar = scrollBar
     }
@@ -68,23 +80,29 @@ class Sheet{
      * 绘制整个sheet画布
      */
     public point = () => {
-        const scrollTop = this.scrollBar.getVertical().scrollTop
+        const sheetData = this.sheetData
+        const horizontal = this.scrollBar.getHorizontal()
+        const vertical = this.scrollBar.getVertical()
         const canvasContext = this.options.canvasContext
+        const startRowIndex = calcStartRowIndex(vertical.scrollTop, sheetData)
+        const endRowIndex = calcEndRowIndex(startRowIndex, this.options.clientHeight, sheetData)
+        const startColIndex = calcStartColIndex(horizontal.scrollLeft, sheetData)
+        const endColIndex = calcEndColIndex(startColIndex, this.options.clientWidth, sheetData)
         canvasContext.clearRect(0, 0, this.options.canvas.width , this.options.canvas.height)
         canvasContext.font = `${this.font}px Arial`
-        const sheetData = this.sheetData
         canvasContext.beginPath()
-        for(let i = this.pointStartRow; i < sheetData.length; i++) {
+        for(let i = startRowIndex; i <= endRowIndex; i++) {
             const row = sheetData[i]
-            for(let j = 0; j < row.length; j++) {
+            for(let j = startColIndex; j <= endColIndex; j++) {
                 const cell = row[j]
-                const y = cell.y - scrollTop
+                const x = cell.x - horizontal.scrollLeft
+                const y = cell.y - vertical.scrollTop
                 // 横线
-				canvasContext.moveTo(cell.x, y)
-				canvasContext.lineTo(cell.x + cell.width, y)
+				canvasContext.moveTo(x, y)
+				canvasContext.lineTo(x + cell.width, y)
 				// 竖线
-				canvasContext.moveTo(cell.x, y)
-                canvasContext.lineTo(cell.x, y+cell.height)
+				canvasContext.moveTo(x, y)
+                canvasContext.lineTo(x, y+cell.height)
 
                 this.pointCell(cell)
             }
@@ -95,11 +113,13 @@ class Sheet{
     }
     private pointCell = (cell: any) => {
         if(cell.value) {
+            const scrollLeft = this.scrollBar.getHorizontal().scrollLeft
             const scrollTop = this.scrollBar.getVertical().scrollTop
             const canvasContext = this.options.canvasContext
-            canvasContext.fillText(cell.value, cell.x + 4, cell.y - scrollTop + (cell.height / 2) + (this.font / 2))
+            canvasContext.fillText(cell.value, cell.x - scrollLeft + 4, cell.y - scrollTop + (cell.height / 2) + (this.font / 2))
         }
     }
+    
     private updateScrollHeight() {
 
     }

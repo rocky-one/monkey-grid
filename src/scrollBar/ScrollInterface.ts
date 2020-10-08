@@ -1,12 +1,13 @@
 export interface ContainerV {
-    clientHeight: number,
+    clientHeight: number
     verticalScrollCb: Function
-    scrollHeight?: number,
+    scrollHeight?: number
 }
 
 export interface ContainerH {
-    clientWidth: number,
-    scrollWidth?: number,
+    clientWidth: number
+    horizontalScrollCb: Function
+    scrollWidth?: number
 }
 
 export interface ScrollBarOptions extends ContainerV,ContainerH {
@@ -35,5 +36,14 @@ export interface VerticalEventRecord {
 }
 
 export interface Horizontal {
-
+    scrollLeft?: number,
+    maxScrollLeft?: number,
+    sliderLeft?: number,
+    sliderMaxLeft?: number,
+    viewScroll?: HTMLElement,
+    viewSlider?: HTMLElement,
+    scrollWidth?: number,
+    clientWidth?: number,
+    scrollClientWidth?: number,
+    sliderWidth?: number
 }
