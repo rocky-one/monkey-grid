@@ -30,14 +30,10 @@ class MonkeyGrid {
     hooks: Object = {}
     private verticalScrollCb = (vertical) => {
         const sheet = this.sheets[0]
-        // const startRowIndex = calcStartRowIndex(vertical.scrollTop, sheet.getSheetData())
-        // sheet.setPointStartRow(startRowIndex)
         sheet.point()
     }
     private horizontalScrollCb = (horizontal) => {
         const sheet = this.sheets[0]
-        // const startColIndex = calcStartColIndex(horizontal.scrollLeft, sheet.getSheetData())
-        // sheet.setPoinStartCol(startColIndex)
         sheet.point()
     }
     public addSheet = (name: string, rowCount: number, colCount: number) => {

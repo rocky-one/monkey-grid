@@ -50,44 +50,47 @@ class ScrollBar {
     mouseDownSlider: Function
     private onMousewheel = () => {
         // 需要判断是否有滚动条 如果没有滚动条 事件需要不触发
+        mousewheel(this.options.eventBindEle, (e: any, { deltaX, deltaY }) => {
+            // sliderHeight > 0 说明有滚动条，只有 有滚动的时候事件才能被触发
+            if (this.vertical.sliderHeight > 0) {
+                // 是否超出边界标记
+                let verticalBoundary = false
+                if (deltaY < 0) {
+                    console.log('向下滚动')
+                    if (this.vertical.sliderTop >= this.vertical.sliderMaxTop) {
+                        verticalBoundary = true
+                    }
+                } else if (deltaY > 0) {
+                    console.log('向上滚动')
+                    if (this.vertical.sliderTop <= 0) {
+                        verticalBoundary = true
+                    }
+                }
+                if (deltaY !== 0 && !verticalBoundary) {
+                    this.vertical = updateVerticalScroll(this.vertical, -deltaY * 40)
+                    this.options.verticalScrollCb(this.vertical)
+                }
 
-        mousewheel(this.options.eventBindEle, (e, {deltaX, deltaY}) => {
-            // 是否超出边界标记
-            let verticalBoundary = false
-            if(deltaY < 0) {
-                console.log('向下滚动')
-                if(this.vertical.sliderTop >= this.vertical.sliderMaxTop) {
-                    verticalBoundary = true
-                }
-            }else if(deltaY > 0) {
-                console.log('向上滚动')
-                if(this.vertical.sliderTop <= 0) {
-                    verticalBoundary = true
-                }
             }
-            if(deltaY !== 0 && !verticalBoundary) {
-                this.vertical = updateVerticalScroll(this.vertical, -deltaY * 40)
-                this.options.verticalScrollCb(this.vertical)
-            }
-
-            let horitovalBoundary = false
-            if(deltaX < 0) {
-                console.log('向右滚动')
-                if(this.horizontal.sliderLeft >= this.horizontal.sliderMaxLeft) {
-                    horitovalBoundary = true
+            if (this.horizontal.sliderWidth > 0) {
+                let horitovalBoundary = false
+                if (deltaX < 0) {
+                    console.log('向右滚动')
+                    if (this.horizontal.sliderLeft >= this.horizontal.sliderMaxLeft) {
+                        horitovalBoundary = true
+                    }
+                } else if (deltaX > 0) {
+                    console.log('向左滚动')
+                    if (this.horizontal.sliderLeft <= 0) {
+                        horitovalBoundary = true
+                    }
                 }
-            }else if(deltaX > 0) {
-                console.log('向左滚动')
-                if(this.horizontal.sliderLeft <= 0) {
-                    horitovalBoundary = true
+                if (deltaX !== 0 && !horitovalBoundary) {
+                    this.horizontal = updateHorizotalScroll(this.horizontal, -deltaX * 40)
+                    this.options.horizontalScrollCb(this.horizontal)
                 }
-            }
-            if(deltaX !== 0 && !horitovalBoundary) {
-                this.horizontal = updateHorizotalScroll(this.horizontal, -deltaX * 40)
-                this.options.horizontalScrollCb(this.horizontal)
             }
         })
-            
     }
     public resetScrollBar = (scrollHeight: number, scrollWidth: number) => {
         this.vertical.scrollHeight = scrollHeight
@@ -114,10 +117,10 @@ class ScrollBar {
         addEvent(this.vertical.viewSlider, 'mousedown', this.mouseDownSlider)
     }
     private removeMouseDownSlider = () => {
-        removeEvent(this.vertical.viewSlider,'mousedown', this.mouseDownSlider)
+        removeEvent(this.vertical.viewSlider, 'mousedown', this.mouseDownSlider)
     }
     destroy = () => {
-        removeMousewheel(this.options.eventBindEle, () => {})
+        removeMousewheel(this.options.eventBindEle, () => { })
         this.removeMouseDownSlider()
         this.options.ele.removeChild(this.vertical.viewScroll)
         // this.vertical = null

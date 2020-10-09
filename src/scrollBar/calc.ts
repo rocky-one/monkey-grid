@@ -50,7 +50,7 @@ export function calcHorizontalSliderSize(horizontal: Horizontal) {
     const scrollClientHeight = horizontal.scrollClientWidth
     let sliderWidth = 0
     if (horizontal.scrollWidth > horizontal.clientWidth) {
-        horizontal.clientWidth * scrollClientHeight / horizontal.scrollWidth
+        sliderWidth = horizontal.clientWidth * scrollClientHeight / horizontal.scrollWidth
     }
     if (sliderWidth > 0 && sliderWidth < 20) {
         sliderWidth = 20
