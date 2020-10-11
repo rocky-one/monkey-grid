@@ -1,18 +1,26 @@
 export interface ContainerV {
+    // 内容可视区域高度
     clientHeight: number
-    verticalScrollCb: Function
+    // 滚动条容器高度
+    scrollClientHeight: number
+    // 内容总高度
     scrollHeight?: number
+    verticalScrollCb: Function
 }
 
 export interface ContainerH {
     clientWidth: number
+    scrollClientWidth: number
     horizontalScrollCb: Function
     scrollWidth?: number
 }
 
 export interface ScrollBarOptions extends ContainerV,ContainerH {
-    ele: HTMLElement,
+    ele?: HTMLElement
+    verticalEle?: HTMLElement
+    horizontalEle?: HTMLElement
     eventBindEle: HTMLElement
+    layout?: any
 }
 
 export interface Vertical {

@@ -4,6 +4,7 @@ export interface SheetOptions {
     name: string,
     rowCount: number,
     colCount: number,
+    layout: any,
     canvas: HTMLCanvasElement,
     canvasContext: any,
     clientHeight: number,

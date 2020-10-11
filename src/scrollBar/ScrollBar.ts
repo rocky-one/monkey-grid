@@ -13,14 +13,14 @@ class ScrollBar {
         this.options = options
         this.vertical.clientHeight = this.options.clientHeight
         this.vertical.scrollHeight = this.options.scrollHeight
-        this.vertical.scrollClientHeight = this.options.clientHeight
+        this.vertical.scrollClientHeight = this.options.scrollClientHeight
 
         this.horizontal.clientWidth = this.options.clientWidth
         this.horizontal.scrollWidth = this.options.scrollWidth
-        this.horizontal.scrollClientWidth = this.options.clientWidth
+        this.horizontal.scrollClientWidth = this.options.scrollClientWidth
 
-        this.updateVertical(createVerticalScroll(this.options.ele, this.vertical))
-        this.updateHorizontal(createHorizontalScroll(this.options.ele, this.horizontal))
+        this.updateVertical(createVerticalScroll(this.vertical, this.options.verticalEle || this.options.ele))
+        this.updateHorizontal(createHorizontalScroll(this.horizontal, this.options.horizontalEle || this.options.ele))
         this.onMousewheel()
         this.onMouseDownSlider()
     }

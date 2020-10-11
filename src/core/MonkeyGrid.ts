@@ -1,9 +1,11 @@
 import  { layout } from './layout'
+import  * as domCore from '../utils/dom'
 import { OptionsInterface } from '../interface/BaseInterface'
 import ScrollBar from '../scrollBar/ScrollBar'
 import Sheet from './Sheet'
 import { initSheetData } from './utils/sheetUtils'
 import { getPixelRatio, calcStartRowIndex, calcStartColIndex } from '../utils/helper'
+import { FOOTER_HEIGHT, RIGHT_SCROLL_WIDTH } from './const'
 import '../style/app.less'
 class MonkeyGrid {
     constructor(options: OptionsInterface){
@@ -11,56 +13,37 @@ class MonkeyGrid {
         this.optContainer = options.container
         this.width = options.width || options.container.offsetWidth
         this.height = options.height || options.container.offsetHeight
-        const layoutObj = layout(this.optContainer, this.width, this.height)
-        this.container = layoutObj.container
-        this.canvas = layoutObj.canvas
+        this.viewWidth = this.width - RIGHT_SCROLL_WIDTH
+        this.viewHeight = this.height - FOOTER_HEIGHT
+        this.layout = layout(this.optContainer, this.width, this.height)
 
         this.init()
+        this.createSheetTabs()
         
     }
     options: OptionsInterface
     optContainer: HTMLElement
-    container: HTMLElement
     width: number
     height: number
+    viewWidth: number
+    viewHeight: number
     sheets: any[] = []
-    canvas: HTMLCanvasElement
+    // canvas: HTMLCanvasElement
     canvasContext: any
     scrollBar: ScrollBar = null
+    layout: any
     hooks: Object = {}
-    private verticalScrollCb = (vertical) => {
-        const sheet = this.sheets[0]
-        sheet.point()
-    }
-    private horizontalScrollCb = (horizontal) => {
-        const sheet = this.sheets[0]
-        sheet.point()
-    }
     public addSheet = (name: string, rowCount: number, colCount: number) => {
         const sheet = new Sheet({
             name,
             rowCount,
             colCount,
-            canvas: this.canvas,
+            layout: this.layout,
+            canvas: this.layout.canvas,
             canvasContext: this.canvasContext,
-            clientHeight: this.height,
-            clientWidth: this.width,
+            clientHeight: this.viewHeight,
+            clientWidth: this.viewWidth,
         })
-        if(this.scrollBar){
-            this.scrollBar.resetScrollBar(sheet.getScrollHeight(), sheet.getScrollWidth())
-        }else {
-            this.scrollBar = new ScrollBar({
-                ele: this.container,
-                clientHeight: this.height,
-                scrollHeight: sheet.getScrollHeight(),
-                clientWidth: this.width,
-                scrollWidth: sheet.getScrollWidth(),
-                eventBindEle:  this.container,
-                verticalScrollCb: this.verticalScrollCb,
-                horizontalScrollCb: this.horizontalScrollCb
-            })
-            sheet.setScrollBar(this.scrollBar)
-        }
         this.sheets.push(sheet)
         return sheet
     }
@@ -73,21 +56,35 @@ class MonkeyGrid {
     public setSelectSheet = () => {
 
     }
+    public onChangeSheet = () => {
+
+    }
     private init = () => {
-        const canvasContext = this.canvas.getContext('2d')
+        const canvasContext = this.layout.canvas.getContext('2d')
         const ratio = getPixelRatio(canvasContext)
-        const oldWidth = this.canvas.width
-        const oldHeight = this.canvas.height
-        this.canvas.width = Math.round(oldWidth * ratio)
-        this.canvas.height = Math.round(oldHeight * ratio)
-        this.canvas.style.width = oldWidth + 'px'
-        this.canvas.style.height = oldHeight + 'px'
+        const oldWidth = this.layout.canvas.width
+        const oldHeight = this.layout.canvas.height
+        this.layout.canvas.width = Math.round(oldWidth * ratio)
+        this.layout.canvas.height = Math.round(oldHeight * ratio)
+        this.layout.canvas.style.width = oldWidth + 'px'
+        this.layout.canvas.style.height = oldHeight + 'px'
         canvasContext.scale(ratio, ratio)
         // canvasContext.translate(ratio, ratio)
         this.canvasContext = canvasContext
     }
-    public onHooks = (hookName, fn) => {
-
+    // 创建底部SheetTab
+    private createSheetTabs = () => {
+        const tabBox = domCore.createDom('div', {
+            class: 'mg-footer-tab',
+        })
+        tabBox.innerHTML = "sheet1"
+        const footerScrollBox = domCore.createDom('div', {
+            class: 'mg-footer-scroll',
+        })
+        this.layout.footerBox.appendChild(tabBox)
+        this.layout.footerBox.appendChild(footerScrollBox)
+        this.layout.tabBox = tabBox
+        this.layout.footerScrollBox = footerScrollBox
     }
 }
 

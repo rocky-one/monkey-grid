@@ -2,7 +2,7 @@ import { createDom, setDomCss } from '../utils/dom'
 import { calcVerticalSliderSize, calcVerticalSliderTop, calcHorizontalSliderSize } from './calc'
 import { Vertical, Horizontal } from './ScrollInterface'
 
-export function createVerticalScroll(ele: HTMLElement, vertical: Vertical) {
+export function createVerticalScroll(vertical: Vertical, ele?: HTMLElement) {
     const sliderSize = calcVerticalSliderSize(vertical)
     const vScrollBox = createDom('div')
     setDomCss(vScrollBox, {
@@ -11,7 +11,7 @@ export function createVerticalScroll(ele: HTMLElement, vertical: Vertical) {
         right: 0,
         top: 0,
         width: '14px',
-        height: `${vertical.clientHeight}px`,
+        height: `${vertical.scrollClientHeight}px`,
         zIndex: 20,
         border: '1px solid #ccc'
     })
@@ -25,7 +25,7 @@ export function createVerticalScroll(ele: HTMLElement, vertical: Vertical) {
         border: '1px solid #ccc'
     })
     vScrollBox.appendChild(vSlider)
-    ele.appendChild(vScrollBox)
+    ele && ele.appendChild(vScrollBox)
     
     return {
         viewScroll: vScrollBox,
@@ -35,15 +35,15 @@ export function createVerticalScroll(ele: HTMLElement, vertical: Vertical) {
     }
 }
 
-export function createHorizontalScroll(ele: HTMLElement, horizontal: Horizontal) {
+export function createHorizontalScroll(horizontal: Horizontal, ele?: HTMLElement) {
     const sliderSize = calcHorizontalSliderSize(horizontal)
     const hScrollBox = createDom('div')
     setDomCss(hScrollBox, {
         display: sliderSize.sliderWidth > 0 ? 'block' : 'none',
-        position: 'absolute',
-        left: 0,
-        top: 0,
-        width: `${horizontal.clientWidth}px`,
+        position: 'relative',
+        // left: 0,
+        // top: 0,
+        width: `${horizontal.scrollClientWidth}px`,
         height: '14px',
         zIndex: 20,
         border: '1px solid #ccc'
@@ -58,7 +58,7 @@ export function createHorizontalScroll(ele: HTMLElement, horizontal: Horizontal)
         border: '1px solid #ccc'
     })
     hScrollBox.appendChild(hSlider)
-    ele.appendChild(hScrollBox)
+    ele && ele.appendChild(hScrollBox)
     
     return {
         viewScroll: hScrollBox,

@@ -47,17 +47,17 @@ export function calcVerticalSliderTop(container, scrollBarContainer, slider, scr
  * @desc 计算横行滚动条滑块大小
  */
 export function calcHorizontalSliderSize(horizontal: Horizontal) {
-    const scrollClientHeight = horizontal.scrollClientWidth
+    const scrollClientWidth = horizontal.scrollClientWidth
     let sliderWidth = 0
     if (horizontal.scrollWidth > horizontal.clientWidth) {
-        sliderWidth = horizontal.clientWidth * scrollClientHeight / horizontal.scrollWidth
+        sliderWidth = horizontal.clientWidth * scrollClientWidth / horizontal.scrollWidth
     }
     if (sliderWidth > 0 && sliderWidth < 20) {
         sliderWidth = 20
     }
     return {
         sliderWidth,
-        sliderMaxTop: scrollClientHeight - sliderWidth
+        sliderMaxTop: scrollClientWidth - sliderWidth
     }
 }
 

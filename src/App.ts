@@ -4,7 +4,7 @@ import MonkeyGrid from './core/MonkeyGrid';
 const data = [];
 for(let i = 0;i<3;i++){
 	let row = []
-	for(let j = 0; j<2;j++){
+	for(let j = 0; j<12;j++){
 		row.push({
 			// row: i,
 			// col: j,
