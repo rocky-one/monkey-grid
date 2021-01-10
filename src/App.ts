@@ -18,7 +18,9 @@ const mG = new MonkeyGrid({
 	container: document.getElementById('app'),
 	width: 600,
 	height: 600,
-	data: data
+	data: data,
+	order: true,
+	headerOrder: true
 })
 const sheet = mG.addSheet('sheet1', 40, 12)
 sheet.addTable('table1', 0, 0, data)

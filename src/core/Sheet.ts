@@ -3,6 +3,7 @@ import { SheetOptions } from '../interface/SheetInterface'
 import { initSheetData, insertTableDataToSheet } from './utils/sheetUtils'
 import ScrollBar from '../scrollBar/ScrollBar'
 import { calcStartRowIndex, calcEndRowIndex, calcStartColIndex, calcEndColIndex } from '../utils/helper'
+import { LEFT_ORDER_WIDTH, HEADER_ORDER_WIDTH } from './const'
 class Sheet {
     constructor(options: SheetOptions) {
         this.tables = []
@@ -28,8 +29,16 @@ class Sheet {
     scrollHeight: number = 0
     scrollWidth: number = 0
     public addTable = (name: string, row: number, col: number, dataSource: any[]) => {
-        const table = new Table(name, row, col, dataSource)
+        const table = new Table({
+            name,
+            row,
+            col,
+            dataSource,
+            xOffset: this.options.xOffset,
+            yOffset: this.options.yOffset
+        })
         this.tables.push(table)
+
         this.sheetData = insertTableDataToSheet(row, col, table.getData(), this.sheetData)
         return table
     }
@@ -44,20 +53,21 @@ class Sheet {
         this.sheetName = name
     }
     public setRowColCount = (rowCount: number, colCount: number) => {
-        this.sheetData = initSheetData(this.sheetData, rowCount, colCount, 80, 20)
+        this.sheetData = initSheetData(this.sheetData, rowCount, colCount, 80, 20, this.options.xOffset, this.options.yOffset)
         this.rowCount = rowCount
         this.colCount = colCount
         this.calcScrollWidthHeight()
     }
+    // 计算内容区域的宽高 需要减去偏移量以及后续的 冻结窗口111
     public calcScrollWidthHeight() {
         const lastRow = this.sheetData[this.rowCount - 1] || []
         // 更新内容宽高 用来创建滚动条
         if (lastRow.length) {
-            this.scrollHeight = lastRow[0].y + lastRow[0].height
+            this.scrollHeight = lastRow[0].y + lastRow[0].height - this.options.yOffset
         }
         const lastCell = lastRow[lastRow.length - 1]
         if (lastCell) {
-            this.scrollWidth = lastCell.x + lastCell.width
+            this.scrollWidth = lastCell.x + lastCell.width - this.options.xOffset
         }
     }
     public getScrollHeight = () => this.scrollHeight
@@ -85,50 +95,65 @@ class Sheet {
         const horizontal = this.scrollBar.getHorizontal()
         const vertical = this.scrollBar.getVertical()
         const canvasContext = this.options.canvasContext
-        const startRowIndex = calcStartRowIndex(vertical.scrollTop, sheetData)
+        const startRowIndex = calcStartRowIndex(vertical.scrollTop, sheetData, this.options.yOffset)
         const endRowIndex = calcEndRowIndex(startRowIndex, this.options.clientHeight, sheetData)
-        const startColIndex = calcStartColIndex(horizontal.scrollLeft, sheetData)
-        const endColIndex = calcEndColIndex(startColIndex, this.options.clientWidth, sheetData)
-        canvasContext.clearRect(0, 0, this.options.canvas.width, this.options.canvas.height)
+        const startColIndex = calcStartColIndex(horizontal.scrollLeft, sheetData, this.options.xOffset)
+        const endColIndex = calcEndColIndex(startColIndex, this.options.clientWidth, sheetData, this.options.xOffset)
         canvasContext.font = `${this.font}px Arial`
         canvasContext.beginPath()
-        const hasOrder = true
-        const xOffset = hasOrder ? 20 : 0
+        const hasOrder = this.options.order
+        // 绘制table部分
         for (let i = startRowIndex; i <= endRowIndex; i++) {
             const row = sheetData[i]
-            if(hasOrder) {
-                // const cell = row[0]
-                // const y = cell.y
-                // // 横线
-                // canvasContext.moveTo(0, y)
-                // canvasContext.lineTo(0 + cell.width, y)
-                // // 竖线
-                // canvasContext.moveTo(0, y)
-                // canvasContext.lineTo(0, y + cell.height)
-
-                // this.pointCell({
-                //     x: 0,
-                //     y: cell.y,
-                //     value: i
-                // })
-            }
             for (let j = startColIndex; j <= endColIndex; j++) {
                 const cell = row[j]
-                const x = cell.x - horizontal.scrollLeft + xOffset
+                const x = cell.x - horizontal.scrollLeft
                 const y = cell.y - vertical.scrollTop
-                // 横线
-                canvasContext.moveTo(x, y)
-                canvasContext.lineTo(x + cell.width, y)
+                // 横线 第一行不画线
+                if(i !== startRowIndex) {
+                    canvasContext.moveTo(x, y)
+                    canvasContext.lineTo(x + cell.width, y)
+                }
                 // 竖线
-                canvasContext.moveTo(x, y)
-                canvasContext.lineTo(x, y + cell.height)
-
+                if(j !== startColIndex) {
+                    canvasContext.moveTo(x, y)
+                    canvasContext.lineTo(x, y + cell.height)
+                }
                 this.pointCell(cell)
             }
         }
+        // 绘制左侧序号 放在后面 可以覆盖前面的
+        for (let i = startRowIndex; i <= endRowIndex; i++) {
+            const row = sheetData[i]
+            if (hasOrder) {
+                const cell = row[0]
+                const y = cell.y - vertical.scrollTop
+                // 横线
+                if(i !== startRowIndex) {
+                    canvasContext.moveTo(0, y)
+                    canvasContext.lineTo(0 + LEFT_ORDER_WIDTH, y)
+                }
+                // 竖线
+                canvasContext.moveTo(LEFT_ORDER_WIDTH, y)
+                canvasContext.lineTo(LEFT_ORDER_WIDTH, y + HEADER_ORDER_WIDTH)
+                // 背景颜色
+                this.paintCellBgColor(0, y, LEFT_ORDER_WIDTH, cell.height, '#fff')
+                // 字体
+                canvasContext.fillStyle = '#000'
+                canvasContext.fillText(i + 1, 0 + 4, y + (cell.height / 2) + (this.font / 2))
+            }
+        }
+        
         canvasContext.strokeStyle = "#ccc"
-        canvasContext.stroke()
         canvasContext.closePath()
+        canvasContext.stroke()
+    }
+    // 绘制背景颜色 context: CanvasRenderingContext2D
+    private paintCellBgColor = (x: number, y: number, width: number, height: number, fillStyle?: string) => {
+        const canvasContext = this.options.canvasContext
+        canvasContext.fillStyle = fillStyle || '#fff'
+        canvasContext.fillRect(x, y, width, height)
+        canvasContext.fill()
     }
     private initScroll = () => {
         this.scrollBar = new ScrollBar({
@@ -146,10 +171,20 @@ class Sheet {
         })
     }
     private verticalScrollCb = (vertical) => {
-        this.point()
+        window.requestAnimationFrame(() => {
+            const canvasContext = this.options.canvasContext
+            this.options.canvas.width = this.options.canvas.width
+            canvasContext.scale(this.options.ratio, this.options.ratio)
+            this.point()
+		})
     }
     private horizontalScrollCb = (horizontal) => {
-        this.point()
+        window.requestAnimationFrame(() => {
+            const canvasContext = this.options.canvasContext
+            this.options.canvas.width = this.options.canvas.width
+            canvasContext.scale(this.options.ratio, this.options.ratio)
+            this.point()
+		})
     }
     private pointCell = (cell: any) => {
         if (cell.value) {

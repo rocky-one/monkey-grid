@@ -70,7 +70,6 @@ class ScrollBar {
                     this.vertical = updateVerticalScroll(this.vertical, -deltaY * 40)
                     this.options.verticalScrollCb(this.vertical)
                 }
-
             }
             if (this.horizontal.sliderWidth > 0) {
                 let horitovalBoundary = false

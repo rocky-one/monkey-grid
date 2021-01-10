@@ -1,11 +1,20 @@
 import { initData } from '../utils/helper'
 
+
+export interface TableOptions{
+    name: string,
+    row: number,
+    col: number,
+    dataSource: any,
+    xOffset: number,
+    yOffset: number
+}
 class Table {
-    constructor(name: string, row: number, col: number, dataSource: any []) {
-        this.name = name
-        this.row = row
-        this.col = col
-        this.dataSource = initData(dataSource)
+    constructor(options: TableOptions) {
+        this.name = options.name
+        this.row = options.row
+        this.col = options.col
+        this.dataSource = initData(options.dataSource, options.xOffset, options.yOffset)
     }
     name: string
     row: number

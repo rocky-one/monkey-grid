@@ -8,8 +8,10 @@ export interface SheetOptions {
     canvas: HTMLCanvasElement,
     canvasContext: any,
     clientHeight: number,
-    clientWidth: number
-}
-export interface TableOptions{
-
+    clientWidth: number,
+    order?: boolean,
+    headerOrder?: boolean
+    xOffset?: number,
+    yOffset?: number,
+    ratio: number
 }

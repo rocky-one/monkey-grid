@@ -3,4 +3,6 @@ export interface OptionsInterface {
     width: number,
     height: number,
     data: Array<any>,
+    order?: boolean,
+    headerOrder?: boolean
 }
