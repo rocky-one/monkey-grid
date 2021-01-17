@@ -137,7 +137,9 @@ class Sheet {
                     canvasContext.moveTo(x, y)
                     canvasContext.lineTo(x, y + cell.height)
                 }
-                this.pointCell(cell)
+                if(!rowspanMap[`${i}${j}`] && !colspanMap[`${i}${j}`]) {
+                    this.pointCell(cell)
+                }
             }
         }
         // 绘制左侧序号 放在后面 可以覆盖前面的
