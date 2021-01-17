@@ -15,3 +15,10 @@ export interface SheetOptions {
     yOffset?: number,
     ratio: number
 }
+
+export interface PointRange {
+    startRowIndex: number;
+    endRowIndex: number;
+    startColIndex: number;
+    endColIndex: number;
+}

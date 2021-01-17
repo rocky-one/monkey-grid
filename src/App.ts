@@ -2,7 +2,7 @@ import MonkeyGrid from './core/MonkeyGrid';
 // 1. 链表
 // 2. 时间切片
 const data = [];
-for(let i = 0;i<3;i++){
+for(let i = 0;i<10;i++){
 	let row = []
 	for(let j = 0; j<12;j++){
 		row.push({
@@ -14,6 +14,9 @@ for(let i = 0;i<3;i++){
 	}
 	data.push(row)
 }
+data[1][1].rowspan = 2
+data[5][1].colspan = 2
+console.log(data)
 const mG = new MonkeyGrid({
 	container: document.getElementById('app'),
 	width: 600,

@@ -1,5 +1,5 @@
 import Table from './Table'
-import { SheetOptions } from '../interface/SheetInterface'
+import { SheetOptions, PointRange } from '../interface/SheetInterface'
 import { initSheetData, insertTableDataToSheet } from './utils/sheetUtils'
 import ScrollBar from '../scrollBar/ScrollBar'
 import { calcStartRowIndex, calcEndRowIndex, calcStartColIndex, calcEndColIndex } from '../utils/helper'
@@ -28,6 +28,12 @@ class Sheet {
     sheetName: string
     scrollHeight: number = 0
     scrollWidth: number = 0
+    pointRange: PointRange = {
+        startRowIndex: 0,
+        endRowIndex: 0,
+        startColIndex: 0,
+        endColIndex: 0
+    }
     public addTable = (name: string, row: number, col: number, dataSource: any[]) => {
         const table = new Table({
             name,
@@ -95,13 +101,15 @@ class Sheet {
         const horizontal = this.scrollBar.getHorizontal()
         const vertical = this.scrollBar.getVertical()
         const canvasContext = this.options.canvasContext
-        const startRowIndex = calcStartRowIndex(vertical.scrollTop, sheetData, this.options.yOffset)
-        const endRowIndex = calcEndRowIndex(startRowIndex, this.options.clientHeight, sheetData)
-        const startColIndex = calcStartColIndex(horizontal.scrollLeft, sheetData, this.options.xOffset)
-        const endColIndex = calcEndColIndex(startColIndex, this.options.clientWidth, sheetData, this.options.xOffset)
+        const startRowIndex = this.pointRange.startRowIndex = calcStartRowIndex(vertical.scrollTop, sheetData, this.options.yOffset)
+        const endRowIndex = this.pointRange.endRowIndex = calcEndRowIndex(startRowIndex, this.options.clientHeight, sheetData)
+        const startColIndex = this.pointRange.startColIndex = calcStartColIndex(horizontal.scrollLeft, sheetData, this.options.xOffset)
+        const endColIndex = this.pointRange.endColIndex = calcEndColIndex(startColIndex, this.options.clientWidth, sheetData, this.options.xOffset)
         canvasContext.font = `${this.font}px Arial`
         canvasContext.beginPath()
         const hasOrder = this.options.order
+        const rowspanMap = {}
+        const colspanMap = {}
         // 绘制table部分
         for (let i = startRowIndex; i <= endRowIndex; i++) {
             const row = sheetData[i]
@@ -109,13 +117,23 @@ class Sheet {
                 const cell = row[j]
                 const x = cell.x - horizontal.scrollLeft
                 const y = cell.y - vertical.scrollTop
-                // 横线 第一行不画线
-                if(i !== startRowIndex) {
+                if(cell.rowspan > 1) {
+                    for(let h = i + 1; h < i + cell.rowspan; h++) {
+                        rowspanMap[`${h}${j}`] = true
+                    }
+                }
+                if(cell.colspan > 1) {
+                    for(let h = j + 1; h < j + cell.colspan; h++) {
+                        colspanMap[`${i}${h}`] = true
+                    }
+                }
+                // 横线 第一行不画线 同时有合并单元格rowspan 横线不画
+                if(i !== startRowIndex && !rowspanMap[`${i}${j}`]) {
                     canvasContext.moveTo(x, y)
                     canvasContext.lineTo(x + cell.width, y)
                 }
-                // 竖线
-                if(j !== startColIndex) {
+                // 竖线 第一列不画 同时有合并单元格colspan 竖线不画
+                if(j !== startColIndex && !colspanMap[`${i}${j}`]) {
                     canvasContext.moveTo(x, y)
                     canvasContext.lineTo(x, y + cell.height)
                 }
