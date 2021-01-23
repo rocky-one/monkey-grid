@@ -47,6 +47,7 @@ class ScrollBar {
         mouseMoveIng: false,
         mouseMoveY: 0
     }
+
     mouseDownSlider: Function
     private onMousewheel = () => {
         // 需要判断是否有滚动条 如果没有滚动条 事件需要不触发
