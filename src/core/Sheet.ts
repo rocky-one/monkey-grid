@@ -1,6 +1,6 @@
 import Table from './Table'
 import { SheetOptions, PointRange } from '../interface/SheetInterface'
-import { initSheetData, insertTableDataToSheet } from './utils/sheetUtils'
+import { setSheetRowColCount, insertTableDataToSheet } from './utils/sheetUtils'
 import ScrollBar from '../scrollBar/ScrollBar'
 import { calcStartRowIndex, calcEndRowIndex, calcStartColIndex, calcEndColIndex } from '../utils/helper'
 import { LEFT_ORDER_WIDTH, HEADER_ORDER_WIDTH } from './const'
@@ -44,7 +44,7 @@ class Sheet {
             yOffset: this.options.yOffset
         })
         this.tables.push(table)
-
+        
         this.sheetData = insertTableDataToSheet(row, col, table.getData(), this.sheetData)
         return table
     }
@@ -59,7 +59,7 @@ class Sheet {
         this.sheetName = name
     }
     public setRowColCount = (rowCount: number, colCount: number) => {
-        this.sheetData = initSheetData(this.sheetData, rowCount, colCount, 80, 20, this.options.xOffset, this.options.yOffset)
+        this.sheetData = setSheetRowColCount(this.sheetData, rowCount, colCount, 100, 24, this.options.xOffset, this.options.yOffset)
         this.rowCount = rowCount
         this.colCount = colCount
         this.calcScrollWidthHeight()
@@ -115,31 +115,32 @@ class Sheet {
             const row = sheetData[i]
             for (let j = startColIndex; j <= endColIndex; j++) {
                 const cell = row[j]
+                if(!cell) continue
                 const x = cell.x - horizontal.scrollLeft
                 const y = cell.y - vertical.scrollTop
-                if(cell.rowspan > 1) {
-                    for(let h = i + 1; h < i + cell.rowspan; h++) {
-                        rowspanMap[`${h}${j}`] = true
-                    }
-                }
-                if(cell.colspan > 1) {
-                    for(let h = j + 1; h < j + cell.colspan; h++) {
-                        colspanMap[`${i}${h}`] = true
-                    }
-                }
-                // 横线 第一行不画线 同时有合并单元格rowspan 横线不画
-                if(i !== startRowIndex && !rowspanMap[`${i}${j}`]) {
+                // if(cell.rowspan > 1) {
+                //     for(let h = i + 1; h < i + cell.rowspan; h++) {
+                //         rowspanMap[`${h}${j}`] = true
+                //     }
+                // }
+                // if(cell.colspan > 1) {
+                //     for(let h = j + 1; h < j + cell.colspan; h++) {
+                //         colspanMap[`${i}${h}`] = true
+                //     }
+                // }
+                // 横线 第一行不画线 同时有合并单元格rowspan 横线不画  && !rowspanMap[`${i}${j}`]
+                if(i !== startRowIndex) {
                     canvasContext.moveTo(x, y)
                     canvasContext.lineTo(x + cell.width, y)
                 }
-                // 竖线 第一列不画 同时有合并单元格colspan 竖线不画
-                if(j !== startColIndex && !colspanMap[`${i}${j}`]) {
+                // 竖线 第一列不画 同时有合并单元格colspan 竖线不画  && !colspanMap[`${i}${j}`]
+                if(j !== startColIndex) {
                     canvasContext.moveTo(x, y)
                     canvasContext.lineTo(x, y + cell.height)
                 }
-                if(!rowspanMap[`${i}${j}`] && !colspanMap[`${i}${j}`]) {
+                // if(!rowspanMap[`${i}${j}`]) {
                     this.pointCell(cell)
-                }
+                // }
             }
         }
         // 绘制左侧序号 放在后面 可以覆盖前面的

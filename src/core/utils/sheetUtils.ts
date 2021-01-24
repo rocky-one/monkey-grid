@@ -1,4 +1,5 @@
-export function initSheetData(
+
+export function setSheetRowColCount(
     data: any[],
     rowCount: number,
     colCount: number,
@@ -86,7 +87,7 @@ export function initSheetData(
 }
 
 /**
- * @desc 把table数据插入到2sheetData中 
+ * @desc 把table数据插入到sheetData中 
  * @param row 
  * @param col 
  * @param tableData 
@@ -95,14 +96,48 @@ export function initSheetData(
 export function insertTableDataToSheet(row: number, col: number, tableData: any[], sheetData: any[]) {
     let rowLen = tableData.length
     let colLen = tableData.length ? tableData[0].length : 0
-    // 注意这里需要检测是否覆盖已有数据和边界问题 111
+    // 注意这里需要检测是否覆盖已有数据和边界问题 ，如果该区域有数据存在给出提示 做调整 111
     for(let i = 0; i < rowLen; i++) {
         const r = tableData[i]
         for(let j = 0; j < r.length; j++) {
-            const cell = sheetData[row+i][col+j]
-            sheetData[row+i][col+j] = Object.assign(r[j], cell)
+            let cell = sheetData[row+i][col+j]
+            setCellMerge(i, j, r[j], tableData)
+            sheetData[row+i][col+j] = r[j] ? Object.assign(cell, r[j]) : r[j]
         }
     }
 
     return sheetData
+}
+
+/**
+ * @desc 支持按sheetData和tableData计算合并单元格，注意row col索引需要对应
+ * @param row 
+ * @param col 
+ * @param cell 
+ * @param data 
+ */
+export function setCellMerge(row: number, col: number, cell: any, data: any[]) {
+    if(!cell || !cell.rowspan || !cell.colspan || cell.continue) return false;
+    
+    if (cell.rowspan > 1) {
+        const lastRow = row + cell.rowspan - 1
+        const lastCol = col + cell.colspan - 1
+        const leftTopCell = data[row][col]
+        let height = 0
+        // const rightBottomCell = data[lastRow][lastCol]
+        for (let i = row; i <= lastRow; i++) {
+            height += data[i][col].height
+            data[i][col] = null
+        }
+        leftTopCell.continue = true;
+        leftTopCell.height = height;
+        data[lastRow][col] = leftTopCell
+    }
+    // for (let j = col; j <= lastCol; j++) {
+    //     data[i][j] = null
+    //     if (i === lastRow && j === lastCol) {
+    //         data[i][j] = rightBottomCell
+    //     }
+    // }
+    
 }
