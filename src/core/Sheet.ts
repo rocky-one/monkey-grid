@@ -11,6 +11,8 @@ class Sheet {
         this.colCount = 4
         this.options = options
         this.sheetData = []
+        this.frozenRowCount = options.frozenRowCount || 0
+        this.frozenColCount = options.frozenColCount || 0
         this.setSheetName(options.name)
         this.setRowColCount(options.rowCount, options.colCount)
         this.initScroll()
@@ -34,6 +36,8 @@ class Sheet {
         startColIndex: 0,
         endColIndex: 0
     }
+    frozenRowCount: number =  0
+    frozenColCount: number = 0
     public addTable = (name: string, row: number, col: number, dataSource: any[]) => {
         const table = new Table({
             name,
@@ -94,6 +98,53 @@ class Sheet {
         this.scrollBar = scrollBar
     }
     /**
+     * 设置冻结行
+     */
+    public setFrozenRowCount = (count: number) => {
+        this.frozenRowCount = count
+    }
+    /**
+     * 设置冻结列
+     */
+    public setFrozenColCount = (count: number) => {
+        this.frozenColCount = count
+    }
+    private pointBody = (pointCellMap, startRowIndex, endRowIndex, startColIndex, endColIndex, isFrozen?: boolean) => {
+        const sheetData = this.sheetData
+        const horizontal = this.scrollBar.getHorizontal()
+        const vertical = this.scrollBar.getVertical()
+        const canvasContext = this.options.canvasContext
+        // 绘制table部分
+        for (let i = startRowIndex; i <= endRowIndex; i++) {
+            const row = sheetData[i]
+            for (let j = startColIndex; j <= endColIndex; j++) {
+                let cell = row[j]
+                // 当前单元格已经被绘制过就跳出
+                if(!cell || pointCellMap[`${i}${j}`]) continue
+                if(cell.pointer && pointCellMap[`${cell.pointer[0]}${cell.pointer[1]}`]) continue
+                
+                // 重新定向到指针单元格
+                if(cell.pointer) {
+                    pointCellMap[`${cell.pointer[0]}${cell.pointer[1]}`] = true
+                    cell = sheetData[cell.pointer[0]][cell.pointer[1]]
+                }
+                const x = cell.x - horizontal.scrollLeft
+                const y = cell.y - vertical.scrollTop
+                // 横线 第一行不画线
+                // if(i !== startRowIndex && !isFrozen) {
+                    canvasContext.moveTo(x, y)
+                    canvasContext.lineTo(x + cell.width, y)
+                // }
+                // 竖线 第一列不画
+                // if(j !== startColIndex && !isFrozen) {
+                    canvasContext.moveTo(x, y)
+                    canvasContext.lineTo(x, y + cell.height)
+                // }
+                this.pointCell(cell)
+            }
+        }
+    }
+    /**
      * 绘制整个sheet画布
      */
     public point = () => {
@@ -108,41 +159,15 @@ class Sheet {
         canvasContext.font = `${this.font}px Arial`
         canvasContext.beginPath()
         const hasOrder = this.options.order
-        const rowspanMap = {}
-        const colspanMap = {}
-        // 绘制table部分
-        for (let i = startRowIndex; i <= endRowIndex; i++) {
-            const row = sheetData[i]
-            for (let j = startColIndex; j <= endColIndex; j++) {
-                const cell = row[j]
-                if(!cell) continue
-                const x = cell.x - horizontal.scrollLeft
-                const y = cell.y - vertical.scrollTop
-                // if(cell.rowspan > 1) {
-                //     for(let h = i + 1; h < i + cell.rowspan; h++) {
-                //         rowspanMap[`${h}${j}`] = true
-                //     }
-                // }
-                // if(cell.colspan > 1) {
-                //     for(let h = j + 1; h < j + cell.colspan; h++) {
-                //         colspanMap[`${i}${h}`] = true
-                //     }
-                // }
-                // 横线 第一行不画线 同时有合并单元格rowspan 横线不画  && !rowspanMap[`${i}${j}`]
-                if(i !== startRowIndex) {
-                    canvasContext.moveTo(x, y)
-                    canvasContext.lineTo(x + cell.width, y)
-                }
-                // 竖线 第一列不画 同时有合并单元格colspan 竖线不画  && !colspanMap[`${i}${j}`]
-                if(j !== startColIndex) {
-                    canvasContext.moveTo(x, y)
-                    canvasContext.lineTo(x, y + cell.height)
-                }
-                // if(!rowspanMap[`${i}${j}`]) {
-                    this.pointCell(cell)
-                // }
-            }
+        // 记录当前单元格是否已经被绘制，有单元格合并的情况需要跳过
+        const pointCellMap = {}
+
+        if(this.frozenRowCount > 0) {
+            this.pointBody(pointCellMap, 0, this.frozenRowCount - 1, startColIndex, endColIndex, true)
         }
+        // 绘制table部分
+        this.pointBody(pointCellMap, startRowIndex + this.frozenRowCount, endRowIndex, startColIndex, endColIndex)
+
         // 绘制左侧序号 放在后面 可以覆盖前面的
         for (let i = startRowIndex; i <= endRowIndex; i++) {
             const row = sheetData[i]

@@ -60,7 +60,9 @@ class MonkeyGrid {
             headerOrder: getObjectAttrDefault(this.options, 'headerOrder', true),
             xOffset: this.xOffset,
             yOffset: this.yOffset,
-            ratio: this.ratio
+            ratio: this.ratio,
+            frozenRowCount: this.options.frozenRowCount,
+            frozenColCount: this.options.frozenColCount
         })
         this.sheets.push(sheet)
         return sheet
@@ -89,9 +91,7 @@ class MonkeyGrid {
         canvasContext.scale(this.ratio, this.ratio)
         // canvasContext.translate(ratio, ratio)
         this.canvasContext = canvasContext
-        mouseEvent(this.layout.canvas, () => {
-
-        })
+        mouseEvent(this.layout.canvas, () => {})
     }
     // 创建底部SheetTab
     private createSheetTabs = () => {

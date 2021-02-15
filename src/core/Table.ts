@@ -15,7 +15,6 @@ class Table {
         this.row = options.row
         this.col = options.col
         this.dataSource = initData(options.dataSource, options.xOffset, options.yOffset)
-        console.log(JSON.parse(JSON.stringify(this.dataSource)), 'this.dataSource')
     }
     name: string
     row: number

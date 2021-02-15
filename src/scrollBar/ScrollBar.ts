@@ -52,6 +52,7 @@ class ScrollBar {
     private onMousewheel = () => {
         // 需要判断是否有滚动条 如果没有滚动条 事件需要不触发
         mousewheel(this.options.eventBindEle, (e: any, { deltaX, deltaY }) => {
+            e.preventDefault()
             // sliderHeight > 0 说明有滚动条，只有 有滚动的时候事件才能被触发
             if (this.vertical.sliderHeight > 0) {
                 // 是否超出边界标记

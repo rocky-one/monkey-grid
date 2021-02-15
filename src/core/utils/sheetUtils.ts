@@ -117,27 +117,26 @@ export function insertTableDataToSheet(row: number, col: number, tableData: any[
  * @param data 
  */
 export function setCellMerge(row: number, col: number, cell: any, data: any[]) {
-    if(!cell || !cell.rowspan || !cell.colspan || cell.continue) return false;
-    
-    if (cell.rowspan > 1) {
-        const lastRow = row + cell.rowspan - 1
-        const lastCol = col + cell.colspan - 1
+    if(!cell || !cell.rowspan || !cell.colspan) return false;
+    let endRow = row + cell.rowspan
+    let endCol = col + cell.colspan
+    if (cell.rowspan > 1 || cell.colspan > 1) {
         const leftTopCell = data[row][col]
         let height = 0
-        // const rightBottomCell = data[lastRow][lastCol]
-        for (let i = row; i <= lastRow; i++) {
+        let width = 0
+        for (let i = row; i < endRow; i++) {
             height += data[i][col].height
-            data[i][col] = null
+            for(let j = col; j < endCol; j++) {
+                if(i === row) {
+                    width += data[i][j].width
+                }
+                data[i][j] = {
+                    pointer: [row, col]
+                }
+            }
         }
-        leftTopCell.continue = true;
         leftTopCell.height = height;
-        data[lastRow][col] = leftTopCell
+        leftTopCell.width = width;
+        data[row][col] = leftTopCell
     }
-    // for (let j = col; j <= lastCol; j++) {
-    //     data[i][j] = null
-    //     if (i === lastRow && j === lastCol) {
-    //         data[i][j] = rightBottomCell
-    //     }
-    // }
-    
 }
