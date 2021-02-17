@@ -1,6 +1,6 @@
 import Table from './Table'
 import { SheetOptions, PointRange } from '../interface/SheetInterface'
-import { setSheetRowColCount, insertTableDataToSheet } from './utils/sheetUtils'
+import { setSheetRowColCount, insertTableDataToSheet, setLeftTopByFrozenData } from './utils/sheetUtils'
 import ScrollBar from '../scrollBar/ScrollBar'
 import { calcStartRowIndex, calcEndRowIndex, calcStartColIndex, calcEndColIndex } from '../utils/helper'
 import { FOOTER_HEIGHT, RIGHT_SCROLL_WIDTH, LEFT_ORDER_WIDTH, HEADER_ORDER_WIDTH } from './const'
@@ -59,8 +59,8 @@ class Sheet {
             yOffset: this.yOffset
         })
         this.tables.push(table)
-
         this.sheetData = insertTableDataToSheet(row, col, table.getData(), this.sheetData)
+        setLeftTopByFrozenData(this.sheetData, this.frozenRowCount, this.frozenColCount)
         return table
     }
     public getTable = (name: string) => {
@@ -149,6 +149,9 @@ class Sheet {
     public setFrozenColCount = (count: number) => {
         this.frozenColCount = count
     }
+    /**
+     * 绘制冻结行
+     */
     private pointFrozenRow = (startColIndex, endColIndex, pointCellMap) => {
         const isFrozenRowCount = this.frozenRowCount > 0
         if (!isFrozenRowCount) return
@@ -186,7 +189,7 @@ class Sheet {
                 canvasContext.moveTo(x, y)
                 canvasContext.lineTo(x, y + cell.height)
                 // 背景颜色
-                this.paintCellBgColor(x, y, cell.width, cell.height, '#E1FFFF')
+                this.paintCellBgColor(x, y, cell.width, cell.height, cell.backgroundColor || '#E1FFFF')
 
                 this.pointCell(cell, -1, cell.y + (cell.height / 2) + (this.font / 2))
             }
@@ -204,7 +207,7 @@ class Sheet {
         const canvasContext = this.options.canvasContext
         canvasContext.beginPath()
         // 绘制冻结行头
-        for (let i = startRowIndex + this.frozenColCount; i <= endRowIndex; i++) {
+        for (let i = startRowIndex; i <= endRowIndex; i++) {
             const row = sheetData[i]
             for (let j = 0; j < this.frozenColCount; j++) {
                 let cell = row[j]
@@ -313,37 +316,35 @@ class Sheet {
      * @param pointCellMap
      */
     private pointLeftTopByFrozen = (pointCellMap) => {
-        const isFrozenColCount = this.frozenColCount > 0
-        if (!isFrozenColCount) return
-        const sheetData = this.sheetData
-        let width = 0
-        let height = 0
-        for(let i = 0; i < this.frozenRowCount; i++) {
-            const row = sheetData[i]
-            for(let j = 0; j < this.frozenColCount; j++) {
-                let cell = row[j]
-                if(i === 0 && j === 0) {
-                    sheetData[i][j].value = ''
-                    sheetData[i][j].rowspan = this.frozenRowCount
-                    sheetData[i][j].colspan = this.frozenColCount
-                } else {
-                    sheetData[i][j] = {
-                        pointer: [0, 0]
-                    }
-                }
-                if(j === 0) {
-                    width += cell.width
-                }
-            }
-            height += row[0].height
-        }
+        // const isFrozenColCount = this.frozenColCount > 0
+        // if (!isFrozenColCount) return
+        // const sheetData = this.sheetData
+        // let width = 0
+        // let height = 0
+        // for(let i = 0; i < this.frozenRowCount; i++) {
+        //     const row = sheetData[i]
+        //     for(let j = 0; j < this.frozenColCount; j++) {
+        //         let cell = row[j]
+        //         if(i === 0 && j === 0) {
+        //             sheetData[i][j].value = ''
+        //             sheetData[i][j].rowspan = this.frozenRowCount
+        //             sheetData[i][j].colspan = this.frozenColCount
+        //         } else {
+        //             sheetData[i][j] = {
+        //                 pointer: [0, 0]
+        //             }
+        //         }
+        //         if(j === 0) {
+        //             width += cell.width
+        //         }
+        //     }
+        //     height += row[0].height
+        // }
 
         let cell:any
         if(this.sheetData.length) {
             if(this.sheetData[0].length) {
                 cell = this.sheetData[0][0]
-                cell.width = width
-                cell.height = height
             }
         }
         if(!cell) return
@@ -381,7 +382,6 @@ class Sheet {
         
         // 记录当前单元格是否已经被绘制，有单元格合并的情况需要跳过
         const pointCellMap = {}
-
         startRowIndex = startRowIndex + this.frozenRowCount
         endRowIndex = endRowIndex + this.frozenRowCount
         startColIndex = startColIndex + this.frozenColCount
@@ -393,9 +393,8 @@ class Sheet {
 
         // 绘制table部分
         this.pointBody(pointCellMap, startRowIndex, endRowIndex, startColIndex, endColIndex)
-
         // 冻结列头
-        this.pointFrozenCol(startRowIndex - this.frozenRowCount, endRowIndex, pointCellMap)
+        this.pointFrozenCol(startRowIndex, endRowIndex, pointCellMap)
 
         // 冻结行头
         this.pointFrozenRow(startColIndex - this.frozenColCount, endColIndex, pointCellMap)

@@ -11,20 +11,20 @@ export function setSheetRowColCount(
     const dataRowLen = data.length
     const dataColLen = dataRowLen ? data[0].length : 0
     // 当整个sheet的行比当前数据的行多时 可以直接插入
-    if(dataRowLen > rowCount) {
+    if (dataRowLen > rowCount) {
         data.splice(rowCount)
     }
     // 列同上
-    if(dataColLen > colCount) {
+    if (dataColLen > colCount) {
         data.forEach(row => {
             row.splice(colCount)
         })
-    // 补全列
-    }else if(dataRowLen) {
-        for(let i = 0; i < dataRowLen; i++) {
-            for(let j = dataColLen; j < colCount; j++) {
+        // 补全列
+    } else if (dataRowLen) {
+        for (let i = 0; i < dataRowLen; i++) {
+            for (let j = dataColLen; j < colCount; j++) {
                 // 取前一个cell如果没有前一个从 -1个开始
-                const preCell = data[i][j-1] || {
+                const preCell = data[i][j - 1] || {
                     height: cellHeight,
                     width: cellWidth,
                     x: -cellWidth,
@@ -41,14 +41,14 @@ export function setSheetRowColCount(
     }
     let startRow = 0
     let startCol = 0
-    if(data.length) {
+    if (data.length) {
         startRow = dataRowLen
     }
     // 如果当前sheet没有数据 先创建第一行数据 方便后面遍历时向上取数
-    if(startRow === 0) {
+    if (startRow === 0) {
         data = []
         const firstRow = []
-        for(let j = 0; j < colCount; j++) {
+        for (let j = 0; j < colCount; j++) {
             firstRow.push({
                 height: cellHeight,
                 width: cellWidth,
@@ -59,12 +59,12 @@ export function setSheetRowColCount(
         data.push(firstRow)
     }
     let startIndex = startRow === 0 ? 1 : startRow
-    for(let i = startIndex; i < rowCount; i++) {
+    for (let i = startIndex; i < rowCount; i++) {
         const row = []
-        for(let j = startCol; j < colCount; j++) {
+        for (let j = startCol; j < colCount; j++) {
             let upCell = data[i - 1][j]
-            let preCell:any
-            if(j === 0) {
+            let preCell: any
+            if (j === 0) {
                 preCell = {
                     height: cellHeight,
                     width: upCell.width,
@@ -72,7 +72,7 @@ export function setSheetRowColCount(
                     y: i * cellHeight - cellHeight + yOffset
                 }
             } else {
-                preCell = row[j-1]
+                preCell = row[j - 1]
             }
             row.push({
                 width: upCell.width,
@@ -97,12 +97,12 @@ export function insertTableDataToSheet(row: number, col: number, tableData: any[
     let rowLen = tableData.length
     let colLen = tableData.length ? tableData[0].length : 0
     // 注意这里需要检测是否覆盖已有数据和边界问题 ，如果该区域有数据存在给出提示 做调整 111
-    for(let i = 0; i < rowLen; i++) {
+    for (let i = 0; i < rowLen; i++) {
         const r = tableData[i]
-        for(let j = 0; j < r.length; j++) {
-            let cell = sheetData[row+i][col+j]
+        for (let j = 0; j < r.length; j++) {
+            let cell = sheetData[row + i][col + j]
             setCellMerge(i, j, r[j], tableData)
-            sheetData[row+i][col+j] = r[j] ? Object.assign(cell, r[j]) : r[j]
+            sheetData[row + i][col + j] = r[j] ? Object.assign(cell, r[j]) : r[j]
         }
     }
 
@@ -117,7 +117,7 @@ export function insertTableDataToSheet(row: number, col: number, tableData: any[
  * @param data 
  */
 export function setCellMerge(row: number, col: number, cell: any, data: any[]) {
-    if(!cell || !cell.rowspan || !cell.colspan) return false;
+    if (!cell || !cell.rowspan || !cell.colspan) return false;
     let endRow = row + cell.rowspan
     let endCol = col + cell.colspan
     if (cell.rowspan > 1 || cell.colspan > 1) {
@@ -126,8 +126,8 @@ export function setCellMerge(row: number, col: number, cell: any, data: any[]) {
         let width = 0
         for (let i = row; i < endRow; i++) {
             height += data[i][col].height
-            for(let j = col; j < endCol; j++) {
-                if(i === row) {
+            for (let j = col; j < endCol; j++) {
+                if (i === row) {
                     width += data[i][j].width
                 }
                 data[i][j] = {
@@ -138,5 +138,32 @@ export function setCellMerge(row: number, col: number, cell: any, data: any[]) {
         leftTopCell.height = height;
         leftTopCell.width = width;
         data[row][col] = leftTopCell
+    }
+}
+
+export function setLeftTopByFrozenData(sheetData: any, frozenRowCount: number, frozenColCount: number) {
+    let width = 0
+    let height = 0
+    for (let i = 0; i < frozenRowCount; i++) {
+        const row = sheetData[i]
+        for (let j = 0; j < frozenColCount; j++) {
+            let cell = row[j]
+            if (i === 0 && j === 0) {
+                sheetData[i][j].value = ''
+                sheetData[i][j].rowspan = frozenRowCount
+                sheetData[i][j].colspan = frozenColCount
+            }
+            sheetData[i][j].pointer = [0, 0]
+            if (i === 0) {
+                width += cell.width
+            }
+        }
+        height += row[0].height
+    }
+    if (sheetData.length) {
+        if (sheetData[0].length) {
+            sheetData[0][0].width = width
+            sheetData[0][0].height = height
+        }
     }
 }

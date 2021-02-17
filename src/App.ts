@@ -26,7 +26,7 @@ const mG = new MonkeyGrid({
 	order: true,
 	headerOrder: true,
 	frozenRowCount: 1,
-	frozenColCount: 1
+	frozenColCount: 2
 })
 const sheet = mG.addSheet('sheet1', 40, 12)
 sheet.addTable('table1', 0, 0, data)

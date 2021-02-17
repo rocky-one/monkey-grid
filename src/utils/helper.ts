@@ -11,8 +11,8 @@ export function initData(data = [], xOffset = 0, yOffset = 0, rowHeight = 24, co
         let x = xOffset
         for (let j = 0; j < row.length; j++) {
             const cell = row[j]
-            cell.width = colWidth
-            cell.height = rowHeight
+            cell.width = cell.width || colWidth
+            cell.height = cell.height || rowHeight
             cell.y = y
             cell.x = x
             x += colWidth
