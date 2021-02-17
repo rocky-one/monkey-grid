@@ -2,7 +2,7 @@ import MonkeyGrid from './core/MonkeyGrid';
 // 1. 链表
 // 2. 时间切片
 const data = [];
-for(let i = 0;i<60;i++){
+for(let i = 0;i<40;i++){
 	let row = []
 	for(let j = 0; j<12;j++){
 		row.push({
@@ -25,9 +25,10 @@ const mG = new MonkeyGrid({
 	// data: data,
 	order: true,
 	headerOrder: true,
-	frozenRowCount: 1
+	frozenRowCount: 1,
+	frozenColCount: 1
 })
-const sheet = mG.addSheet('sheet1', 60, 12)
+const sheet = mG.addSheet('sheet1', 40, 12)
 sheet.addTable('table1', 0, 0, data)
 sheet.point()
 // const box = document.getElementById('app')

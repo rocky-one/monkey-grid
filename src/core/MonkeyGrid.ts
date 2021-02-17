@@ -5,7 +5,7 @@ import ScrollBar from '../scrollBar/ScrollBar'
 import Sheet from './Sheet'
 import { mouseEvent } from '../event/mouseEvent'
 import { getPixelRatio, getObjectAttrDefault, calcStartRowIndex, calcStartColIndex } from '../utils/helper'
-import { FOOTER_HEIGHT, RIGHT_SCROLL_WIDTH, LEFT_ORDER_WIDTH, HEADER_ORDER_WIDTH } from './const'
+// import { FOOTER_HEIGHT, RIGHT_SCROLL_WIDTH, LEFT_ORDER_WIDTH, HEADER_ORDER_WIDTH } from './const'
 import '../style/app.less'
 
 /**
@@ -18,15 +18,7 @@ class MonkeyGrid {
         this.optContainer = options.container
         this.width = options.width || options.container.offsetWidth
         this.height = options.height || options.container.offsetHeight
-        // 有序号时的偏移量
-        this.xOffset = this.options.order ? LEFT_ORDER_WIDTH : 0  
-        this.yOffset = this.options.headerOrder ? HEADER_ORDER_WIDTH : 0
-        // 计算可视区域宽高
-        this.viewWidth = this.width - RIGHT_SCROLL_WIDTH - this.xOffset
-        this.viewHeight = this.height - FOOTER_HEIGHT - this.yOffset
-        
         this.layout = layout(this.optContainer, this.width, this.height)
-
         this.init()
         this.createSheetTabs()
         
@@ -35,16 +27,12 @@ class MonkeyGrid {
     optContainer: HTMLElement
     width: number
     height: number
-    viewWidth: number
-    viewHeight: number
     sheets: any[] = []
     // canvas: HTMLCanvasElement
     canvasContext: any
     scrollBar: ScrollBar = null
     layout: any
     hooks: Object = {}
-    xOffset: number = 0
-    yOffset: number = 0
     ratio: number = 1
     public addSheet = (name: string, rowCount: number, colCount: number) => {
         const sheet = new Sheet({
@@ -54,12 +42,10 @@ class MonkeyGrid {
             layout: this.layout,
             canvas: this.layout.canvas,
             canvasContext: this.canvasContext,
-            clientHeight: this.viewHeight,
-            clientWidth: this.viewWidth,
+            height: this.height,
+            width: this.width,
             order: getObjectAttrDefault(this.options, 'order', true),
             headerOrder: getObjectAttrDefault(this.options, 'headerOrder', true),
-            xOffset: this.xOffset,
-            yOffset: this.yOffset,
             ratio: this.ratio,
             frozenRowCount: this.options.frozenRowCount,
             frozenColCount: this.options.frozenColCount

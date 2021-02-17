@@ -7,8 +7,8 @@ export interface SheetOptions {
     layout: any
     canvas: HTMLCanvasElement
     canvasContext: any
-    clientHeight: number
-    clientWidth: number
+    height: number
+    width: number
     order?: boolean
     headerOrder?: boolean
     xOffset?: number
