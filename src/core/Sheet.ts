@@ -156,8 +156,6 @@ class Sheet {
         const isFrozenRowCount = this.frozenRowCount > 0
         if (!isFrozenRowCount) return
         const sheetData = this.sheetData
-        const horizontal = this.scrollBar.getHorizontal()
-        const vertical = this.scrollBar.getVertical()
         const canvasContext = this.options.canvasContext
         canvasContext.beginPath()
         // 绘制冻结行头
@@ -174,24 +172,8 @@ class Sheet {
                     pointCellMap[`${cell.pointer[0]}${cell.pointer[1]}`] = true
                     cell = sheetData[cell.pointer[0]][cell.pointer[1]]
                 }
-                let x = cell.x
-                let y = cell.y
-                if (isFrozenRowCount) {
-                    x -= horizontal.scrollLeft
-                } else {
-                    x -= horizontal.scrollLeft
-                    y -= vertical.scrollTop
-                }
-                // 横线 第一行不画线
-                canvasContext.moveTo(x, y)
-                canvasContext.lineTo(x + cell.width, y)
-                // 竖线 第一列不画
-                canvasContext.moveTo(x, y)
-                canvasContext.lineTo(x, y + cell.height)
-                // 背景颜色
-                this.paintCellBgColor(x, y, cell.width, cell.height, cell.backgroundColor || '#E1FFFF')
-
-                this.pointCell(cell, -1, cell.y + (cell.height / 2) + (this.font / 2))
+                cell.backgroundColor = cell.backgroundColor || '#E1FFFF'
+                this.pointCell(cell, undefined, cell.y)
             }
         }
         canvasContext.strokeStyle = "#ccc"
@@ -220,22 +202,12 @@ class Sheet {
                     cell = sheetData[cell.pointer[0]][cell.pointer[1]]
                 }
                 let x = cell.x
-                let y = cell.y
-                if (isFrozenColCount) {
-                    y -= vertical.scrollTop
-                } else {
+                let y = cell.y - vertical.scrollTop
+                if (!isFrozenColCount) {
                     x -= horizontal.scrollLeft
-                    y -= vertical.scrollTop
                 }
-                // 横线 第一行不画线
-                canvasContext.moveTo(x, y)
-                canvasContext.lineTo(x + cell.width, y)
-                // 竖线 第一列不画
-                canvasContext.moveTo(x, y)
-                canvasContext.lineTo(x, y + cell.height)
-                // 背景颜色
-                this.paintCellBgColor(x, y, cell.width, cell.height, '#E1FFFF')
-                this.pointCell(cell, cell.x + 4, -1)
+                cell.backgroundColor = cell.backgroundColor || '#E1FFFF'
+                this.pointCell(cell, cell.x, y)
             }
         }
         canvasContext.strokeStyle = "#ccc"
@@ -244,8 +216,6 @@ class Sheet {
     }
     private pointBody = (pointCellMap, startRowIndex, endRowIndex, startColIndex, endColIndex) => {
         const sheetData = this.sheetData
-        const horizontal = this.scrollBar.getHorizontal()
-        const vertical = this.scrollBar.getVertical()
         const canvasContext = this.options.canvasContext
         canvasContext.beginPath()
         // 绘制table部分
@@ -262,18 +232,6 @@ class Sheet {
                     pointCellMap[`${cell.pointer[0]}${cell.pointer[1]}`] = true
                     cell = sheetData[cell.pointer[0]][cell.pointer[1]]
                 }
-                let x = cell.x - horizontal.scrollLeft
-                let y = cell.y - vertical.scrollTop
-                // 横线 第一行不画线
-                // if(i !== startRowIndex && !isFrozenRowCount) {
-                canvasContext.moveTo(x, y)
-                canvasContext.lineTo(x + cell.width, y)
-                // }
-                // 竖线 第一列不画
-                // if(j !== startColIndex && !isFrozenRowCount) {
-                canvasContext.moveTo(x, y)
-                canvasContext.lineTo(x, y + cell.height)
-                // }
                 this.pointCell(cell)
             }
         }
@@ -291,20 +249,14 @@ class Sheet {
             const row = sheetData[i]
             if (hasOrder) {
                 const cell = row[0]
-                const y = frozenRow ? cell.y : cell.y - vertical.scrollTop
-                // 横线
-                // if (i !== startRowIndex) {
-                canvasContext.moveTo(0, y)
-                canvasContext.lineTo(0 + LEFT_ORDER_WIDTH, y)
-                // }
-                // 竖线
-                canvasContext.moveTo(LEFT_ORDER_WIDTH, y)
-                canvasContext.lineTo(LEFT_ORDER_WIDTH, y + HEADER_ORDER_WIDTH)
-                // 背景颜色
-                this.paintCellBgColor(0, y, LEFT_ORDER_WIDTH, cell.height, '#AFEEEE')
-                // 字体
-                canvasContext.fillStyle = '#000'
-                canvasContext.fillText(i + 1, 0 + 4, y + (cell.height / 2) + (this.font / 2))
+                let y = frozenRow ? cell.y : cell.y - vertical.scrollTop
+                this.pointCell({
+                    color: '#000',
+                    value: i + 1,
+                    width: LEFT_ORDER_WIDTH,
+                    height: cell.height,
+                    backgroundColor: '#AFEEEE'
+                }, 0, y)
             }
         }
         canvasContext.strokeStyle = "#ccc"
@@ -316,52 +268,19 @@ class Sheet {
      * @param pointCellMap
      */
     private pointLeftTopByFrozen = (pointCellMap) => {
-        // const isFrozenColCount = this.frozenColCount > 0
-        // if (!isFrozenColCount) return
-        // const sheetData = this.sheetData
-        // let width = 0
-        // let height = 0
-        // for(let i = 0; i < this.frozenRowCount; i++) {
-        //     const row = sheetData[i]
-        //     for(let j = 0; j < this.frozenColCount; j++) {
-        //         let cell = row[j]
-        //         if(i === 0 && j === 0) {
-        //             sheetData[i][j].value = ''
-        //             sheetData[i][j].rowspan = this.frozenRowCount
-        //             sheetData[i][j].colspan = this.frozenColCount
-        //         } else {
-        //             sheetData[i][j] = {
-        //                 pointer: [0, 0]
-        //             }
-        //         }
-        //         if(j === 0) {
-        //             width += cell.width
-        //         }
-        //     }
-        //     height += row[0].height
-        // }
-
-        let cell:any
-        if(this.sheetData.length) {
-            if(this.sheetData[0].length) {
+        let cell: any
+        if (this.sheetData.length) {
+            if (this.sheetData[0].length) {
                 cell = this.sheetData[0][0]
             }
         }
-        if(!cell) return
+        if (!cell) return
         pointCellMap['00'] = true
-        let x = cell.x
-        let y = cell.y
+       
         const canvasContext = this.options.canvasContext
         canvasContext.beginPath()
-        // 横线 第一行不画线
-        canvasContext.moveTo(x, y)
-        canvasContext.lineTo(x + cell.width, y)
-        // 竖线 第一列不画
-        canvasContext.moveTo(x, y)
-        canvasContext.lineTo(x, y + cell.height)
-        // 背景颜色
-        this.paintCellBgColor(x, y, cell.width, cell.height, '#E1FFFF')
-
+        cell.backgroundColor = '#E1FFFF'
+        this.pointCell(cell, cell.x, cell.y)
         canvasContext.strokeStyle = "#ccc"
         canvasContext.closePath()
         canvasContext.stroke()
@@ -379,7 +298,7 @@ class Sheet {
         let startColIndex = this.pointRange.startColIndex = calcStartColIndex(horizontal.scrollLeft, sheetData, this.xOffset)
         let endColIndex = this.pointRange.endColIndex = calcEndColIndex(startColIndex, this.clientWidth, sheetData, this.xOffset)
         canvasContext.font = `${this.font}px Arial`
-        
+
         // 记录当前单元格是否已经被绘制，有单元格合并的情况需要跳过
         const pointCellMap = {}
         startRowIndex = startRowIndex + this.frozenRowCount
@@ -407,7 +326,7 @@ class Sheet {
 
         // 绘制左上角冻结区域
         this.pointLeftTopByFrozen(pointCellMap)
-        
+
     }
     // 绘制背景颜色 context: CanvasRenderingContext2D
     private paintCellBgColor = (x: number, y: number, width: number, height: number, fillStyle?: string) => {
@@ -448,15 +367,26 @@ class Sheet {
         })
     }
     private pointCell = (cell: any, x?: number, y?: number) => {
+        const scrollLeft = this.scrollBar.getHorizontal().scrollLeft
+        const scrollTop = this.scrollBar.getVertical().scrollTop
+        const canvasContext = this.options.canvasContext
+        const lineX = x !== undefined ? x : cell.x - scrollLeft
+        const lineY = y !== undefined ? y : cell.y - scrollTop
+       
+        canvasContext.moveTo(lineX, lineY + cell.height)
+        canvasContext.lineTo(lineX + cell.width, lineY + cell.height)
+
+        canvasContext.moveTo(lineX + cell.width, lineY)
+        canvasContext.lineTo(lineX + cell.width, lineY + cell.height)
+        // 单元格背景颜色
+        this.paintCellBgColor(lineX, lineY, cell.width, cell.height, cell.backgroundColor || '#FFFFFF')
+
         if (cell.value) {
-            const scrollLeft = this.scrollBar.getHorizontal().scrollLeft
-            const scrollTop = this.scrollBar.getVertical().scrollTop
-            const canvasContext = this.options.canvasContext
-            let cx = x >= 0 ? x : cell.x - scrollLeft + 4
-            let cy = y >= 0 ? y : cell.y - scrollTop + (cell.height / 2) + (this.font / 2)
+            let fontX = x !== undefined ? x + 4 : cell.x - scrollLeft + 4
+            let fontY = y !== undefined ? y + (cell.height / 2) + (this.font / 2) : cell.y - scrollTop + (cell.height / 2) + (this.font / 2)
             // 字体
             canvasContext.fillStyle = '#000'
-            canvasContext.fillText(cell.value, cx, cy)
+            canvasContext.fillText(cell.value, fontX, fontY)
         }
     }
     public getRowCount() {
