@@ -1,9 +1,9 @@
 import Table from './Table'
 import { SheetOptions, PointRange } from '../interface/SheetInterface'
-import { setSheetRowColCount, insertTableDataToSheet, setLeftTopByFrozenData } from './utils/sheetUtils'
+import { setSheetRowColCount, insertTableDataToSheet, setLeftTopByFrozenData, numToABC } from './utils/sheetUtils'
 import ScrollBar from '../scrollBar/ScrollBar'
 import { calcStartRowIndex, calcEndRowIndex, calcStartColIndex, calcEndColIndex } from '../utils/helper'
-import { FOOTER_HEIGHT, RIGHT_SCROLL_WIDTH, LEFT_ORDER_WIDTH, HEADER_ORDER_WIDTH } from './const'
+import { FOOTER_HEIGHT, RIGHT_SCROLL_WIDTH, LEFT_ORDER_WIDTH, HEADER_ORDER_HEIGHT } from './const'
 class Sheet {
     constructor(options: SheetOptions) {
         this.tables = []
@@ -15,7 +15,7 @@ class Sheet {
         this.frozenColCount = options.frozenColCount || 0
         // 有序号时的偏移量
         this.xOffset = this.options.order ? LEFT_ORDER_WIDTH : 0
-        this.yOffset = this.options.headerOrder ? HEADER_ORDER_WIDTH : 0
+        this.yOffset = this.options.headerOrder ? HEADER_ORDER_HEIGHT : 0
         // 计算可视区域宽高
         this.clientWidth = this.options.width - RIGHT_SCROLL_WIDTH - this.xOffset
         this.clientHeight = this.options.height - FOOTER_HEIGHT - this.yOffset
@@ -240,34 +240,56 @@ class Sheet {
         canvasContext.stroke()
     }
     private pointLeftOrder = (startRowIndex: number, endRowIndex: number, frozenRow?: boolean) => {
-        const sheetData = this.sheetData
         const hasOrder = this.options.order
+        if (!hasOrder) return
+        const sheetData = this.sheetData
         const vertical = this.scrollBar.getVertical()
         const canvasContext = this.options.canvasContext
         canvasContext.beginPath()
         for (let i = startRowIndex; i <= endRowIndex; i++) {
             const row = sheetData[i]
-            if (hasOrder) {
-                const cell = row[0]
-                let y = frozenRow ? cell.y : cell.y - vertical.scrollTop
-                this.pointCell({
-                    color: '#000',
-                    value: i + 1,
-                    width: LEFT_ORDER_WIDTH,
-                    height: cell.height,
-                    backgroundColor: '#AFEEEE'
-                }, 0, y)
-            }
+            const cell = row[0]
+            let y = frozenRow ? cell.y : cell.y - vertical.scrollTop
+            this.pointCell({
+                color: '#000',
+                value: i + 1,
+                width: LEFT_ORDER_WIDTH,
+                height: cell.height,
+                backgroundColor: '#AFEEEE'
+            }, 0, y)
+        }
+        canvasContext.strokeStyle = "#ccc"
+        canvasContext.closePath()
+        canvasContext.stroke()
+    }
+    private pointTopOrder = (startColIndex, endColIndex, pointCellMap) => {
+        const sheetData = this.sheetData
+        const headerOrder = this.options.headerOrder
+        if (!headerOrder) return
+        const scrollLeft = this.scrollBar.getHorizontal().scrollLeft
+        const canvasContext = this.options.canvasContext
+        canvasContext.beginPath()
+        let startX = this.xOffset
+        for (let j = startColIndex; j <= endColIndex; j++) {
+            const cell = sheetData[0][j]
+            let x = cell.x - scrollLeft
+            this.pointCell({
+                color: '#000',
+                value: numToABC(j),
+                width: cell.width,
+                height: HEADER_ORDER_HEIGHT,
+                backgroundColor: '#AFEEEE'
+            }, x, 0)
         }
         canvasContext.strokeStyle = "#ccc"
         canvasContext.closePath()
         canvasContext.stroke()
     }
     /**
-     * 绘制左上角冻结的空白区域
+     * 绘制body区域左上角冻结的空白区域
      * @param pointCellMap
      */
-    private pointLeftTopByFrozen = (pointCellMap) => {
+    private pointLeftTopByFrozenOnBody = (pointCellMap) => {
         let cell: any
         if (this.sheetData.length) {
             if (this.sheetData[0].length) {
@@ -276,7 +298,7 @@ class Sheet {
         }
         if (!cell) return
         pointCellMap['00'] = true
-       
+
         const canvasContext = this.options.canvasContext
         canvasContext.beginPath()
         cell.backgroundColor = '#E1FFFF'
@@ -284,6 +306,27 @@ class Sheet {
         canvasContext.strokeStyle = "#ccc"
         canvasContext.closePath()
         canvasContext.stroke()
+    }
+    /**
+     * 如果有行列标，绘制左上角空白区域
+     */
+    private pointLeftTopByFrozen = () => {
+        if (this.options.order && this.options.headerOrder) {
+            const canvasContext = this.options.canvasContext
+            canvasContext.beginPath()
+            const cell: any = {
+                x: 0,
+                y: 0,
+                width: LEFT_ORDER_WIDTH,
+                height: HEADER_ORDER_HEIGHT,
+                backgroundColor: '#FFFFFF',
+                value: ''
+            }
+            this.pointCell(cell, cell.x, cell.y)
+            canvasContext.strokeStyle = "#ccc"
+            canvasContext.closePath()
+            canvasContext.stroke()
+        }
     }
     /**
      * 绘制整个sheet画布
@@ -318,14 +361,20 @@ class Sheet {
         // 冻结行头
         this.pointFrozenRow(startColIndex - this.frozenColCount, endColIndex, pointCellMap)
 
+        // 头部列标
+        this.pointTopOrder(startColIndex - this.frozenColCount, endColIndex, pointCellMap)
+
         // 绘制左侧序号 放在后面 可以覆盖前面的
         this.pointLeftOrder(startRowIndex, endRowIndex)
 
         // 冻结序号
         this.pointLeftOrder(0, this.frozenRowCount - 1, true)
 
-        // 绘制左上角冻结区域
-        this.pointLeftTopByFrozen(pointCellMap)
+        // 如果有冻结行列，绘制body区域左上角冻结区域
+        this.pointLeftTopByFrozenOnBody(pointCellMap)
+
+        // 如果有行列标，绘制左上角空白区域
+        this.pointLeftTopByFrozen()
 
     }
     // 绘制背景颜色 context: CanvasRenderingContext2D
@@ -372,7 +421,7 @@ class Sheet {
         const canvasContext = this.options.canvasContext
         const lineX = x !== undefined ? x : cell.x - scrollLeft
         const lineY = y !== undefined ? y : cell.y - scrollTop
-       
+
         canvasContext.moveTo(lineX, lineY + cell.height)
         canvasContext.lineTo(lineX + cell.width, lineY + cell.height)
 

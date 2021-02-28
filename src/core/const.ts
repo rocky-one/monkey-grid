@@ -8,4 +8,4 @@ export const RIGHT_SCROLL_WIDTH = 18
 export const LEFT_ORDER_WIDTH = 40
 
 // 头部序号占用高度
-export const HEADER_ORDER_WIDTH = 24
+export const HEADER_ORDER_HEIGHT = 24

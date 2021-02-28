@@ -5,7 +5,7 @@ import ScrollBar from '../scrollBar/ScrollBar'
 import Sheet from './Sheet'
 import { mouseEvent } from '../event/mouseEvent'
 import { getPixelRatio, getObjectAttrDefault, calcStartRowIndex, calcStartColIndex } from '../utils/helper'
-// import { FOOTER_HEIGHT, RIGHT_SCROLL_WIDTH, LEFT_ORDER_WIDTH, HEADER_ORDER_WIDTH } from './const'
+// import { FOOTER_HEIGHT, RIGHT_SCROLL_WIDTH, LEFT_ORDER_WIDTH, HEADER_ORDER_HEIGHT } from './const'
 import '../style/app.less'
 
 /**

@@ -196,19 +196,64 @@ export const ABC_MAP = {
     24: 'Y',
     25: 'Z'
 }
+// A
+// AB BC
 export function getHeaderABC(col: number) {
-    // 整数
-    let integer = Math.floor(col / 26)
-    let sum = integer > 0 ? 0 : -1
-    while (integer >= 26) {
-        integer = Math.floor(col / 26)
-        sum++
-    }
-
+    const base = 25
     // 余数
-    const remainder = col % 26
-    let letter = ''
-    if (integer > 0) {
+    const remainder = col % base
+    // 共计多少个25
+    const integer = Math.floor((col - remainder) / base)
 
+    let sum = integer > 0 ? 0 : -1
+    let str = ''
+    let sign = integer
+    while (sign > base) {
+        let rem = sign % base
+        sign = Math.floor((sign - rem ) / base)
+        sum++
+        str = ABC_MAP[rem]
     }
+
 }
+
+export function numToABC(n:number) {
+    let orda = 'a'.charCodeAt(0)
+    let ordz = 'z'.charCodeAt(0)
+    let len = ordz - orda + 1
+    let s = ''
+   
+    while( n >= 0 ) {
+        s = String.fromCharCode(n % len + orda) + s
+        n = Math.floor(n / len) - 1
+    }
+
+    return s.toUpperCase()
+};
+
+
+function ABCToNum(a) {
+    if(a==null || a.length==0){
+        return NaN;
+    }
+    let str=a.toLowerCase().split("");
+    let num=0;
+    let al = str.length;
+    let getCharNumber = function(charx){
+        return charx.charCodeAt() -96;
+    };
+    let numout = 0;
+    let charnum = 0;
+    for(let i = 0; i < al; i++){
+        charnum = getCharNumber(str[i]);
+        numout += charnum * Math.pow(26, al-i-1);
+    };
+    if(numout==0){
+        return NaN;
+    }
+    return numout-1;
+};
+
+const columeHeader_word = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+const columeHeader_word_index = { 'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7, 'I': 8, 'J': 9, 'K': 10, 'L': 11, 'M': 12, 'N': 13, 'O': 14, 'P': 15, 'Q': 16, 'R': 17, 'S': 18, 'T': 19, 'U': 20, 'V': 21, 'W': 22, 'X': 23, 'Y': 24, 'Z': 25 }
+
