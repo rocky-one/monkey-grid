@@ -64,7 +64,7 @@ export function getPixelRatio(context: any) {
  * @param sheetData 
  * @param rowHeight 
  */
-export function calcStartRowIndex(scrollTop: number, sheetData: any[], yOffset: number): number {
+export function calcStartRowIndex(scrollTop: number, sheetData: any[], yOffset: number, rowsHeight: number[]): number {
     if (scrollTop === 0) return 0
     const sheetLen = sheetData.length
     const top = scrollTop + yOffset
@@ -73,7 +73,8 @@ export function calcStartRowIndex(scrollTop: number, sheetData: any[], yOffset: 
     while (start <= end) {
         let mid = Math.floor(start + (end - start) / 2);
         const cell = sheetData[mid][0]
-        if (cell.y + cell.height >= top && cell.y <= top) {
+        const height = rowsHeight[mid]
+        if (cell.y + height >= top && cell.y <= top) {
             return mid;
         } else if (cell.y < top) {
             start = mid + 1;
@@ -89,10 +90,10 @@ export function calcStartRowIndex(scrollTop: number, sheetData: any[], yOffset: 
  * @param containerHeight 
  * @param sheetData 
  */
-export function calcEndRowIndex(startRow: number, containerHeight: number, sheetData: any[]): number {
+export function calcEndRowIndex(startRow: number, containerHeight: number, sheetData: any[], rowsHeight: number[]): number {
     let height = 0
     for(let i = startRow + 1; i < sheetData.length; i++) {
-        height += sheetData[i][0].height
+        height += rowsHeight[i]
         if(height > containerHeight) {
             return i
         }
@@ -104,17 +105,19 @@ export function calcEndRowIndex(startRow: number, containerHeight: number, sheet
  * @desc 计算可视区域开始的列索引 二分查找
  * @param scrollLeft 
  * @param sheetData 
+ * @param colsWidth 这里需要使用列头的宽计算，如果采用cell.width存在colspan的情况计算不对
  */
-export function calcStartColIndex(scrollLeft: number, sheetData: any[], xOffset: number): number {
+export function calcStartColIndex(scrollLeft: number, sheetData: any[], xOffset: number, colsWidth: number[]): number {
     if (scrollLeft === 0) return 0
     const sheetLen = sheetData[0].length
     const left = scrollLeft + xOffset
     let start = 0
     let end = sheetLen - 1
     while (start <= end) {
-        let mid = Math.floor(start + (end - start) / 2);
+        let mid = Math.floor(start + (end - start) / 2)
         const cell = sheetData[0][mid]
-        if (cell.x + cell.width >= left && cell.x <= left) {
+        const width = colsWidth[mid]
+        if (cell.x + width >= left && cell.x <= left) {
             return mid;
         } else if (cell.x < left) {
             start = mid + 1;
@@ -130,11 +133,11 @@ export function calcStartColIndex(scrollLeft: number, sheetData: any[], xOffset:
  * @param containerWidth 
  * @param sheetData 
  */
-export function calcEndColIndex(startCol: number, containerWidth: number, sheetData: any[], xOffset:number): number {
+export function calcEndColIndex(startCol: number, containerWidth: number, sheetData: any[], colsWidth: number[]): number {
     if(!sheetData[0]) return 0
     let width = 0
     for(let j = startCol + 1; j < sheetData[0].length; j++) {
-        width += sheetData[0][j].width
+        width += colsWidth[j]
         if(width > containerWidth) {
             return j
         }

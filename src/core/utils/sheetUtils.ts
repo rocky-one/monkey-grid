@@ -117,7 +117,7 @@ export function insertTableDataToSheet(row: number, col: number, tableData: any[
  * @param data 
  */
 export function setCellMerge(row: number, col: number, cell: any, data: any[]) {
-    if (!cell || !cell.rowspan || !cell.colspan) return false;
+    if (!cell || !cell.rowspan || !cell.colspan) return false
     let endRow = row + cell.rowspan
     let endCol = col + cell.colspan
     if (cell.rowspan > 1 || cell.colspan > 1) {
@@ -135,8 +135,8 @@ export function setCellMerge(row: number, col: number, cell: any, data: any[]) {
                 }
             }
         }
-        leftTopCell.height = height;
-        leftTopCell.width = width;
+        leftTopCell.height = height
+        leftTopCell.width = width
         data[row][col] = leftTopCell
     }
 }

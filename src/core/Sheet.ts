@@ -3,10 +3,12 @@ import { SheetOptions, PointRange } from '../interface/SheetInterface'
 import { setSheetRowColCount, insertTableDataToSheet, setLeftTopByFrozenData, numToABC } from './utils/sheetUtils'
 import ScrollBar from '../scrollBar/ScrollBar'
 import { calcStartRowIndex, calcEndRowIndex, calcStartColIndex, calcEndColIndex } from '../utils/helper'
-import { FOOTER_HEIGHT, RIGHT_SCROLL_WIDTH, LEFT_ORDER_WIDTH, HEADER_ORDER_HEIGHT } from './const'
+import { ROW_HEIGHT, COL_WIDTH, FOOTER_HEIGHT, RIGHT_SCROLL_WIDTH, LEFT_ORDER_WIDTH, HEADER_ORDER_HEIGHT } from './const'
 class Sheet {
     constructor(options: SheetOptions) {
         this.tables = []
+        // this.rowHeightMap = {}
+        // this.colWidthMap = {}
         this.rowCount = 10
         this.colCount = 4
         this.options = options
@@ -25,6 +27,8 @@ class Sheet {
         this.initScroll()
     }
     tables: any[]
+    rowsHeight: number[] = []
+    colsWidth: number[] = []
     rowCount: number
     colCount: number
     options: SheetOptions
@@ -77,7 +81,17 @@ class Sheet {
         this.sheetData = setSheetRowColCount(this.sheetData, rowCount, colCount, 100, 24, this.xOffset, this.yOffset)
         this.rowCount = rowCount
         this.colCount = colCount
+        this.rowsHeight = new Array(rowCount).fill(ROW_HEIGHT)
+        this.colsWidth = new Array(colCount).fill(COL_WIDTH)
         this.calcScrollWidthHeight()
+    }
+    // 设置行高
+    public setRowsHeight = (rows = []) => {
+        rows.forEach(item => this.rowsHeight[item.row] = item.height)
+    }
+    // 设置列高
+    public setColsWidth = (cols = []) => {
+        cols.forEach(item => this.colsWidth[item.col] = item.width)
     }
     // 计算冻结行高
     private calcFrozenHeight = () => {
@@ -262,21 +276,20 @@ class Sheet {
         canvasContext.closePath()
         canvasContext.stroke()
     }
-    private pointTopOrder = (startColIndex, endColIndex, pointCellMap) => {
+    private pointTopOrder = (startColIndex, endColIndex, frozen?: boolean) => {
         const sheetData = this.sheetData
         const headerOrder = this.options.headerOrder
         if (!headerOrder) return
         const scrollLeft = this.scrollBar.getHorizontal().scrollLeft
         const canvasContext = this.options.canvasContext
         canvasContext.beginPath()
-        let startX = this.xOffset
         for (let j = startColIndex; j <= endColIndex; j++) {
             const cell = sheetData[0][j]
-            let x = cell.x - scrollLeft
+            let x = frozen ? cell.x : cell.x - scrollLeft
             this.pointCell({
                 color: '#000',
                 value: numToABC(j),
-                width: cell.width,
+                width: this.colsWidth[j],
                 height: HEADER_ORDER_HEIGHT,
                 backgroundColor: '#AFEEEE'
             }, x, 0)
@@ -336,12 +349,11 @@ class Sheet {
         const horizontal = this.scrollBar.getHorizontal()
         const vertical = this.scrollBar.getVertical()
         const canvasContext = this.options.canvasContext
-        let startRowIndex = this.pointRange.startRowIndex = calcStartRowIndex(vertical.scrollTop, sheetData, this.yOffset)
-        let endRowIndex = this.pointRange.endRowIndex = calcEndRowIndex(startRowIndex, this.clientHeight, sheetData)
-        let startColIndex = this.pointRange.startColIndex = calcStartColIndex(horizontal.scrollLeft, sheetData, this.xOffset)
-        let endColIndex = this.pointRange.endColIndex = calcEndColIndex(startColIndex, this.clientWidth, sheetData, this.xOffset)
+        let startRowIndex = this.pointRange.startRowIndex = calcStartRowIndex(vertical.scrollTop, sheetData, this.yOffset, this.rowsHeight)
+        let endRowIndex = this.pointRange.endRowIndex = calcEndRowIndex(startRowIndex, this.clientHeight, sheetData, this.rowsHeight)
+        let startColIndex = this.pointRange.startColIndex = calcStartColIndex(horizontal.scrollLeft, sheetData, this.xOffset, this.colsWidth)
+        let endColIndex = this.pointRange.endColIndex = calcEndColIndex(startColIndex, this.clientWidth, sheetData, this.colsWidth)
         canvasContext.font = `${this.font}px Arial`
-
         // 记录当前单元格是否已经被绘制，有单元格合并的情况需要跳过
         const pointCellMap = {}
         startRowIndex = startRowIndex + this.frozenRowCount
@@ -352,7 +364,6 @@ class Sheet {
         if (endRowIndex >= this.getRowCount() - 1) endRowIndex = this.getRowCount() - 1
         if (startColIndex < 0) startColIndex = 0
         if (endColIndex >= this.getColCount()) endColIndex = this.getColCount() - 1
-
         // 绘制table部分
         this.pointBody(pointCellMap, startRowIndex, endRowIndex, startColIndex, endColIndex)
         // 冻结列头
@@ -362,7 +373,10 @@ class Sheet {
         this.pointFrozenRow(startColIndex - this.frozenColCount, endColIndex, pointCellMap)
 
         // 头部列标
-        this.pointTopOrder(startColIndex - this.frozenColCount, endColIndex, pointCellMap)
+        this.pointTopOrder(startColIndex, endColIndex)
+        
+        // 冻结头部列标
+        this.pointTopOrder(0, this.frozenColCount - 1, true)
 
         // 绘制左侧序号 放在后面 可以覆盖前面的
         this.pointLeftOrder(startRowIndex, endRowIndex)
