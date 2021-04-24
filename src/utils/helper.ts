@@ -59,7 +59,8 @@ export function getPixelRatio(context: any) {
 }
 
 /**
- * @desc 计算可是区域开始的行索引
+ * @desc 计算可是区域渲染开始的行索引，因为数据是根据坐标排序所以这里采用二分查找算法
+ * 根据最小行高计算，如果当前单元格正好是合并单元格直接绘制，如果当前单元格不是第一个带合并信息的单元格需要根据指针找到第一个
  * @param scrollTop 
  * @param sheetData 
  * @param rowHeight 

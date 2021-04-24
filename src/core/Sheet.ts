@@ -237,11 +237,12 @@ class Sheet {
             const row = sheetData[i]
             for (let j = startColIndex; j <= endColIndex; j++) {
                 let cell = row[j]
-                // 当前单元格已经被绘制过就跳出
+                // 当前单元格已经被绘制过就跳出，合并单元格的情况，因为后面的数据和前面的一样
                 if (!cell || pointCellMap[`${i}${j}`]) continue
                 if (cell.pointer && pointCellMap[`${cell.pointer[0]}${cell.pointer[1]}`]) continue
 
-                // 重新定向到指针单元格
+                // 如果当前开始的位置的单元格是合并单元格，且不是第一个位置，重新定向到指针单元格，也就是第一个带合并信息的单元格。
+                // 因为第一个带合并信息的单元格的合并信息和坐标是准确的
                 if (cell.pointer) {
                     pointCellMap[`${cell.pointer[0]}${cell.pointer[1]}`] = true
                     cell = sheetData[cell.pointer[0]][cell.pointer[1]]
