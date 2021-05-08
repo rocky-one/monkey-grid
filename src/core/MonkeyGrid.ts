@@ -1,5 +1,5 @@
-import  { layout } from './layout'
-import  * as domCore from '../utils/dom'
+import { layout } from './layout'
+import * as domCore from '../utils/dom'
 import { OptionsInterface } from '../interface/BaseInterface'
 import ScrollBar from '../scrollBar/ScrollBar'
 import Sheet from './Sheet'
@@ -13,7 +13,7 @@ import '../style/app.less'
  * order 是否有序号 true | false
  */
 class MonkeyGrid {
-    constructor(options: OptionsInterface){
+    constructor(options: OptionsInterface) {
         this.options = options
         this.optContainer = options.container
         this.width = options.width || options.container.offsetWidth
@@ -21,7 +21,7 @@ class MonkeyGrid {
         this.layout = layout(this.optContainer, this.width, this.height)
         this.init()
         this.createSheetTabs()
-        
+
     }
     options: OptionsInterface
     optContainer: HTMLElement
@@ -77,7 +77,9 @@ class MonkeyGrid {
         canvasContext.scale(this.ratio, this.ratio)
         // canvasContext.translate(ratio, ratio)
         this.canvasContext = canvasContext
-        mouseEvent(this.layout.canvas, () => {})
+        mouseEvent(this.layout.canvas, (event: Event) => {
+            console.log(event, 33);
+        })
     }
     // 创建底部SheetTab
     private createSheetTabs = () => {

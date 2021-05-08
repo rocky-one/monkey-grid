@@ -53,6 +53,7 @@ class Sheet {
     frozenColCount: number = 0
     xOffset: number = 0
     yOffset: number = 0
+    selectedRange: number []
     public addTable = (name: string, row: number, col: number, dataSource: any[]) => {
         const table = new Table({
             name,
@@ -342,6 +343,13 @@ class Sheet {
             canvasContext.stroke()
         }
     }
+    private pointSelectedRange = () => {
+        this.selectedRange = [3, 2, 4, 3]
+        if(this.selectedRange.length) {
+            const canvasContext = this.options.canvasContext
+
+        }
+    }
     /**
      * 绘制整个sheet画布
      */
@@ -390,6 +398,9 @@ class Sheet {
 
         // 如果有行列标，绘制左上角空白区域
         this.pointLeftTopByFrozen()
+        
+        // 绘制选中区域
+        this.pointSelectedRange()
 
     }
     // 绘制背景颜色 context: CanvasRenderingContext2D
