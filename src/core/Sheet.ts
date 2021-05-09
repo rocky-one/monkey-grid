@@ -53,7 +53,7 @@ class Sheet {
     frozenColCount: number = 0
     xOffset: number = 0
     yOffset: number = 0
-    selectedRange: number []
+    selectedRange: number[] = []
     public addTable = (name: string, row: number, col: number, dataSource: any[]) => {
         const table = new Table({
             name,
@@ -74,6 +74,15 @@ class Sheet {
     }
     public getSheetData = () => {
         return this.sheetData
+    }
+    public getCellRange = (x: number, y: number, xx: number, yy: number) => {
+        const cells = []
+        for (let i = x; i <= xx; i++) {
+            for (let j = y; j <= yy; j++) {
+                cells.push({ ...this.sheetData[i][j] })
+            }
+        }
+        return cells
     }
     public setSheetName = (name: string) => {
         this.sheetName = name
@@ -344,10 +353,90 @@ class Sheet {
         }
     }
     private pointSelectedRange = () => {
-        this.selectedRange = [3, 2, 4, 3]
-        if(this.selectedRange.length) {
+        if (this.selectedRange.length) {
+            const selected: any = {
+                x: null,
+                y: null,
+                width: 0,
+                height: 0,
+                fristCell: null
+            }
+            for (let i = this.selectedRange[0]; i <= this.selectedRange[2]; i++) {
+                if (i < this.pointRange.startRowIndex || i > this.pointRange.endRowIndex) break
+
+                for (let j = this.selectedRange[1]; j <= this.selectedRange[3]; j++) {
+                    if (j < this.pointRange.startColIndex || j > this.pointRange.endColIndex) break
+
+                    if(selected.fristCell === null) {
+                        selected.fristCell = this.getCellRange(i, j, i, j)[0]
+                    }
+                    // 累加宽，只需要第一行的即可
+                    if (i === this.selectedRange[0]) {
+                        const cell = this.getCellRange(i, j, i, j)[0]
+                        if (cell) {
+                            selected.width += cell.width
+                            if (selected.x === null) {
+                                selected.x = cell.x
+                            }
+                            if (selected.y === null) {
+                                selected.y = cell.y
+                            }
+                        }
+                    }
+                    // 累加高，只需要第一列
+                    if (j === this.selectedRange[1]) {
+                        const cell = this.getCellRange(i, j, i, j)[0]
+                        if (cell) {
+                            selected.height += cell.height
+                        }
+                    }
+                }
+            }
             const canvasContext = this.options.canvasContext
 
+            // 单元格背景颜色
+            // this.paintCellBgColor(selected.x + 1, selected.y + 1, selected.width - 2, selected.height - 2, null, 'rgba(0, 0, 0, 0.3)')
+            // 第一个单元格背景颜色
+            this.paintCellBgColor(
+                selected.x + selected.fristCell.width,
+                selected.fristCell.y,
+                selected.width - selected.fristCell.width,
+                selected.fristCell.height,
+                null,
+                'rgba(0, 0, 0, 0.2)'
+            )
+            this.paintCellBgColor(
+                selected.x,
+                selected.fristCell.y + selected.fristCell.height,
+                selected.width,
+                selected.fristCell.height,
+                null,
+                'rgba(0, 0, 0, 0.2)'
+            )
+            // 绘制线段
+            canvasContext.beginPath()
+            canvasContext.lineWidth = 2;
+            canvasContext.strokeStyle = '#227346';
+            canvasContext.moveTo(selected.x - 1, selected.y)
+            canvasContext.lineTo(selected.x + selected.width + 2, selected.y)
+
+            canvasContext.moveTo(selected.x - 1, selected.y + selected.height + 1)
+            canvasContext.lineTo(selected.x + selected.width - 3, selected.y + selected.height + 1)
+
+            canvasContext.moveTo(selected.x, selected.y)
+            canvasContext.lineTo(selected.x, selected.y + selected.height)
+            
+            canvasContext.moveTo(selected.x + selected.width + 1, selected.y)
+            canvasContext.lineTo(selected.x + selected.width + 1, selected.y + selected.height - 3)
+
+            canvasContext.stroke()
+
+            canvasContext.fillStyle = '#227346'
+            canvasContext.fillRect(selected.x + selected.width - 2, selected.y + selected.height - 2, 5, 5)
+            canvasContext.fill()
+        
+            canvasContext.closePath()
+            
         }
     }
     /**
@@ -358,10 +447,10 @@ class Sheet {
         const horizontal = this.scrollBar.getHorizontal()
         const vertical = this.scrollBar.getVertical()
         const canvasContext = this.options.canvasContext
-        let startRowIndex = this.pointRange.startRowIndex = calcStartRowIndex(vertical.scrollTop, sheetData, this.yOffset, this.rowsHeight)
-        let endRowIndex = this.pointRange.endRowIndex = calcEndRowIndex(startRowIndex, this.clientHeight, sheetData, this.rowsHeight)
-        let startColIndex = this.pointRange.startColIndex = calcStartColIndex(horizontal.scrollLeft, sheetData, this.xOffset, this.colsWidth)
-        let endColIndex = this.pointRange.endColIndex = calcEndColIndex(startColIndex, this.clientWidth, sheetData, this.colsWidth)
+        let startRowIndex = calcStartRowIndex(vertical.scrollTop, sheetData, this.yOffset, this.rowsHeight)
+        let endRowIndex = calcEndRowIndex(startRowIndex, this.clientHeight, sheetData, this.rowsHeight)
+        let startColIndex = calcStartColIndex(horizontal.scrollLeft, sheetData, this.xOffset, this.colsWidth)
+        let endColIndex = calcEndColIndex(startColIndex, this.clientWidth, sheetData, this.colsWidth)
         canvasContext.font = `${this.font}px Arial`
         // 记录当前单元格是否已经被绘制，有单元格合并的情况需要跳过
         const pointCellMap = {}
@@ -373,8 +462,14 @@ class Sheet {
         if (endRowIndex >= this.getRowCount() - 1) endRowIndex = this.getRowCount() - 1
         if (startColIndex < 0) startColIndex = 0
         if (endColIndex >= this.getColCount()) endColIndex = this.getColCount() - 1
+        this.pointRange.startRowIndex = startRowIndex
+        this.pointRange.endRowIndex = endRowIndex
+        this.pointRange.startColIndex = startColIndex
+        this.pointRange.endColIndex = endColIndex
+
         // 绘制table部分
         this.pointBody(pointCellMap, startRowIndex, endRowIndex, startColIndex, endColIndex)
+
         // 冻结列头
         this.pointFrozenCol(startRowIndex, endRowIndex, pointCellMap)
 
@@ -383,7 +478,7 @@ class Sheet {
 
         // 头部列标
         this.pointTopOrder(startColIndex, endColIndex)
-        
+
         // 冻结头部列标
         this.pointTopOrder(0, this.frozenColCount - 1, true)
 
@@ -398,15 +493,15 @@ class Sheet {
 
         // 如果有行列标，绘制左上角空白区域
         this.pointLeftTopByFrozen()
-        
+
         // 绘制选中区域
         this.pointSelectedRange()
 
     }
     // 绘制背景颜色 context: CanvasRenderingContext2D
-    private paintCellBgColor = (x: number, y: number, width: number, height: number, fillStyle?: string) => {
+    private paintCellBgColor = (x: number, y: number, width: number, height: number, fillStyle: string, customStyle?: string) => {
         const canvasContext = this.options.canvasContext
-        canvasContext.fillStyle = fillStyle || '#fff'
+        canvasContext.fillStyle = customStyle || fillStyle
         canvasContext.fillRect(x, y, width, height)
         canvasContext.fill()
     }
@@ -447,12 +542,14 @@ class Sheet {
         const canvasContext = this.options.canvasContext
         const lineX = x !== undefined ? x : cell.x - scrollLeft
         const lineY = y !== undefined ? y : cell.y - scrollTop
+        
+        canvasContext.lineWidth = 1;
+        canvasContext.strokeStyle = '#227346';
+        canvasContext.moveTo(lineX + 0.5, lineY + cell.height + 0.5)
+        canvasContext.lineTo(lineX + cell.width + 0.5, lineY + cell.height + 0.5)
 
-        canvasContext.moveTo(lineX, lineY + cell.height)
-        canvasContext.lineTo(lineX + cell.width, lineY + cell.height)
-
-        canvasContext.moveTo(lineX + cell.width, lineY)
-        canvasContext.lineTo(lineX + cell.width, lineY + cell.height)
+        canvasContext.moveTo(lineX + cell.width + 0.5, lineY + 0.5)
+        canvasContext.lineTo(lineX + cell.width + 0.5, lineY + cell.height + 0.5)
         // 单元格背景颜色
         this.paintCellBgColor(lineX, lineY, cell.width, cell.height, cell.backgroundColor || '#FFFFFF')
 

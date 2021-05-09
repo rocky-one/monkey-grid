@@ -3,7 +3,7 @@ import * as domCore from '../utils/dom'
 import { OptionsInterface } from '../interface/BaseInterface'
 import ScrollBar from '../scrollBar/ScrollBar'
 import Sheet from './Sheet'
-import { mouseEvent } from '../event/mouseEvent'
+import { mouseDown, mouseEvent } from '../event/mouseEvent'
 import { getPixelRatio, getObjectAttrDefault, calcStartRowIndex, calcStartColIndex } from '../utils/helper'
 // import { FOOTER_HEIGHT, RIGHT_SCROLL_WIDTH, LEFT_ORDER_WIDTH, HEADER_ORDER_HEIGHT } from './const'
 import '../style/app.less'
@@ -77,7 +77,10 @@ class MonkeyGrid {
         canvasContext.scale(this.ratio, this.ratio)
         // canvasContext.translate(ratio, ratio)
         this.canvasContext = canvasContext
-        mouseEvent(this.layout.canvas, (event: Event) => {
+        mouseDown(this.layout.canvas, (event: Event) => {
+            // this.selectedRange = [3, 2, 4, 3]
+            this.sheets[0].selectedRange = [3, 2, 4, 3];
+            this.sheets[0].point()
             console.log(event, 33);
         })
     }
