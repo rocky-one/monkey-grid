@@ -93,7 +93,7 @@ export function setSheetRowColCount(
  * @param tableData 
  * @param sheetData 
  */
-export function insertTableDataToSheet(row: number, col: number, tableData: any[], sheetData: any[]) {
+export function insertTableDataToSheet(row: number, col: number, tableData: any[], sheetData: any[], mergeCells: any) {
     let rowLen = tableData.length
     let colLen = tableData.length ? tableData[0].length : 0
     // 注意这里需要检测是否覆盖已有数据和边界问题 ，如果该区域有数据存在给出提示 做调整 111
@@ -101,7 +101,7 @@ export function insertTableDataToSheet(row: number, col: number, tableData: any[
         const r = tableData[i]
         for (let j = 0; j < r.length; j++) {
             let cell = sheetData[row + i][col + j]
-            setCellMerge(i, j, r[j], tableData)
+            setWidthHeightByMergeCells(i, j, r[j], tableData, mergeCells)
             sheetData[row + i][col + j] = r[j] ? Object.assign(cell, r[j]) : r[j]
         }
     }
@@ -116,30 +116,55 @@ export function insertTableDataToSheet(row: number, col: number, tableData: any[
  * @param cell 
  * @param data 
  */
-export function setCellMerge(row: number, col: number, cell: any, data: any[]) {
-    if (!cell || !cell.rowspan || !cell.colspan) return false
-    let endRow = row + cell.rowspan
-    let endCol = col + cell.colspan
-    if (cell.rowspan > 1 || cell.colspan > 1) {
-        const leftTopCell = data[row][col]
-        let height = 0
-        let width = 0
-        for (let i = row; i < endRow; i++) {
-            height += data[i][col].height
-            for (let j = col; j < endCol; j++) {
-                if (i === row) {
-                    width += data[i][j].width
-                }
-                data[i][j] = {
-                    pointer: [row, col]
-                }
+export function setWidthHeightByMergeCells(row: number, col: number, cell: any, data: any[], mergeCells: any) {
+    
+    if (!cell || cell.pointer) return false
+    const mergeCell = mergeCells[`${row}${col}`]
+    if(!mergeCell) return false
+    let endRow = row + mergeCell[0] + 1
+    let endCol = col + mergeCell[1] + 1
+    const leftTopCell = data[row][col]
+    let height = 0
+    let width = 0
+    for (let i = row; i < endRow; i++) {
+        height += data[i][col].height
+        for (let j = col; j < endCol; j++) {
+            if (i === row) {
+                width += data[i][j].width
+            }
+            data[i][j] = {
+                pointer: [row, col]
             }
         }
-        leftTopCell.height = height
-        leftTopCell.width = width
-        data[row][col] = leftTopCell
     }
+    leftTopCell.height = height
+    leftTopCell.width = width
+    data[row][col] = leftTopCell
+
+    // if (!cell || !cell.rowspan || !cell.colspan) return false
+    // let endRow = row + cell.rowspan
+    // let endCol = col + cell.colspan
+    // if (cell.rowspan > 1 || cell.colspan > 1) {
+    //     const leftTopCell = data[row][col]
+    //     let height = 0
+    //     let width = 0
+    //     for (let i = row; i < endRow; i++) {
+    //         height += data[i][col].height
+    //         for (let j = col; j < endCol; j++) {
+    //             if (i === row) {
+    //                 width += data[i][j].width
+    //             }
+    //             data[i][j] = {
+    //                 pointer: [row, col]
+    //             }
+    //         }
+    //     }
+    //     leftTopCell.height = height
+    //     leftTopCell.width = width
+    //     data[row][col] = leftTopCell
+    // }
 }
+
 
 export function setLeftTopByFrozenData(sheetData: any, frozenRowCount: number, frozenColCount: number) {
     let width = 0

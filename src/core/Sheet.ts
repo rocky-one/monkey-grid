@@ -7,12 +7,11 @@ import { ROW_HEIGHT, COL_WIDTH, FOOTER_HEIGHT, RIGHT_SCROLL_WIDTH, LEFT_ORDER_WI
 class Sheet {
     constructor(options: SheetOptions) {
         this.tables = []
-        // this.rowHeightMap = {}
-        // this.colWidthMap = {}
-        this.rowCount = 10
-        this.colCount = 4
+        this.rowCount = 100
+        this.colCount = 10
         this.options = options
         this.sheetData = []
+        this.mergeCells = {}
         this.frozenRowCount = options.frozenRowCount || 0
         this.frozenColCount = options.frozenColCount || 0
         // 有序号时的偏移量
@@ -33,6 +32,7 @@ class Sheet {
     colCount: number
     options: SheetOptions
     sheetData: any[]
+    mergeCells: any
     font: number = 12
     pointStartRow: number = 0
     pointEndRow: number = 0
@@ -64,7 +64,7 @@ class Sheet {
             yOffset: this.yOffset
         })
         this.tables.push(table)
-        this.sheetData = insertTableDataToSheet(row, col, table.getData(), this.sheetData)
+        this.sheetData = insertTableDataToSheet(row, col, table.getData(), this.sheetData, this.mergeCells)
         setLeftTopByFrozenData(this.sheetData, this.frozenRowCount, this.frozenColCount)
         return table
     }
@@ -94,6 +94,12 @@ class Sheet {
         this.rowsHeight = new Array(rowCount).fill(ROW_HEIGHT)
         this.colsWidth = new Array(colCount).fill(COL_WIDTH)
         this.calcScrollWidthHeight()
+    }
+    public setMergeCells = (row: number, col: number, endRow: number, endCol: number) => {
+        this.mergeCells[`${row}${col}`] = [endRow - row, endCol - col]
+    }
+    public removeMergeCells = () => {
+        
     }
     // 设置行高
     public setRowsHeight = (rows = []) => {
