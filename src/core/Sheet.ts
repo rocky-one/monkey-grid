@@ -99,7 +99,7 @@ class Sheet {
         this.mergeCells[`${row}${col}`] = [endRow - row, endCol - col]
     }
     public removeMergeCells = () => {
-        
+
     }
     // 设置行高
     public setRowsHeight = (rows = []) => {
@@ -472,10 +472,8 @@ class Sheet {
         this.pointRange.endRowIndex = endRowIndex
         this.pointRange.startColIndex = startColIndex
         this.pointRange.endColIndex = endColIndex
-
         // 绘制table部分
         this.pointBody(pointCellMap, startRowIndex, endRowIndex, startColIndex, endColIndex)
-
         // 冻结列头
         this.pointFrozenCol(startRowIndex, endRowIndex, pointCellMap)
 
@@ -531,6 +529,7 @@ class Sheet {
             const canvasContext = this.options.canvasContext
             this.options.canvas.width = this.options.canvas.width
             canvasContext.scale(this.options.ratio, this.options.ratio)
+            // canvasContext.clearRect(0,0,this.options.canvas.width,this.options.canvas.height);
             this.point()
         })
     }
@@ -539,6 +538,7 @@ class Sheet {
             const canvasContext = this.options.canvasContext
             this.options.canvas.width = this.options.canvas.width
             canvasContext.scale(this.options.ratio, this.options.ratio)
+            // canvasContext.clearRect(0,0,this.options.canvas.width,this.options.canvas.height);
             this.point()
         })
     }
@@ -578,8 +578,13 @@ class Sheet {
         }
         return 0
     }
-    private updateScrollHeight() {
-
+    public destroy = () => {
+        this.tables.forEach(t => t.destroy())
+        this.tables = null
+        this.options = null
+        this.sheetData = null
+        this.mergeCells = null
+        this.scrollBar = null
     }
 }
 

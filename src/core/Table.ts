@@ -23,6 +23,9 @@ class Table {
     public getData = () => {
         return this.dataSource
     }
+    public destroy = () => {
+        this.dataSource = null
+    }
 }
 
 export default Table

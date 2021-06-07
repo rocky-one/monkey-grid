@@ -57,7 +57,11 @@ class MonkeyGrid {
         // return this.sheets[index]
     }
     public removeSheet = (name: string) => {
-
+        const index = this.sheets.find(item => item.sheetName === name)
+        const sheet: any = this.sheets.splice(index, 1)
+        if(sheet) {
+            sheet.destroy();
+        }
     }
     public setSelectSheet = () => {
 
@@ -81,7 +85,6 @@ class MonkeyGrid {
             // this.selectedRange = [3, 2, 4, 3]
             this.sheets[0].selectedRange = [3, 2, 4, 3];
             this.sheets[0].point()
-            console.log(event, 33);
         })
     }
     // 创建底部SheetTab
@@ -97,6 +100,12 @@ class MonkeyGrid {
         this.layout.footerBox.appendChild(footerScrollBox)
         this.layout.tabBox = tabBox
         this.layout.footerScrollBox = footerScrollBox
+    }
+    public destroy = () => {
+        this.sheets.forEach(s => s.destroy())
+        this.sheets = null
+        this.options = null
+        this.layout = null
     }
 }
 
