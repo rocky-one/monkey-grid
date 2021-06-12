@@ -2,7 +2,7 @@ import {
     calcVerticalSliderSize,
     calcHorizontalSliderSize,
 } from './calc'
-import { explorerType } from '../utils/helper'
+import { throllte } from '../utils/helper'
 import { createVerticalScroll, createHorizontalScroll, setNodeStyle } from './create'
 import { updateVerticalScroll, updateHorizotalScroll } from './update'
 import { addEvent, removeEvent } from '../utils/event'
@@ -49,49 +49,51 @@ class ScrollBar {
     }
 
     mouseDownSlider: Function
+    private onMouse = (e: any, { deltaX, deltaY }) => {
+        e.preventDefault()
+        // sliderHeight > 0 说明有滚动条，只有 有滚动的时候事件才能被触发
+        if (this.vertical.sliderHeight > 0) {
+            // 是否超出边界标记
+            let verticalBoundary = false
+            if (deltaY < 0) {
+                console.log('向下滚动')
+                if (this.vertical.sliderTop >= this.vertical.sliderMaxTop) {
+                    verticalBoundary = true
+                }
+            } else if (deltaY > 0) {
+                console.log('向上滚动')
+                if (this.vertical.sliderTop <= 0) {
+                    verticalBoundary = true
+                }
+            }
+            if (deltaY !== 0 && !verticalBoundary) {
+                this.vertical = updateVerticalScroll(this.vertical, -deltaY * 40)
+                this.options.verticalScrollCb(this.vertical)
+            }
+        }
+        if (this.horizontal.sliderWidth > 0) {
+            let horitovalBoundary = false
+            if (deltaX < 0) {
+                console.log('向右滚动')
+                if (this.horizontal.sliderLeft >= this.horizontal.sliderMaxLeft) {
+                    horitovalBoundary = true
+                }
+            } else if (deltaX > 0) {
+                console.log('向左滚动')
+                if (this.horizontal.sliderLeft <= 0) {
+                    horitovalBoundary = true
+                }
+            }
+            if (deltaX !== 0 && !horitovalBoundary) {
+                this.horizontal = updateHorizotalScroll(this.horizontal, -deltaX * 40)
+                this.options.horizontalScrollCb(this.horizontal)
+            }
+        }
+
+    }
     private onMousewheel = () => {
-        // 需要判断是否有滚动条 如果没有滚动条 事件需要不触发
-        mousewheel(this.options.eventBindEle, (e: any, { deltaX, deltaY }) => {
-            e.preventDefault()
-            // sliderHeight > 0 说明有滚动条，只有 有滚动的时候事件才能被触发
-            if (this.vertical.sliderHeight > 0) {
-                // 是否超出边界标记
-                let verticalBoundary = false
-                if (deltaY < 0) {
-                    console.log('向下滚动')
-                    if (this.vertical.sliderTop >= this.vertical.sliderMaxTop) {
-                        verticalBoundary = true
-                    }
-                } else if (deltaY > 0) {
-                    console.log('向上滚动')
-                    if (this.vertical.sliderTop <= 0) {
-                        verticalBoundary = true
-                    }
-                }
-                if (deltaY !== 0 && !verticalBoundary) {
-                    this.vertical = updateVerticalScroll(this.vertical, -deltaY * 40)
-                    this.options.verticalScrollCb(this.vertical)
-                }
-            }
-            if (this.horizontal.sliderWidth > 0) {
-                let horitovalBoundary = false
-                if (deltaX < 0) {
-                    console.log('向右滚动')
-                    if (this.horizontal.sliderLeft >= this.horizontal.sliderMaxLeft) {
-                        horitovalBoundary = true
-                    }
-                } else if (deltaX > 0) {
-                    console.log('向左滚动')
-                    if (this.horizontal.sliderLeft <= 0) {
-                        horitovalBoundary = true
-                    }
-                }
-                if (deltaX !== 0 && !horitovalBoundary) {
-                    this.horizontal = updateHorizotalScroll(this.horizontal, -deltaX * 40)
-                    this.options.horizontalScrollCb(this.horizontal)
-                }
-            }
-        })
+        // 需要判断是否有滚动条 如果没有滚动条 事件需要不触发 throllte(this.onMouse, 40)
+        mousewheel(this.options.eventBindEle, this.onMouse)
     }
     public resetScrollBar = (scrollHeight: number, scrollWidth: number) => {
         this.vertical.scrollHeight = scrollHeight

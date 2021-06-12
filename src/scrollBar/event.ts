@@ -9,7 +9,7 @@ import { VerticalEventRecord } from './ScrollInterface'
  */
 export function mousewheel(ele: HTMLElement, cb: Function):void {
     const evetType = explorerType === 'Firefox' ? 'DOMMouseScroll' : 'mousewheel'
-    ele.addEventListener(evetType, (e: WheelEvent) => {
+    ele.addEventListener(evetType, (e: any) => {
         let deltaX = 0
         let deltaY = 0
         deltaX = (e.wheelDeltaX) ? e.wheelDeltaX / 120 : - (e.detailX || 0) / 3
@@ -20,7 +20,7 @@ export function mousewheel(ele: HTMLElement, cb: Function):void {
 
 export function removeMousewheel(ele: HTMLElement, cb: Function):void {
     const evetType = explorerType === 'Firefox' ? 'DOMMouseScroll' : 'mousewheel'
-    ele.removeEventListener(evetType, (e: WheelEvent) => {
+    ele.removeEventListener(evetType, (e: any) => {
         let deltaX = 0
         let deltaY = 0
         deltaX = (e.wheelDeltaX) ? e.wheelDeltaX / 120 : - (e.detailX || 0) / 3

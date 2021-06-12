@@ -399,26 +399,36 @@ class Sheet {
                 }
             }
             const canvasContext = this.options.canvasContext
-
+            
             // 单元格背景颜色
-            // this.paintCellBgColor(selected.x + 1, selected.y + 1, selected.width - 2, selected.height - 2, null, 'rgba(0, 0, 0, 0.3)')
-            // 第一个单元格背景颜色
-            this.paintCellBgColor(
-                selected.x + selected.fristCell.width,
-                selected.fristCell.y,
-                selected.width - selected.fristCell.width,
-                selected.fristCell.height,
-                null,
-                'rgba(0, 0, 0, 0.2)'
-            )
-            this.paintCellBgColor(
-                selected.x,
-                selected.fristCell.y + selected.fristCell.height,
-                selected.width,
-                selected.fristCell.height,
-                null,
-                'rgba(0, 0, 0, 0.2)'
-            )
+
+            // 第一行除第一个单元格外的单元格背景颜色
+
+            // 排除只有一列的情况，>=1说明至少有两列
+            if(this.selectedRange[3] - this.selectedRange[1] >= 1) {
+                this.paintCellBgColor(
+                    selected.x + selected.fristCell.width,
+                    selected.fristCell.y,
+                    selected.width - selected.fristCell.width,
+                    selected.fristCell.height,
+                    null,
+                    'rgba(0, 0, 0, 0.2)'
+                )
+            }
+            
+            // 绘制第二行后单元格背景
+            // 排除只有一行的情况 >=1说明至少有两行
+            if(this.selectedRange[2] - this.selectedRange[0] >= 1) {
+                this.paintCellBgColor(
+                    selected.x,
+                    selected.fristCell.y + selected.fristCell.height,
+                    selected.width,
+                    selected.fristCell.height,
+                    null,
+                    'rgba(0, 0, 0, 0.2)'
+                )
+            }
+            
             // 绘制线段
             canvasContext.beginPath()
             canvasContext.lineWidth = 2;
@@ -439,7 +449,6 @@ class Sheet {
 
             canvasContext.fillStyle = '#227346'
             canvasContext.fillRect(selected.x + selected.width - 2, selected.y + selected.height - 2, 5, 5)
-            canvasContext.fill()
         
             canvasContext.closePath()
             
@@ -453,6 +462,7 @@ class Sheet {
         const horizontal = this.scrollBar.getHorizontal()
         const vertical = this.scrollBar.getVertical()
         const canvasContext = this.options.canvasContext
+        canvasContext.lineWidth = 1;
         let startRowIndex = calcStartRowIndex(vertical.scrollTop, sheetData, this.yOffset, this.rowsHeight)
         let endRowIndex = calcEndRowIndex(startRowIndex, this.clientHeight, sheetData, this.rowsHeight)
         let startColIndex = calcStartColIndex(horizontal.scrollLeft, sheetData, this.xOffset, this.colsWidth)
@@ -507,7 +517,6 @@ class Sheet {
         const canvasContext = this.options.canvasContext
         canvasContext.fillStyle = customStyle || fillStyle
         canvasContext.fillRect(x, y, width, height)
-        canvasContext.fill()
     }
     private initScroll = () => {
         this.scrollBar = new ScrollBar({
@@ -549,7 +558,6 @@ class Sheet {
         const lineX = x !== undefined ? x : cell.x - scrollLeft
         const lineY = y !== undefined ? y : cell.y - scrollTop
         
-        canvasContext.lineWidth = 1;
         canvasContext.strokeStyle = '#227346';
         canvasContext.moveTo(lineX + 0.5, lineY + cell.height + 0.5)
         canvasContext.lineTo(lineX + cell.width + 0.5, lineY + cell.height + 0.5)

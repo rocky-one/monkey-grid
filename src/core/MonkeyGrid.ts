@@ -4,7 +4,7 @@ import { OptionsInterface } from '../interface/BaseInterface'
 import ScrollBar from '../scrollBar/ScrollBar'
 import Sheet from './Sheet'
 import { mouseDown, mouseEvent } from '../event/mouseEvent'
-import { getPixelRatio, getObjectAttrDefault, calcStartRowIndex, calcStartColIndex } from '../utils/helper'
+import { getPixelRatio, getObjectAttrDefault, findCellByXY } from '../utils/helper'
 // import { FOOTER_HEIGHT, RIGHT_SCROLL_WIDTH, LEFT_ORDER_WIDTH, HEADER_ORDER_HEIGHT } from './const'
 import '../style/app.less'
 
@@ -34,6 +34,7 @@ class MonkeyGrid {
     layout: any
     hooks: Object = {}
     ratio: number = 1
+    selectedSheetIndex: number = 0
     public addSheet = (name: string, rowCount: number, colCount: number) => {
         const sheet = new Sheet({
             name,
@@ -51,6 +52,7 @@ class MonkeyGrid {
             frozenColCount: this.options.frozenColCount
         })
         this.sheets.push(sheet)
+        this.selectedSheetIndex = this.sheets.length - 1
         return sheet
     }
     public getSheet = (name: string) => {
@@ -82,9 +84,12 @@ class MonkeyGrid {
         // canvasContext.translate(ratio, ratio)
         this.canvasContext = canvasContext
         mouseDown(this.layout.canvas, (event: Event) => {
-            // this.selectedRange = [3, 2, 4, 3]
-            this.sheets[0].selectedRange = [3, 2, 4, 3];
-            this.sheets[0].point()
+            const {offsetX, offsetY}: any = event
+            const sheet = this.sheets[this.selectedSheetIndex]
+            const cell = findCellByXY(offsetX, offsetY, sheet.pointRange, sheet.sheetData)
+            sheet.selectedRange = [cell.row, cell.col, cell.row, cell.col]
+            sheet.point()
+
         })
     }
     // 创建底部SheetTab

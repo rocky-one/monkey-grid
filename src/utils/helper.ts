@@ -1,3 +1,4 @@
+import { PointRange } from '../interface/SheetInterface'
 // 延迟执行
 export function defer(callback) {
     setTimeout(callback, 0)
@@ -93,9 +94,9 @@ export function calcStartRowIndex(scrollTop: number, sheetData: any[], yOffset: 
  */
 export function calcEndRowIndex(startRow: number, containerHeight: number, sheetData: any[], rowsHeight: number[]): number {
     let height = 0
-    for(let i = startRow + 1; i < sheetData.length; i++) {
+    for (let i = startRow + 1; i < sheetData.length; i++) {
         height += rowsHeight[i]
-        if(height > containerHeight) {
+        if (height > containerHeight) {
             return i
         }
     }
@@ -135,11 +136,11 @@ export function calcStartColIndex(scrollLeft: number, sheetData: any[], xOffset:
  * @param sheetData 
  */
 export function calcEndColIndex(startCol: number, containerWidth: number, sheetData: any[], colsWidth: number[]): number {
-    if(!sheetData[0]) return 0
+    if (!sheetData[0]) return 0
     let width = 0
-    for(let j = startCol + 1; j < sheetData[0].length; j++) {
+    for (let j = startCol + 1; j < sheetData[0].length; j++) {
         width += colsWidth[j]
-        if(width > containerWidth) {
+        if (width > containerWidth) {
             return j
         }
     }
@@ -154,8 +155,57 @@ export function calcEndColIndex(startCol: number, containerWidth: number, sheetD
  * @param defaultValue 
  */
 export function getObjectAttrDefault(obj: object, attrName: string, defaultValue: any) {
-    if(obj.hasOwnProperty(attrName)) {
+    if (obj.hasOwnProperty(attrName)) {
         return obj[attrName]
     }
     return defaultValue
+}
+
+/**
+ * @desc 函数截流
+ * @param fn 
+ * @param time
+ */
+export function throllte(fn: Function, time: number) {
+    let sign = true
+    return function () {
+        if (!sign) return
+        let context = this
+        let args = arguments
+        sign = false
+        setTimeout(() => {
+            sign = true
+            fn.apply(context, args)
+        }, time)
+    }
+}
+
+/**
+ * @desc 根据坐标位置查找当前坐标内的单元格
+ * @param x 
+ * @param y 
+ * @param pointRange 
+ * @param data 
+ */
+export function findCellByXY(x: number, y: number, pointRange: PointRange, data: any) {
+    const { startRowIndex, endRowIndex, startColIndex, endColIndex } = pointRange
+    for (let i = startRowIndex; i <= endRowIndex; i++) {
+        const row = data[i]
+        if (!row) {
+            return false
+        }
+        if (y >= row[0].y &&  y <= row[0].y + row[0].height) {
+            for (let j = startColIndex; j <= endColIndex; j++) {
+                const cell = row[j]
+                if (x >= cell.x && x <= cell.x + cell.width) {
+                    return {
+                        ...cell,
+                        row: i,
+                        col: j
+                    };
+                }
+            }
+        }
+    }
+    return false;
 }
