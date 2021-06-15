@@ -54,6 +54,8 @@ class Sheet {
     xOffset: number = 0
     yOffset: number = 0
     selectedRange: number[] = []
+    selectedRangeInFrozenRow: boolean // 当前选中区域是否在冻结行内
+    selectedRangeInFrozenCol: boolean // 当前选中区域是否在冻结列内
     public addTable = (name: string, row: number, col: number, dataSource: any[]) => {
         const table = new Table({
             name,
@@ -358,7 +360,22 @@ class Sheet {
             canvasContext.stroke()
         }
     }
-    private pointSelectedRange = () => {
+    private pointSelectedRange = (isBody: boolean) => {
+        // 如果是body 同时点击到了冻结直接返回
+        if (isBody && (this.selectedRangeInFrozenRow || this.selectedRangeInFrozenCol)) {
+            return
+        }
+        let scrollLeft = this.scrollBar.getHorizontal().scrollLeft
+        let scrollTop = this.scrollBar.getVertical().scrollTop
+        // 如果点击区域是冻结区域，选中区域也需要冻结
+        if (!isBody) {
+            if (this.selectedRangeInFrozenRow) {
+                scrollTop = 0
+            }
+            if (this.selectedRangeInFrozenCol) {
+                scrollLeft = 0
+            }
+        }
         if (this.selectedRange.length) {
             const selected: any = {
                 x: null,
@@ -367,13 +384,14 @@ class Sheet {
                 height: 0,
                 fristCell: null
             }
+
             for (let i = this.selectedRange[0]; i <= this.selectedRange[2]; i++) {
-                if (i < this.pointRange.startRowIndex || i > this.pointRange.endRowIndex) break
+                // if (i < this.pointRange.startRowIndex || i > this.pointRange.endRowIndex) break
 
                 for (let j = this.selectedRange[1]; j <= this.selectedRange[3]; j++) {
-                    if (j < this.pointRange.startColIndex || j > this.pointRange.endColIndex) break
+                    // if (j < this.pointRange.startColIndex || j > this.pointRange.endColIndex) break
 
-                    if(selected.fristCell === null) {
+                    if (selected.fristCell === null) {
                         selected.fristCell = this.getCellRange(i, j, i, j)[0]
                     }
                     // 累加宽，只需要第一行的即可
@@ -382,10 +400,10 @@ class Sheet {
                         if (cell) {
                             selected.width += cell.width
                             if (selected.x === null) {
-                                selected.x = cell.x
+                                selected.x = cell.x - scrollLeft
                             }
                             if (selected.y === null) {
-                                selected.y = cell.y
+                                selected.y = cell.y - scrollTop
                             }
                         }
                     }
@@ -399,13 +417,13 @@ class Sheet {
                 }
             }
             const canvasContext = this.options.canvasContext
-            
+
             // 单元格背景颜色
 
             // 第一行除第一个单元格外的单元格背景颜色
 
             // 排除只有一列的情况，>=1说明至少有两列
-            if(this.selectedRange[3] - this.selectedRange[1] >= 1) {
+            if (this.selectedRange[3] - this.selectedRange[1] >= 1) {
                 this.paintCellBgColor(
                     selected.x + selected.fristCell.width,
                     selected.fristCell.y,
@@ -415,10 +433,10 @@ class Sheet {
                     'rgba(0, 0, 0, 0.2)'
                 )
             }
-            
+
             // 绘制第二行后单元格背景
             // 排除只有一行的情况 >=1说明至少有两行
-            if(this.selectedRange[2] - this.selectedRange[0] >= 1) {
+            if (this.selectedRange[2] - this.selectedRange[0] >= 1) {
                 this.paintCellBgColor(
                     selected.x,
                     selected.fristCell.y + selected.fristCell.height,
@@ -428,7 +446,7 @@ class Sheet {
                     'rgba(0, 0, 0, 0.2)'
                 )
             }
-            
+
             // 绘制线段
             canvasContext.beginPath()
             canvasContext.lineWidth = 2;
@@ -441,7 +459,7 @@ class Sheet {
 
             canvasContext.moveTo(selected.x, selected.y)
             canvasContext.lineTo(selected.x, selected.y + selected.height)
-            
+
             canvasContext.moveTo(selected.x + selected.width + 1, selected.y)
             canvasContext.lineTo(selected.x + selected.width + 1, selected.y + selected.height - 3)
 
@@ -449,9 +467,9 @@ class Sheet {
 
             canvasContext.fillStyle = '#227346'
             canvasContext.fillRect(selected.x + selected.width - 2, selected.y + selected.height - 2, 5, 5)
-        
+
             canvasContext.closePath()
-            
+
         }
     }
     /**
@@ -484,11 +502,19 @@ class Sheet {
         this.pointRange.endColIndex = endColIndex
         // 绘制table部分
         this.pointBody(pointCellMap, startRowIndex, endRowIndex, startColIndex, endColIndex)
+
+        // 绘制body区域选中效果
+        this.pointSelectedRange(true)
+        canvasContext.lineWidth = 1
         // 冻结列头
         this.pointFrozenCol(startRowIndex, endRowIndex, pointCellMap)
 
         // 冻结行头
         this.pointFrozenRow(startColIndex - this.frozenColCount, endColIndex, pointCellMap)
+
+        // 绘制冻结区域选中效果
+        this.pointSelectedRange(false)
+        canvasContext.lineWidth = 1
 
         // 头部列标
         this.pointTopOrder(startColIndex, endColIndex)
@@ -508,8 +534,7 @@ class Sheet {
         // 如果有行列标，绘制左上角空白区域
         this.pointLeftTopByFrozen()
 
-        // 绘制选中区域
-        this.pointSelectedRange()
+
 
     }
     // 绘制背景颜色 context: CanvasRenderingContext2D
@@ -557,7 +582,7 @@ class Sheet {
         const canvasContext = this.options.canvasContext
         const lineX = x !== undefined ? x : cell.x - scrollLeft
         const lineY = y !== undefined ? y : cell.y - scrollTop
-        
+
         canvasContext.strokeStyle = '#227346';
         canvasContext.moveTo(lineX + 0.5, lineY + cell.height + 0.5)
         canvasContext.lineTo(lineX + cell.width + 0.5, lineY + cell.height + 0.5)

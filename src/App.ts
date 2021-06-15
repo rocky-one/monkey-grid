@@ -1,7 +1,7 @@
 import MonkeyGrid from './core/MonkeyGrid';
 // 1. 链表
 // 2. 时间切片
-let rowLen = 1000;
+let rowLen = 300;
 let colLen = 20
 const data = [];
 for(let i = 0;i<rowLen;i++){
@@ -33,7 +33,7 @@ const sheet = mG.addSheet('sheet1', rowLen, colLen)
 sheet.setMergeCells(1, 1, 30, 1)
 sheet.setMergeCells(5, 3, 5, 8)
 sheet.setMergeCells(7, 3, 10, 6)
-
+console.log(sheet.sheetData, '3')
 sheet.addTable('table1', 0, 0, data)
 sheet.point()
 // const box = document.getElementById('app')

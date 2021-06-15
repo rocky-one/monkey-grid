@@ -181,16 +181,53 @@ export function throllte(fn: Function, time: number) {
 }
 
 /**
+ * @desc 判断当前点击坐标是否在冻结行内部
+ * @param y 
+ * @param frozenRowCount 
+ * @param sheetData 
+ */
+export function inFrozenRowByXY(y: number, frozenRowCount: number, sheetData: any) {
+    if( frozenRowCount <= 0) {
+        return false
+    }
+    let y2 = sheetData[0][0].y
+    for(let i = 0; i < frozenRowCount; i++) {
+        if(sheetData[i][0]) {
+            y2 += sheetData[i][0].height
+        }
+    }
+    return y <= y2
+}
+export function inFrozenColByXY(x: number, frozenColCount: number, sheetData: any) {
+    if( frozenColCount <= 0) {
+        return false
+    }
+    let x2 = sheetData[0][0].x
+    for(let i = 0; i < frozenColCount; i++) {
+        x2 += sheetData[0][i].width
+    }
+    return x <= x2
+}
+/**
  * @desc 根据坐标位置查找当前坐标内的单元格
  * @param x 
  * @param y 
  * @param pointRange 
  * @param data 
  */
-export function findCellByXY(x: number, y: number, pointRange: PointRange, data: any) {
-    const { startRowIndex, endRowIndex, startColIndex, endColIndex } = pointRange
+export function findCellByXY(x: number, y: number, sheet: any) {
+    const {sheetData, pointRange, frozenRowCount, frozenColCount} = sheet
+    const scrollLeft = sheet.scrollBar.getHorizontal().scrollLeft
+    const scrollTop = sheet.scrollBar.getVertical().scrollTop
+    let { startRowIndex, endRowIndex, startColIndex, endColIndex } = pointRange
+    startRowIndex = startRowIndex - frozenRowCount
+    endRowIndex = endRowIndex - frozenRowCount
+    startColIndex = startColIndex - frozenColCount
+    endColIndex = endColIndex - frozenColCount
+    x += scrollLeft
+    y += scrollTop
     for (let i = startRowIndex; i <= endRowIndex; i++) {
-        const row = data[i]
+        const row = sheetData[i]
         if (!row) {
             return false
         }
@@ -198,11 +235,19 @@ export function findCellByXY(x: number, y: number, pointRange: PointRange, data:
             for (let j = startColIndex; j <= endColIndex; j++) {
                 const cell = row[j]
                 if (x >= cell.x && x <= cell.x + cell.width) {
-                    return {
-                        ...cell,
-                        row: i,
-                        col: j
-                    };
+                    if (cell.pointer) {
+                        let rowspan = cell.rowspan ? cell.rowspan - 1 : 0
+                        let colspan = cell.colspan ? cell.colspan - 1 : 0
+                        return {
+                            ...cell,
+                            range: [cell.pointer[0], cell.pointer[1], cell.pointer[0] + rowspan, cell.pointer[1] + colspan]
+                        }
+                    }else {
+                        return {
+                            ...cell,
+                            range: [i, j, i, j]
+                        };
+                    }
                 }
             }
         }

@@ -4,7 +4,7 @@ import { OptionsInterface } from '../interface/BaseInterface'
 import ScrollBar from '../scrollBar/ScrollBar'
 import Sheet from './Sheet'
 import { mouseDown, mouseEvent } from '../event/mouseEvent'
-import { getPixelRatio, getObjectAttrDefault, findCellByXY } from '../utils/helper'
+import { getPixelRatio, getObjectAttrDefault, findCellByXY, inFrozenRowByXY, inFrozenColByXY } from '../utils/helper'
 // import { FOOTER_HEIGHT, RIGHT_SCROLL_WIDTH, LEFT_ORDER_WIDTH, HEADER_ORDER_HEIGHT } from './const'
 import '../style/app.less'
 
@@ -86,10 +86,15 @@ class MonkeyGrid {
         mouseDown(this.layout.canvas, (event: Event) => {
             const {offsetX, offsetY}: any = event
             const sheet = this.sheets[this.selectedSheetIndex]
-            const cell = findCellByXY(offsetX, offsetY, sheet.pointRange, sheet.sheetData)
-            sheet.selectedRange = [cell.row, cell.col, cell.row, cell.col]
+            const {sheetData, pointRange, frozenRowCount, frozenColCount} = sheet
+            const inFrozenRow = inFrozenRowByXY(offsetY, frozenRowCount, sheetData)
+            const inFrozenCol = inFrozenColByXY(offsetX, frozenColCount, sheetData)
+            sheet.selectedRangeInFrozenRow = inFrozenRow
+            sheet.selectedRangeInFrozenCol = inFrozenCol
+            const cell = findCellByXY(offsetX, offsetY, sheet)
+            sheet.selectedRange = cell.range
+            console.log(cell.range)
             sheet.point()
-
         })
     }
     // 创建底部SheetTab
