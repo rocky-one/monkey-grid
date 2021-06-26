@@ -92,8 +92,11 @@ class MonkeyGrid {
             sheet.selectedRangeInFrozenRow = inFrozenRow
             sheet.selectedRangeInFrozenCol = inFrozenCol
             const cell = findCellByXY(offsetX, offsetY, sheet)
-            sheet.selectedRange = cell.range
-            console.log(cell.range)
+            if(cell) {
+                sheet.selectedRange = cell.range
+            }
+            
+            console.log(cell, cell.range)
             sheet.point()
         })
     }

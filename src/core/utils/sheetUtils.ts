@@ -177,8 +177,9 @@ export function setLeftTopByFrozenData(sheetData: any, frozenRowCount: number, f
                 sheetData[i][j].value = ''
                 sheetData[i][j].rowspan = frozenRowCount
                 sheetData[i][j].colspan = frozenColCount
+            }else {
+                sheetData[i][j].pointer = [0, 0]
             }
-            sheetData[i][j].pointer = [0, 0]
             if (i === 0) {
                 width += cell.width
             }

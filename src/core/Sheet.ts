@@ -365,6 +365,9 @@ class Sheet {
         if (isBody && (this.selectedRangeInFrozenRow || this.selectedRangeInFrozenCol)) {
             return
         }
+        if (!isBody && !this.selectedRangeInFrozenRow && !this.selectedRangeInFrozenCol) {
+            return
+        }
         let scrollLeft = this.scrollBar.getHorizontal().scrollLeft
         let scrollTop = this.scrollBar.getVertical().scrollTop
         // 如果点击区域是冻结区域，选中区域也需要冻结

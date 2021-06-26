@@ -193,6 +193,9 @@ export function inFrozenRowByXY(y: number, frozenRowCount: number, sheetData: an
     let y2 = sheetData[0][0].y
     for(let i = 0; i < frozenRowCount; i++) {
         if(sheetData[i][0]) {
+            if(sheetData[i][0].pointer) {
+                continue
+            }
             y2 += sheetData[i][0].height
         }
     }
@@ -204,10 +207,16 @@ export function inFrozenColByXY(x: number, frozenColCount: number, sheetData: an
     }
     let x2 = sheetData[0][0].x
     for(let i = 0; i < frozenColCount; i++) {
+        console.log(sheetData[0][i])
+        if(sheetData[0][i].pointer) {
+            continue
+        }
         x2 += sheetData[0][i].width
     }
+    console.log(x, x2)
     return x <= x2
 }
+
 /**
  * @desc 根据坐标位置查找当前坐标内的单元格
  * @param x 
@@ -219,13 +228,23 @@ export function findCellByXY(x: number, y: number, sheet: any) {
     const {sheetData, pointRange, frozenRowCount, frozenColCount} = sheet
     const scrollLeft = sheet.scrollBar.getHorizontal().scrollLeft
     const scrollTop = sheet.scrollBar.getVertical().scrollTop
-    let { startRowIndex, endRowIndex, startColIndex, endColIndex } = pointRange
-    startRowIndex = startRowIndex - frozenRowCount
-    endRowIndex = endRowIndex - frozenRowCount
-    startColIndex = startColIndex - frozenColCount
-    endColIndex = endColIndex - frozenColCount
-    x += scrollLeft
-    y += scrollTop
+    let startRowIndex = 0
+    let endRowIndex = frozenRowCount - 1
+    let startColIndex = 0
+    let endColIndex = frozenColCount - 1
+    if(!sheet.selectedRangeInFrozenRow) {
+        y += scrollTop
+
+        startRowIndex =pointRange.startRowIndex
+        endRowIndex =pointRange.endRowIndex
+    }
+    if(!sheet.selectedRangeInFrozenCol) {
+        x += scrollLeft
+
+        startColIndex =pointRange.startColIndex
+        endColIndex =pointRange.endColIndex
+    }
+    console.log(sheet.selectedRangeInFrozenCol, startRowIndex, endRowIndex, startColIndex, endColIndex, 'lt')
     for (let i = startRowIndex; i <= endRowIndex; i++) {
         const row = sheetData[i]
         if (!row) {
