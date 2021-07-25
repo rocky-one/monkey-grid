@@ -3,8 +3,8 @@ import * as domCore from '../utils/dom'
 import { OptionsInterface } from '../interface/BaseInterface'
 import ScrollBar from '../scrollBar/ScrollBar'
 import Sheet from './Sheet'
-import { mouseDown, mouseEvent } from '../event/mouseEvent'
-import { getPixelRatio, getObjectAttrDefault, findCellByXY, inFrozenRowByXY, inFrozenColByXY } from '../utils/helper'
+import { mouseDown, mouseEvent, mouseMove, mouseUp, removeMouseMove } from '../event/mouseEvent'
+import { getPixelRatio, getObjectAttrDefault, findCellByXY, inFrozenRowByXY, inFrozenColByXY, throllte } from '../utils/helper'
 // import { FOOTER_HEIGHT, RIGHT_SCROLL_WIDTH, LEFT_ORDER_WIDTH, HEADER_ORDER_HEIGHT } from './const'
 import '../style/app.less'
 
@@ -35,6 +35,7 @@ class MonkeyGrid {
     hooks: Object = {}
     ratio: number = 1
     selectedSheetIndex: number = 0
+    mouseDownFlag: boolean = false
     public addSheet = (name: string, rowCount: number, colCount: number) => {
         const sheet = new Sheet({
             name,
@@ -84,6 +85,7 @@ class MonkeyGrid {
         // canvasContext.translate(ratio, ratio)
         this.canvasContext = canvasContext
         mouseDown(this.layout.canvas, (event: Event) => {
+            this.mouseDownFlag = true
             const {offsetX, offsetY}: any = event
             const sheet = this.sheets[this.selectedSheetIndex]
             const {sheetData, pointRange, frozenRowCount, frozenColCount} = sheet
@@ -94,11 +96,52 @@ class MonkeyGrid {
             const cell = findCellByXY(offsetX, offsetY, sheet)
             if(cell) {
                 sheet.selectedRange = cell.range
+                sheet.selectedCell = cell
             }
-            
-            console.log(cell, cell.range)
             sheet.point()
         })
+        const moveFn = this.onMouseMove()
+        mouseMove(this.layout.canvas, moveFn)
+
+        mouseUp(this.layout.canvas, (event: Event) => {
+            this.mouseDownFlag = false
+        })
+    }
+    private onMouseMove = () => {
+        return throllte((event: Event) => {
+            if(this.mouseDownFlag) {
+                const {offsetX, offsetY}: any = event
+                const sheet = this.sheets[this.selectedSheetIndex]
+                const cell = findCellByXY(offsetX, offsetY, sheet)
+                if(cell) {
+                    let selectedCellRange = sheet.selectedCell.range
+                    const selectedRange = sheet.selectedRange
+                    const row = cell.range[0]
+                    const col = cell.range[1]
+                    if(selectedCellRange) {
+                        // 反方向选中
+                        if(row < selectedCellRange[0] || col < selectedCellRange[0]) {
+                            // selectedRange[0] = row
+                            // selectedRange[1] = col
+                            // selectedRange[2] = selectedCellRange[0]
+                            // selectedRange[3] = selectedCellRange[1]
+                        }else {
+                            selectedRange[2] = row
+                            selectedRange[3] = col
+                        }
+                    }
+                    sheet.selectedRange = selectedRange
+                }
+                console.log(sheet.selectedRange, 12)
+                sheet.point()
+            }
+        }, 100)
+    }
+    private calcMouseMoveXY = () => {
+
+    }
+    private onRemoveMouseMode = (fn: Function) => {
+        removeMouseMove(this.layout.canvas, fn)
     }
     // 创建底部SheetTab
     private createSheetTabs = () => {

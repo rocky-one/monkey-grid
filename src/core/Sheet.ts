@@ -56,6 +56,7 @@ class Sheet {
     selectedRange: number[] = []
     selectedRangeInFrozenRow: boolean // 当前选中区域是否在冻结行内
     selectedRangeInFrozenCol: boolean // 当前选中区域是否在冻结列内
+    selectedCell: any = null
     public addTable = (name: string, row: number, col: number, dataSource: any[]) => {
         const table = new Table({
             name,

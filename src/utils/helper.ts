@@ -207,13 +207,11 @@ export function inFrozenColByXY(x: number, frozenColCount: number, sheetData: an
     }
     let x2 = sheetData[0][0].x
     for(let i = 0; i < frozenColCount; i++) {
-        console.log(sheetData[0][i])
         if(sheetData[0][i].pointer) {
             continue
         }
         x2 += sheetData[0][i].width
     }
-    console.log(x, x2)
     return x <= x2
 }
 
@@ -244,7 +242,6 @@ export function findCellByXY(x: number, y: number, sheet: any) {
         startColIndex =pointRange.startColIndex
         endColIndex =pointRange.endColIndex
     }
-    console.log(sheet.selectedRangeInFrozenCol, startRowIndex, endRowIndex, startColIndex, endColIndex, 'lt')
     for (let i = startRowIndex; i <= endRowIndex; i++) {
         const row = sheetData[i]
         if (!row) {
