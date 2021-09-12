@@ -57,6 +57,7 @@ class Sheet {
     selectedRangeInFrozenRow: boolean // 当前选中区域是否在冻结行内
     selectedRangeInFrozenCol: boolean // 当前选中区域是否在冻结列内
     selectedCell: any = null
+    selectedMoveRange: any = [null, null, null, null]
     public addTable = (name: string, row: number, col: number, dataSource: any[]) => {
         const table = new Table({
             name,
@@ -86,6 +87,9 @@ class Sheet {
             }
         }
         return cells
+    }
+    public getCellByRowCol = (row: number, col: number) => {
+        return this.sheetData[row][col];
     }
     public setSheetName = (name: string) => {
         this.sheetName = name
@@ -388,69 +392,44 @@ class Sheet {
                 height: 0,
                 fristCell: null
             }
-
             for (let i = this.selectedRange[0]; i <= this.selectedRange[2]; i++) {
-                // if (i < this.pointRange.startRowIndex || i > this.pointRange.endRowIndex) break
-
-                for (let j = this.selectedRange[1]; j <= this.selectedRange[3]; j++) {
-                    // if (j < this.pointRange.startColIndex || j > this.pointRange.endColIndex) break
-
-                    if (selected.fristCell === null) {
-                        selected.fristCell = this.getCellRange(i, j, i, j)[0]
+                let colNum = this.selectedRange[1]
+                const cell = this.sheetData[i][colNum]
+                if (cell && !cell.pointer) {
+                    selected.height += cell.height
+                    if (selected.x === null) {
+                        selected.x = cell.x - scrollLeft
                     }
-                    // 累加宽，只需要第一行的即可
-                    if (i === this.selectedRange[0]) {
-                        const cell = this.getCellRange(i, j, i, j)[0]
-                        if (cell) {
-                            selected.width += cell.width
-                            if (selected.x === null) {
-                                selected.x = cell.x - scrollLeft
-                            }
-                            if (selected.y === null) {
-                                selected.y = cell.y - scrollTop
-                            }
-                        }
+                    if (selected.y === null) {
+                        selected.y = cell.y - scrollTop
                     }
-                    // 累加高，只需要第一列
-                    if (j === this.selectedRange[1]) {
-                        const cell = this.getCellRange(i, j, i, j)[0]
-                        if (cell) {
-                            selected.height += cell.height
+                }
+            }
+            for (let j = this.selectedRange[1]; j <= this.selectedRange[3]; j++) {
+                let rowNum = this.selectedRange[0]
+                const cell = this.sheetData[rowNum][j]
+                if (cell && !cell.pointer) {
+                    selected.width += cell.width
+                }
+            }
+            const canvasContext = this.options.canvasContext
+            for(let i = this.selectedRange[0]; i <= this.selectedRange[2]; i++) {
+                for(let j = this.selectedRange[1]; j <= this.selectedRange[3]; j++) {
+                    if (i != this.selectedCell.range[0] || j != this.selectedCell.range[1]) {
+                        const cell = this.getCellByRowCol(i, j)
+                        if (!cell.pointer) {
+                            this.paintCellBgColor(
+                                cell.x - scrollLeft,
+                                cell.y - scrollTop,
+                                cell.width,
+                                cell.height,
+                                null,
+                                'rgba(0, 0, 0, 0.2)'
+                            )
                         }
                     }
                 }
             }
-            const canvasContext = this.options.canvasContext
-
-            // 单元格背景颜色
-
-            // 第一行除第一个单元格外的单元格背景颜色
-
-            // 排除只有一列的情况，>=1说明至少有两列
-            if (this.selectedRange[3] - this.selectedRange[1] >= 1) {
-                this.paintCellBgColor(
-                    selected.x + selected.fristCell.width,
-                    selected.fristCell.y,
-                    selected.width - selected.fristCell.width,
-                    selected.fristCell.height,
-                    null,
-                    'rgba(0, 0, 0, 0.2)'
-                )
-            }
-
-            // 绘制第二行后单元格背景
-            // 排除只有一行的情况 >=1说明至少有两行
-            if (this.selectedRange[2] - this.selectedRange[0] >= 1) {
-                this.paintCellBgColor(
-                    selected.x,
-                    selected.fristCell.y + selected.fristCell.height,
-                    selected.width,
-                    selected.fristCell.height,
-                    null,
-                    'rgba(0, 0, 0, 0.2)'
-                )
-            }
-
             // 绘制线段
             canvasContext.beginPath()
             canvasContext.lineWidth = 2;

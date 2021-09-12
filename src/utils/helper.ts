@@ -20,7 +20,6 @@ export function initData(data = [], xOffset = 0, yOffset = 0, rowHeight = 24, co
         }
         y += rowHeight
     }
-
     return data
 }
 
@@ -222,7 +221,7 @@ export function inFrozenColByXY(x: number, frozenColCount: number, sheetData: an
  * @param pointRange 
  * @param data 
  */
-export function findCellByXY(x: number, y: number, sheet: any) {
+export function findCellByXY(x: number, y: number, sheet: any, isFindPointerOrigin: boolean = true) {
     const {sheetData, pointRange, frozenRowCount, frozenColCount} = sheet
     const scrollLeft = sheet.scrollBar.getHorizontal().scrollLeft
     const scrollTop = sheet.scrollBar.getVertical().scrollTop
@@ -233,14 +232,14 @@ export function findCellByXY(x: number, y: number, sheet: any) {
     if(!sheet.selectedRangeInFrozenRow) {
         y += scrollTop
 
-        startRowIndex =pointRange.startRowIndex
-        endRowIndex =pointRange.endRowIndex
+        startRowIndex = pointRange.startRowIndex
+        endRowIndex = pointRange.endRowIndex
     }
     if(!sheet.selectedRangeInFrozenCol) {
         x += scrollLeft
 
-        startColIndex =pointRange.startColIndex
-        endColIndex =pointRange.endColIndex
+        startColIndex = pointRange.startColIndex
+        endColIndex = pointRange.endColIndex
     }
     for (let i = startRowIndex; i <= endRowIndex; i++) {
         const row = sheetData[i]
@@ -251,7 +250,7 @@ export function findCellByXY(x: number, y: number, sheet: any) {
             for (let j = startColIndex; j <= endColIndex; j++) {
                 const cell = row[j]
                 if (x >= cell.x && x <= cell.x + cell.width) {
-                    if (cell.pointer) {
+                    if (cell.pointer && isFindPointerOrigin) {
                         let rowspan = cell.rowspan ? cell.rowspan - 1 : 0
                         let colspan = cell.colspan ? cell.colspan - 1 : 0
                         return {

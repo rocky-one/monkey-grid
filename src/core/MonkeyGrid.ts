@@ -95,7 +95,8 @@ class MonkeyGrid {
             sheet.selectedRangeInFrozenCol = inFrozenCol
             const cell = findCellByXY(offsetX, offsetY, sheet)
             if(cell) {
-                sheet.selectedRange = cell.range
+                // 避免同一个引用，否则后面修改 sheet.selectedRange 会影响初始的sheet.selectedCell.range
+                sheet.selectedRange = [...cell.range]
                 sheet.selectedCell = cell
             }
             sheet.point()
@@ -112,27 +113,58 @@ class MonkeyGrid {
             if(this.mouseDownFlag) {
                 const {offsetX, offsetY}: any = event
                 const sheet = this.sheets[this.selectedSheetIndex]
-                const cell = findCellByXY(offsetX, offsetY, sheet)
+                const cell = findCellByXY(offsetX, offsetY, sheet, false)
+                const row = cell.range[0]
+                const col = cell.range[1]
                 if(cell) {
-                    let selectedCellRange = sheet.selectedCell.range
                     const selectedRange = sheet.selectedRange
-                    const row = cell.range[0]
-                    const col = cell.range[1]
+                    const mergeCells = sheet.mergeCells
+                    const selectedCellRange = sheet.selectedCell.range
+
                     if(selectedCellRange) {
+                        selectedRange[2] = row
+                        selectedRange[3] = col
                         // 反方向选中
-                        if(row < selectedCellRange[0] || col < selectedCellRange[0]) {
-                            // selectedRange[0] = row
-                            // selectedRange[1] = col
-                            // selectedRange[2] = selectedCellRange[0]
-                            // selectedRange[3] = selectedCellRange[1]
-                        }else {
-                            selectedRange[2] = row
-                            selectedRange[3] = col
+                        if(row < selectedCellRange[0]) {
+                            selectedRange[0] = row
+                            selectedRange[2] = selectedCellRange[0]
+                        }
+                        if(col < selectedCellRange[1]) {
+                            selectedRange[1] = col
+                            selectedRange[3] = selectedCellRange[1]
+                        }
+                        sheet.selectedRange = selectedRange
+                    }
+
+                    // 如果当前区域有合并单元格 需要找出最大的边界值
+                    for(let i = selectedRange[0]; i <= selectedRange[2]; i++) {
+                        for(let j = selectedRange[1]; j <= selectedRange[3]; j++) {
+                            const cell = sheet.sheetData[i][j]
+                            const pointer = cell.pointer || [i, j]
+                            const mergeCellEnd = mergeCells[`${pointer[0]}${pointer[1]}`]
+                            if (mergeCellEnd) {
+                                let mergeStartRow = cell.pointer ? cell.pointer[0] : i
+                                let mergeStartCol = cell.pointer ? cell.pointer[1] : j
+                                let mergeEndRow = mergeStartRow + mergeCellEnd[0]
+                                let mergeEndCol = mergeStartCol + mergeCellEnd[1]
+                                if (mergeStartRow < selectedRange[0]) {
+                                    selectedRange[0] = mergeStartRow
+                                }
+                                if (mergeEndRow > selectedRange[2]) {
+                                    selectedRange[2] = mergeEndRow
+                                }
+                                if (mergeStartCol < selectedRange[1]) {
+                                    selectedRange[1] = mergeStartCol
+                                }
+                                if (mergeEndCol > selectedRange[3]) {
+                                    selectedRange[3] = mergeEndCol
+                                }
+                                sheet.selectedRange = selectedRange
+                            }
                         }
                     }
-                    sheet.selectedRange = selectedRange
                 }
-                console.log(sheet.selectedRange, 12)
+
                 sheet.point()
             }
         }, 100)

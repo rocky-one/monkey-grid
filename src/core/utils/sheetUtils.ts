@@ -121,14 +121,14 @@ export function setWidthHeightByMergeCells(row: number, col: number, cell: any, 
     if (!cell || cell.pointer) return false
     const mergeCell = mergeCells[`${row}${col}`]
     if(!mergeCell) return false
-    let endRow = row + mergeCell[0] + 1
-    let endCol = col + mergeCell[1] + 1
+    let endRow = row + mergeCell[0]
+    let endCol = col + mergeCell[1]
     const leftTopCell = data[row][col]
     let height = 0
     let width = 0
-    for (let i = row; i < endRow; i++) {
+    for (let i = row; i <= endRow; i++) {
         height += data[i][col].height
-        for (let j = col; j < endCol; j++) {
+        for (let j = col; j <= endCol; j++) {
             if (i === row) {
                 width += data[i][j].width
             }
