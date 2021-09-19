@@ -21,7 +21,7 @@ for(let i = 0;i<rowLen;i++){
 // data[7][3].colspan = 3
 const mG = new MonkeyGrid({
 	container: document.getElementById('app'),
-	width: 600,
+	width: 800,
 	height: 600,
 	// data: data,
 	order: true,

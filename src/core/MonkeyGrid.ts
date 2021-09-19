@@ -114,13 +114,12 @@ class MonkeyGrid {
                 const {offsetX, offsetY}: any = event
                 const sheet = this.sheets[this.selectedSheetIndex]
                 const cell = findCellByXY(offsetX, offsetY, sheet, false)
-                const row = cell.range[0]
-                const col = cell.range[1]
                 if(cell) {
+                    const row = cell.range[0]
+                    const col = cell.range[1]
                     const selectedRange = sheet.selectedRange
                     const mergeCells = sheet.mergeCells
                     const selectedCellRange = sheet.selectedCell.range
-
                     if(selectedCellRange) {
                         selectedRange[2] = row
                         selectedRange[3] = col
@@ -163,9 +162,8 @@ class MonkeyGrid {
                             }
                         }
                     }
+                    sheet.point()
                 }
-
-                sheet.point()
             }
         }, 100)
     }

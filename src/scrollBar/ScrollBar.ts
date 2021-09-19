@@ -56,12 +56,12 @@ class ScrollBar {
             // 是否超出边界标记
             let verticalBoundary = false
             if (deltaY < 0) {
-                console.log('向下滚动')
+                // console.log('向下滚动')
                 if (this.vertical.sliderTop >= this.vertical.sliderMaxTop) {
                     verticalBoundary = true
                 }
             } else if (deltaY > 0) {
-                console.log('向上滚动')
+                // console.log('向上滚动')
                 if (this.vertical.sliderTop <= 0) {
                     verticalBoundary = true
                 }
@@ -74,12 +74,12 @@ class ScrollBar {
         if (this.horizontal.sliderWidth > 0) {
             let horitovalBoundary = false
             if (deltaX < 0) {
-                console.log('向右滚动')
+                // console.log('向右滚动')
                 if (this.horizontal.sliderLeft >= this.horizontal.sliderMaxLeft) {
                     horitovalBoundary = true
                 }
             } else if (deltaX > 0) {
-                console.log('向左滚动')
+                // console.log('向左滚动')
                 if (this.horizontal.sliderLeft <= 0) {
                     horitovalBoundary = true
                 }

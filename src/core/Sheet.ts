@@ -2,7 +2,7 @@ import Table from './Table'
 import { SheetOptions, PointRange } from '../interface/SheetInterface'
 import { setSheetRowColCount, insertTableDataToSheet, setLeftTopByFrozenData, numToABC } from './utils/sheetUtils'
 import ScrollBar from '../scrollBar/ScrollBar'
-import { calcStartRowIndex, calcEndRowIndex, calcStartColIndex, calcEndColIndex } from '../utils/helper'
+import { calcStartRowIndex, calcEndRowIndex, calcStartColIndex, calcEndColIndex, getCellInFrozenByIndex } from '../utils/helper'
 import { ROW_HEIGHT, COL_WIDTH, FOOTER_HEIGHT, RIGHT_SCROLL_WIDTH, LEFT_ORDER_WIDTH, HEADER_ORDER_HEIGHT } from './const'
 class Sheet {
     constructor(options: SheetOptions) {
@@ -51,6 +51,16 @@ class Sheet {
     }
     frozenRowCount: number = 0
     frozenColCount: number = 0
+    frozenInfo: any = {
+        row: {
+            startY: 0,
+            endY: 0
+        },
+        col: {
+            startX: 0,
+            endX: 0
+        }
+    }
     xOffset: number = 0
     yOffset: number = 0
     selectedRange: number[] = []
@@ -117,24 +127,26 @@ class Sheet {
         cols.forEach(item => this.colsWidth[item.col] = item.width)
     }
     // 计算冻结行高
-    private calcFrozenHeight = () => {
+    // yOffsetFlag 是否需要计算序列号的高度
+    private calcFrozenHeight = (yOffsetFlag: boolean = true) => {
         if (this.frozenRowCount > 0) {
             const frozenRowIndex = this.frozenRowCount - 1
             const frozenLastRow = this.sheetData[frozenRowIndex]
             if (frozenLastRow) {
-                return frozenLastRow[0].y + frozenLastRow[0].height - this.yOffset
+                return frozenLastRow[0].y + frozenLastRow[0].height - (yOffsetFlag ? this.yOffset: 0)
             }
         }
         return 0
     }
     // 计算冻结列宽
-    private calcFrozenWidth = () => {
+    // xOffsetFlag 是否需要计算序列号的宽度
+    private calcFrozenWidth = (xOffsetFlag: boolean = true) => {
         if (this.frozenColCount > 0) {
             const frozenFristRow = this.sheetData[0]
             if (frozenFristRow) {
-                const colCell = frozenFristRow[this.frozenColCount - 1]
-                if (colCell) {
-                    return colCell.x + colCell.width - this.xOffset
+                const lastColCell = frozenFristRow[this.frozenColCount - 1]
+                if (lastColCell) {
+                    return lastColCell.x + lastColCell.width - (xOffsetFlag ? this.xOffset : 0)
                 }
             }
         }
@@ -194,6 +206,8 @@ class Sheet {
         if (!isFrozenRowCount) return
         const sheetData = this.sheetData
         const canvasContext = this.options.canvasContext
+        // 记住冻结行到达的最大Y坐标，选中区域时用来判断当前鼠标的坐标是否在冻结区域
+        let maxY = 0;
         canvasContext.beginPath()
         // 绘制冻结行头
         for (let i = 0; i < this.frozenRowCount; i++) {
@@ -211,8 +225,15 @@ class Sheet {
                 }
                 cell.backgroundColor = cell.backgroundColor || '#E1FFFF'
                 this.pointCell(cell, undefined, cell.y)
+                // 冻结的最后一行，更新maxY
+                if (i === this.frozenRowCount - 1) {
+                    if (cell.y + cell.height > maxY) {
+                        maxY = cell.y + cell.height
+                    }
+                }
             }
         }
+        this.frozenInfo.row.endY = maxY
         canvasContext.strokeStyle = "#ccc"
         canvasContext.closePath()
         canvasContext.stroke()
@@ -224,6 +245,8 @@ class Sheet {
         const horizontal = this.scrollBar.getHorizontal()
         const vertical = this.scrollBar.getVertical()
         const canvasContext = this.options.canvasContext
+        // 记住冻结列到达的最大X坐标，选中区域时用来判断当前鼠标的坐标是否在冻结区域
+        let maxX = 0;
         canvasContext.beginPath()
         // 绘制冻结行头
         for (let i = startRowIndex; i <= endRowIndex; i++) {
@@ -245,8 +268,15 @@ class Sheet {
                 }
                 cell.backgroundColor = cell.backgroundColor || '#E1FFFF'
                 this.pointCell(cell, cell.x, y)
+                // 冻结的最后一行，更新maxY
+                if (j === this.frozenColCount - 1) {
+                    if (cell.x + cell.width > maxX) {
+                        maxX = cell.x + cell.width
+                    }
+                }
             }
         }
+        this.frozenInfo.col.endX = maxX
         canvasContext.strokeStyle = "#ccc"
         canvasContext.closePath()
         canvasContext.stroke()
@@ -367,22 +397,31 @@ class Sheet {
     }
     private pointSelectedRange = (isBody: boolean) => {
         // 如果是body 同时点击到了冻结直接返回
-        if (isBody && (this.selectedRangeInFrozenRow || this.selectedRangeInFrozenCol)) {
-            return
-        }
-        if (!isBody && !this.selectedRangeInFrozenRow && !this.selectedRangeInFrozenCol) {
-            return
-        }
+        // if (isBody && (this.selectedRangeInFrozenRow || this.selectedRangeInFrozenCol)) {
+        //     return
+        // }
+        // if (!isBody && !this.selectedRangeInFrozenRow && !this.selectedRangeInFrozenCol) {
+        //     return
+        // }
         let scrollLeft = this.scrollBar.getHorizontal().scrollLeft
         let scrollTop = this.scrollBar.getVertical().scrollTop
+        const frozenColX = this.calcFrozenWidth(false)
+        const frozenRowY = this.calcFrozenHeight(false)
         // 如果点击区域是冻结区域，选中区域也需要冻结
-        if (!isBody) {
-            if (this.selectedRangeInFrozenRow) {
-                scrollTop = 0
-            }
-            if (this.selectedRangeInFrozenCol) {
-                scrollLeft = 0
-            }
+        // if (!isBody) {
+        //     if (this.selectedRangeInFrozenRow) {
+        //         scrollTop = 0
+        //     }
+        //     if (this.selectedRangeInFrozenCol) {
+        //         scrollLeft = 0
+        //     }
+        // }
+        if (this.selectedRangeInFrozenRow) {
+            scrollTop = 0
+        }
+        if (this.selectedRangeInFrozenCol) {
+            scrollLeft = 0
+
         }
         if (this.selectedRange.length) {
             const selected: any = {
@@ -405,6 +444,30 @@ class Sheet {
                     }
                 }
             }
+            // 选中区域跨冻结和body，需要减去scrollTop，避免滚动时选中区域高度错误
+            //  && this.selectedRange[2] >= this.frozenRowCount
+            if (this.selectedRangeInFrozenRow) {
+                selected.height -= this.scrollBar.getVertical().scrollTop
+                if (selected.height <= this.selectedCell.height) {
+                    selected.height = this.selectedCell.height
+                }
+            // 选中区域超出上侧冻结区域需要隐藏 做截取操作
+            } else if(selected.y < frozenRowY){
+                selected.top = false
+                let st = this.scrollBar.getVertical().scrollTop
+                let cellBottomY = selected.y + selected.height
+                if(selected.y - st < frozenRowY && cellBottomY >= frozenRowY) {
+                    let topMore = frozenRowY - selected.y
+                    let newY = selected.y + topMore
+                    selected.y = newY
+                    selected.height -= topMore
+                } else if(cellBottomY < frozenRowY) {
+                    selected.bottom = false
+                }
+            }
+
+
+
             for (let j = this.selectedRange[1]; j <= this.selectedRange[3]; j++) {
                 let rowNum = this.selectedRange[0]
                 const cell = this.sheetData[rowNum][j]
@@ -412,17 +475,71 @@ class Sheet {
                     selected.width += cell.width
                 }
             }
+            // 选中区域跨冻结和body，需要减去scrollLeft，避免滚动时选中区域宽度错误
+            //  && this.selectedRange[3] >= this.frozenColCount
+            if (this.selectedRangeInFrozenCol) {
+                selected.width -= this.scrollBar.getHorizontal().scrollLeft
+                if (selected.width <= this.selectedCell.width) {
+                    selected.width = this.selectedCell.width
+                }
+            // 选中区域超出左侧冻结区域需要隐藏 做截取操作
+            } else if (selected.x < frozenColX) {
+                selected.left = false
+                let sl = this.scrollBar.getHorizontal().scrollLeft
+                let cellRightX = selected.x + selected.width
+                if(selected.x - sl < frozenColX && cellRightX >= frozenColX) {
+                    let leftMore = frozenColX - selected.x
+                    let newX = selected.x + leftMore
+                    selected.x = newX
+                    selected.width -= leftMore
+                } else if(cellRightX < frozenColX) {
+                    selected.right = false
+                }
+            }
             const canvasContext = this.options.canvasContext
+            
             for(let i = this.selectedRange[0]; i <= this.selectedRange[2]; i++) {
                 for(let j = this.selectedRange[1]; j <= this.selectedRange[3]; j++) {
                     if (i != this.selectedCell.range[0] || j != this.selectedCell.range[1]) {
                         const cell = this.getCellByRowCol(i, j)
                         if (!cell.pointer) {
+                            let sl = this.scrollBar.getHorizontal().scrollLeft
+                            let st = this.scrollBar.getVertical().scrollTop
+                            let wid = cell.width
+                            let hei = cell.height
+                            let x = cell.x
+                            let y = cell.y
+                            if(getCellInFrozenByIndex(i, j, this) === 'row') {
+                                st = 0;
+                            }else {
+                                y -= st
+                                // const frozenRowY = this.calcFrozenHeight(false)
+                                let cellBottomY = cell.y + cell.height
+                                if(cell.y+hei-st <= frozenRowY) {
+                                    continue;
+                                }else if(cell.y - st < frozenRowY && cellBottomY - st > frozenRowY) {
+                                    y = frozenRowY
+                                    hei = cellBottomY - st - frozenRowY
+                                }
+                            }
+                            if(getCellInFrozenByIndex(i, j, this) === 'col') {
+                                sl = 0  
+                            }else {
+                                x -=sl
+                                // const frozenColX = this.calcFrozenWidth(false)
+                                let cellRightX = cell.x + cell.width
+                                if(cell.x+wid-sl <= frozenColX) {
+                                    continue;
+                                }else if(cell.x - sl < frozenColX && cellRightX - sl > frozenColX) {
+                                    x = frozenColX
+                                    wid = cellRightX - sl - frozenColX
+                                }
+                            }
                             this.paintCellBgColor(
-                                cell.x - scrollLeft,
-                                cell.y - scrollTop,
-                                cell.width,
-                                cell.height,
+                                x,
+                                y,
+                                wid,
+                                hei,
                                 null,
                                 'rgba(0, 0, 0, 0.2)'
                             )
@@ -430,18 +547,26 @@ class Sheet {
                     }
                 }
             }
+            if (selected.right === false || selected.bottom === false) {
+                return
+            }
             // 绘制线段
             canvasContext.beginPath()
-            canvasContext.lineWidth = 2;
-            canvasContext.strokeStyle = '#227346';
-            canvasContext.moveTo(selected.x - 1, selected.y)
-            canvasContext.lineTo(selected.x + selected.width + 2, selected.y)
+            canvasContext.lineWidth = 2
+            canvasContext.strokeStyle = '#227346'
 
+            if (selected.top !== false) {
+                canvasContext.moveTo(selected.x - 1, selected.y)
+                canvasContext.lineTo(selected.x + selected.width + 2, selected.y)
+            }
+            
             canvasContext.moveTo(selected.x - 1, selected.y + selected.height + 1)
             canvasContext.lineTo(selected.x + selected.width - 3, selected.y + selected.height + 1)
 
-            canvasContext.moveTo(selected.x, selected.y)
-            canvasContext.lineTo(selected.x, selected.y + selected.height)
+            if (selected.left !== false) {
+                canvasContext.moveTo(selected.x, selected.y)
+                canvasContext.lineTo(selected.x, selected.y + selected.height)
+            }
 
             canvasContext.moveTo(selected.x + selected.width + 1, selected.y)
             canvasContext.lineTo(selected.x + selected.width + 1, selected.y + selected.height - 3)
@@ -487,7 +612,7 @@ class Sheet {
         this.pointBody(pointCellMap, startRowIndex, endRowIndex, startColIndex, endColIndex)
 
         // 绘制body区域选中效果
-        this.pointSelectedRange(true)
+        // this.pointSelectedRange(true)
         canvasContext.lineWidth = 1
         // 冻结列头
         this.pointFrozenCol(startRowIndex, endRowIndex, pointCellMap)
