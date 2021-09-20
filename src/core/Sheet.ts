@@ -133,7 +133,7 @@ class Sheet {
             const frozenRowIndex = this.frozenRowCount - 1
             const frozenLastRow = this.sheetData[frozenRowIndex]
             if (frozenLastRow) {
-                return frozenLastRow[0].y + frozenLastRow[0].height - (yOffsetFlag ? this.yOffset: 0)
+                return frozenLastRow[0].y + frozenLastRow[0].height - (yOffsetFlag ? this.yOffset : 0)
             }
         }
         return 0
@@ -395,34 +395,12 @@ class Sheet {
             canvasContext.stroke()
         }
     }
-    private pointSelectedRange = (isBody: boolean) => {
-        // 如果是body 同时点击到了冻结直接返回
-        // if (isBody && (this.selectedRangeInFrozenRow || this.selectedRangeInFrozenCol)) {
-        //     return
-        // }
-        // if (!isBody && !this.selectedRangeInFrozenRow && !this.selectedRangeInFrozenCol) {
-        //     return
-        // }
-        let scrollLeft = this.scrollBar.getHorizontal().scrollLeft
-        let scrollTop = this.scrollBar.getVertical().scrollTop
+    private pointSelectedRange = () => {
+        const scrollLeft = this.scrollBar.getHorizontal().scrollLeft
+        const scrollTop = this.scrollBar.getVertical().scrollTop
         const frozenColX = this.calcFrozenWidth(false)
         const frozenRowY = this.calcFrozenHeight(false)
-        // 如果点击区域是冻结区域，选中区域也需要冻结
-        // if (!isBody) {
-        //     if (this.selectedRangeInFrozenRow) {
-        //         scrollTop = 0
-        //     }
-        //     if (this.selectedRangeInFrozenCol) {
-        //         scrollLeft = 0
-        //     }
-        // }
-        if (this.selectedRangeInFrozenRow) {
-            scrollTop = 0
-        }
-        if (this.selectedRangeInFrozenCol) {
-            scrollLeft = 0
 
-        }
         if (this.selectedRange.length) {
             const selected: any = {
                 x: null,
@@ -437,35 +415,33 @@ class Sheet {
                 if (cell && !cell.pointer) {
                     selected.height += cell.height
                     if (selected.x === null) {
-                        selected.x = cell.x - scrollLeft
+                        // 如果选中的是冻结区域不需要减去scrollLeft
+                        selected.x = cell.x - (this.selectedRangeInFrozenCol ? 0 : scrollLeft)
                     }
                     if (selected.y === null) {
-                        selected.y = cell.y - scrollTop
+                        selected.y = cell.y - (this.selectedRangeInFrozenRow ? 0 : scrollTop)
                     }
                 }
             }
             // 选中区域跨冻结和body，需要减去scrollTop，避免滚动时选中区域高度错误
-            //  && this.selectedRange[2] >= this.frozenRowCount
             if (this.selectedRangeInFrozenRow) {
-                selected.height -= this.scrollBar.getVertical().scrollTop
+                selected.height -= scrollTop
                 if (selected.height <= this.selectedCell.height) {
                     selected.height = this.selectedCell.height
                 }
-            // 选中区域超出上侧冻结区域需要隐藏 做截取操作
-            } else if(selected.y < frozenRowY){
+                // 选中区域超出上侧冻结区域需要隐藏 做截取操作
+            } else if (selected.y < frozenRowY) {
                 selected.top = false
-                let st = this.scrollBar.getVertical().scrollTop
                 let cellBottomY = selected.y + selected.height
-                if(selected.y - st < frozenRowY && cellBottomY >= frozenRowY) {
+                if (selected.y - scrollTop < frozenRowY && cellBottomY >= frozenRowY) {
                     let topMore = frozenRowY - selected.y
                     let newY = selected.y + topMore
                     selected.y = newY
                     selected.height -= topMore
-                } else if(cellBottomY < frozenRowY) {
+                } else if (cellBottomY < frozenRowY) {
                     selected.bottom = false
                 }
             }
-
 
 
             for (let j = this.selectedRange[1]; j <= this.selectedRange[3]; j++) {
@@ -476,61 +452,61 @@ class Sheet {
                 }
             }
             // 选中区域跨冻结和body，需要减去scrollLeft，避免滚动时选中区域宽度错误
-            //  && this.selectedRange[3] >= this.frozenColCount
             if (this.selectedRangeInFrozenCol) {
-                selected.width -= this.scrollBar.getHorizontal().scrollLeft
+                selected.width -= scrollLeft
                 if (selected.width <= this.selectedCell.width) {
                     selected.width = this.selectedCell.width
                 }
-            // 选中区域超出左侧冻结区域需要隐藏 做截取操作
+                // 选中区域超出左侧冻结区域需要隐藏 做截取操作
             } else if (selected.x < frozenColX) {
                 selected.left = false
-                let sl = this.scrollBar.getHorizontal().scrollLeft
                 let cellRightX = selected.x + selected.width
-                if(selected.x - sl < frozenColX && cellRightX >= frozenColX) {
+                if (selected.x - scrollLeft < frozenColX && cellRightX >= frozenColX) {
                     let leftMore = frozenColX - selected.x
                     let newX = selected.x + leftMore
                     selected.x = newX
                     selected.width -= leftMore
-                } else if(cellRightX < frozenColX) {
+                } else if (cellRightX < frozenColX) {
                     selected.right = false
                 }
             }
             const canvasContext = this.options.canvasContext
-            
-            for(let i = this.selectedRange[0]; i <= this.selectedRange[2]; i++) {
-                for(let j = this.selectedRange[1]; j <= this.selectedRange[3]; j++) {
+
+            for (let i = this.selectedRange[0]; i <= this.selectedRange[2]; i++) {
+                for (let j = this.selectedRange[1]; j <= this.selectedRange[3]; j++) {
                     if (i != this.selectedCell.range[0] || j != this.selectedCell.range[1]) {
                         const cell = this.getCellByRowCol(i, j)
                         if (!cell.pointer) {
-                            let sl = this.scrollBar.getHorizontal().scrollLeft
-                            let st = this.scrollBar.getVertical().scrollTop
+                            let sl = scrollLeft
+                            let st = scrollTop
                             let wid = cell.width
                             let hei = cell.height
                             let x = cell.x
                             let y = cell.y
-                            if(getCellInFrozenByIndex(i, j, this) === 'row') {
+                            if (getCellInFrozenByIndex(i, j, this) === 'row') {
                                 st = 0;
-                            }else {
+                            } else {
                                 y -= st
-                                // const frozenRowY = this.calcFrozenHeight(false)
                                 let cellBottomY = cell.y + cell.height
-                                if(cell.y+hei-st <= frozenRowY) {
+                                // 往上滚动，当前选中的单元格超过冻结区域时不需要绘制
+                                if (cell.y + hei - st <= frozenRowY) {
                                     continue;
-                                }else if(cell.y - st < frozenRowY && cellBottomY - st > frozenRowY) {
+                                // 往上滚动，卡在冻结区域和body各一半时需要重新计算选中的单元格高度和当前单元格y坐标
+                                } else if (cell.y - st < frozenRowY && cellBottomY - st > frozenRowY) {
                                     y = frozenRowY
                                     hei = cellBottomY - st - frozenRowY
                                 }
                             }
-                            if(getCellInFrozenByIndex(i, j, this) === 'col') {
-                                sl = 0  
-                            }else {
-                                x -=sl
-                                // const frozenColX = this.calcFrozenWidth(false)
+                            if (getCellInFrozenByIndex(i, j, this) === 'col') {
+                                sl = 0
+                            } else {
+                                x -= sl
                                 let cellRightX = cell.x + cell.width
-                                if(cell.x+wid-sl <= frozenColX) {
+                                // 往左滚动，当前选中的单元格超过冻结区域时不需要绘制
+                                if (cell.x + wid - sl <= frozenColX) {
                                     continue;
-                                }else if(cell.x - sl < frozenColX && cellRightX - sl > frozenColX) {
+                                // 往左滚动，卡在冻结区域和body各一半时需要重新计算选中的单元格宽度和当前单元格x坐标
+                                } else if (cell.x - sl < frozenColX && cellRightX - sl > frozenColX) {
                                     x = frozenColX
                                     wid = cellRightX - sl - frozenColX
                                 }
@@ -547,6 +523,7 @@ class Sheet {
                     }
                 }
             }
+            // 滚动超出左侧 或者 上方时选中区域不需要绘制
             if (selected.right === false || selected.bottom === false) {
                 return
             }
@@ -555,11 +532,12 @@ class Sheet {
             canvasContext.lineWidth = 2
             canvasContext.strokeStyle = '#227346'
 
+            // 选中区域边框超出上方冻结区域时 不需要绘制
             if (selected.top !== false) {
                 canvasContext.moveTo(selected.x - 1, selected.y)
                 canvasContext.lineTo(selected.x + selected.width + 2, selected.y)
             }
-            
+
             canvasContext.moveTo(selected.x - 1, selected.y + selected.height + 1)
             canvasContext.lineTo(selected.x + selected.width - 3, selected.y + selected.height + 1)
 
@@ -611,8 +589,6 @@ class Sheet {
         // 绘制table部分
         this.pointBody(pointCellMap, startRowIndex, endRowIndex, startColIndex, endColIndex)
 
-        // 绘制body区域选中效果
-        // this.pointSelectedRange(true)
         canvasContext.lineWidth = 1
         // 冻结列头
         this.pointFrozenCol(startRowIndex, endRowIndex, pointCellMap)
@@ -621,7 +597,7 @@ class Sheet {
         this.pointFrozenRow(startColIndex - this.frozenColCount, endColIndex, pointCellMap)
 
         // 绘制冻结区域选中效果
-        this.pointSelectedRange(false)
+        this.pointSelectedRange()
         canvasContext.lineWidth = 1
 
         // 头部列标

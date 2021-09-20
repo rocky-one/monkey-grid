@@ -283,3 +283,22 @@ function ABCToNum(a) {
 const columeHeader_word = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 const columeHeader_word_index = { 'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5, 'G': 6, 'H': 7, 'I': 8, 'J': 9, 'K': 10, 'L': 11, 'M': 12, 'N': 13, 'O': 14, 'P': 15, 'Q': 16, 'R': 17, 'S': 18, 'T': 19, 'U': 20, 'V': 21, 'W': 22, 'X': 23, 'Y': 24, 'Z': 25 }
 
+/**
+ * @desc 根据选中区域循环sheetData
+ * @param selectedRange 
+ * @param sheetData 
+ * @param cb 
+ */
+export function forEachSheetDataBySelectedRange(selectedRange: number[], sheetData: any, cb: Function, pointerFlag: boolean = true) {
+    if (selectedRange.length) {
+        for(let i = selectedRange[0]; i <= selectedRange[2]; i++) {
+            for (let j = selectedRange[1]; j <= selectedRange[3]; j++) {
+                let cell = sheetData[i][j]
+                if (pointerFlag && cell.pointer) {
+                    cell = sheetData[cell.pointer[0]][cell.pointer[1]]
+                }
+                cb(cell, i, j)
+            }
+        }
+    }
+}

@@ -19,22 +19,20 @@ for(let i = 0;i<rowLen;i++){
 // data[5][3].colspan = 4
 // data[7][3].rowspan = 3
 // data[7][3].colspan = 3
+console.log(document.getElementById('tableBox'),'d')
 const mG = new MonkeyGrid({
-	container: document.getElementById('app'),
+	container: document.getElementById('tableBox'),
 	width: 800,
 	height: 600,
-	// data: data,
 	order: true,
 	headerOrder: true,
 	frozenRowCount: 1,
 	frozenColCount: 2
 })
-const sheet = mG.addSheet('sheet1', rowLen, colLen)
+const sheet = mG.addSheet('sheet1', rowLen+20, colLen+20)
 sheet.setMergeCells(1, 1, 30, 1)
 sheet.setMergeCells(5, 3, 5, 8)
 sheet.setMergeCells(7, 3, 10, 6)
 console.log(sheet.sheetData, '3')
 sheet.addTable('table1', 0, 0, data)
 sheet.point()
-// const box = document.getElementById('app')
-// console.log(box.scrollHeight, box.clientHeight, 333)

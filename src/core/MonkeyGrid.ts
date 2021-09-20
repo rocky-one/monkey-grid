@@ -7,6 +7,8 @@ import { mouseDown, mouseEvent, mouseMove, mouseUp, removeMouseMove } from '../e
 import { getPixelRatio, getObjectAttrDefault, findCellByXY, inFrozenRowByXY, inFrozenColByXY, throllte } from '../utils/helper'
 // import { FOOTER_HEIGHT, RIGHT_SCROLL_WIDTH, LEFT_ORDER_WIDTH, HEADER_ORDER_HEIGHT } from './const'
 import '../style/app.less'
+import watch from '../event/watch'
+import keyBoardInit from '../event/keyBoard'
 
 /**
  * @desc options参数描述
@@ -21,7 +23,9 @@ class MonkeyGrid {
         this.layout = layout(this.optContainer, this.width, this.height)
         this.init()
         this.createSheetTabs()
-
+        watch(this, 'selectedSheetIndex', () => {
+            keyBoardInit(this.getSheet())
+        })
     }
     options: OptionsInterface
     optContainer: HTMLElement
@@ -34,7 +38,7 @@ class MonkeyGrid {
     layout: any
     hooks: Object = {}
     ratio: number = 1
-    selectedSheetIndex: number = 0
+    selectedSheetIndex: number = -1
     mouseDownFlag: boolean = false
     public addSheet = (name: string, rowCount: number, colCount: number) => {
         const sheet = new Sheet({
@@ -56,8 +60,8 @@ class MonkeyGrid {
         this.selectedSheetIndex = this.sheets.length - 1
         return sheet
     }
-    public getSheet = (name: string) => {
-        // return this.sheets[index]
+    public getSheet = () => {
+        return this.sheets[this.selectedSheetIndex]
     }
     public removeSheet = (name: string) => {
         const index = this.sheets.find(item => item.sheetName === name)
