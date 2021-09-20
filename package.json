@@ -20,7 +20,7 @@
     "@loadable/component": "^5.10.3",
     "antd": "^3.19.3",
     "antd-iconfont": "^3.0.3",
-    "axios": "^0.18.0",
+    "axios": "^0.21.2",
     "babel-polyfill": "^6.26.0",
     "classnames": "^2.2.5",
     "codemirror": "^5.39.2",
