@@ -2,6 +2,8 @@ import Table from './Table'
 import { SheetOptions, PointRange } from '../interface/SheetInterface'
 import { setSheetRowColCount, insertTableDataToSheet, setLeftTopByFrozenData, numToABC } from './utils/sheetUtils'
 import ScrollBar from '../scrollBar/ScrollBar'
+import CreateTextarea from './CreateTextarea'
+import watch from '../event/watch'
 import { calcStartRowIndex, calcEndRowIndex, calcStartColIndex, calcEndColIndex, getCellInFrozenByIndex } from '../utils/helper'
 import { ROW_HEIGHT, COL_WIDTH, FOOTER_HEIGHT, RIGHT_SCROLL_WIDTH, LEFT_ORDER_WIDTH, HEADER_ORDER_HEIGHT } from './const'
 class Sheet {
@@ -24,6 +26,22 @@ class Sheet {
         this.setRowColCount(options.rowCount, options.colCount)
         this.calcClientWidthHeight()
         this.initScroll()
+        this.textareaInstance = new CreateTextarea({
+            container: this.options.layout.container
+        })
+        watch(this, 'selectedCell', () => {
+            console.log('change cell')
+            const cell = this.selectedCell
+            this.textareaInstance.resetPosition({
+                width: cell.width,
+                height: cell.height,
+                left: cell.x,
+                top: cell.y,
+                scrollLeft: this.scrollBar.getHorizontal().scrollLeft,
+                scrollTop: this.scrollBar.getVertical().scrollTop
+            })
+            this.textareaInstance.setValue(this.selectedCell.value)
+        })
     }
     tables: any[]
     rowsHeight: number[] = []
@@ -68,6 +86,7 @@ class Sheet {
     selectedRangeInFrozenCol: boolean // 当前选中区域是否在冻结列内
     selectedCell: any = null
     selectedMoveRange: any = [null, null, null, null]
+    textareaInstance: any = null
     public addTable = (name: string, row: number, col: number, dataSource: any[]) => {
         const table = new Table({
             name,
@@ -99,7 +118,7 @@ class Sheet {
         return cells
     }
     public getCellByRowCol = (row: number, col: number) => {
-        return this.sheetData[row][col];
+        return this.sheetData[row][col]
     }
     public setSheetName = (name: string) => {
         this.sheetName = name
@@ -125,6 +144,23 @@ class Sheet {
     // 设置列高
     public setColsWidth = (cols = []) => {
         cols.forEach(item => this.colsWidth[item.col] = item.width)
+    }
+    private nextTick = (callback: Function, flag: string | number = Math.random()) => {
+        if (!this[flag]) {
+            const p = Promise.resolve()
+            p.then(() => {
+                callback()
+                this[flag] = null
+                delete this[flag]
+            })
+            this[flag] = true;
+        }
+        
+    }
+    // 设置单元格值
+    public setCellValue = (row: number, col: number, value: any) => {
+        this.sheetData[row][col].value = value
+        this.nextTick(this.point)
     }
     // 计算冻结行高
     // yOffsetFlag 是否需要计算序列号的高度

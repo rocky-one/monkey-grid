@@ -9,7 +9,6 @@ import { getPixelRatio, getObjectAttrDefault, findCellByXY, inFrozenRowByXY, inF
 import '../style/app.less'
 import watch from '../event/watch'
 import keyBoardInit from '../event/keyBoard'
-
 /**
  * @desc options参数描述
  * order 是否有序号 true | false
@@ -103,7 +102,7 @@ class MonkeyGrid {
                 sheet.selectedRange = [...cell.range]
                 sheet.selectedCell = cell
             }
-            sheet.point()
+            sheet.point()            
         })
         const moveFn = this.onMouseMove()
         mouseMove(this.layout.canvas, moveFn)

@@ -10,10 +10,13 @@ export const createCanvas = (attrs = {}) => {
  * @param {*} tag 
  * @param {object} attrs 属性
  */
-export const createDom = (tag, attrs = {}) => {
+export const createDom = (tag, attrs = {}, style = {}) => {
     let dom = document.createElement(tag)
     Object.keys(attrs).forEach(k => {
         dom.setAttribute(k, attrs[k])
+    })
+    Object.keys(style).forEach(k => {
+        dom.style[k] = style[k]
     })
     return dom
 }
