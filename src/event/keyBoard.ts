@@ -108,12 +108,9 @@ function paste(event: any) {
 document.addEventListener('paste', paste);
 
 
-
 keyboardJS.bind('', (e) => {
 	const keyCode = e.keyCode
-	keyBoardData.sheet.textareaInstance.setValue('eeee');
-	console.log(e, keyCode, 'any key was pressed');
-  });
+});
 
 export default function keyBoardInit(sheet: any) {
 	keyBoardData.sheet = sheet

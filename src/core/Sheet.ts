@@ -30,7 +30,6 @@ class Sheet {
             container: this.options.layout.container
         })
         watch(this, 'selectedCell', () => {
-            console.log('change cell')
             const cell = this.selectedCell
             this.textareaInstance.resetPosition({
                 width: cell.width,
