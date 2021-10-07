@@ -45,13 +45,18 @@ const getClipboardData = (clipboardData: any) => {
 				break;
 			}
 		}
-		let prows = txt.split(lineWarp)
-		// 解决web端和Excel端读取剪切板数据的差异性
-		for (let i = 0; i < prows.length; i++) {
-			copyData[i] = prows[i].split('\t').map(v => {
-				return v.replace(/^\"|\"$/g, '')
-			});
+		if (lineWarp) {
+			let prows = txt.split(lineWarp)
+			// 解决web端和Excel端读取剪切板数据的差异性
+			for (let i = 0; i < prows.length; i++) {
+				copyData[i] = prows[i].split('\t').map(v => {
+					return v.replace(/^\"|\"$/g, '')
+				});
+			}
+		} else {
+			copyData[0] = [txt]
 		}
+		
 		let height = copyData.length || 0,
 			width = copyData[0].length || 0
 		return {
@@ -64,6 +69,7 @@ const getClipboardData = (clipboardData: any) => {
 keyboardJS.bind('command + c', (e) => {
 	const sheet = keyBoardData.sheet
 	if (!sheet) return
+	// if (sheet.textareaInstance.isFocus) return
 	const selectedRange = sheet.selectedRange
 	const sheetData = sheet.sheetData
 	let value = ''
@@ -105,11 +111,29 @@ function paste(event: any) {
 	// event.preventDefault();
 }
 
-document.addEventListener('paste', paste);
+// document.addEventListener('paste', paste);
 
+// 当获取到焦点时 不需要响应的键盘按键
+const noInputCodeMap = {
+	9: '右箭头@',
+	20: '中英文',
+	16: 'shift',
+	17: 'control',
+	18: 'option',
+	91: 'command',
+	13: '回车',
+	38: '上',
+	40: '下',
+	37: '左',
+	39: '右'
+}
 
 keyboardJS.bind('', (e) => {
 	const keyCode = e.keyCode
+	// 选中一个单元格 直接录入时 需要清空单元格value
+	if (!keyBoardData.sheet.textareaInstance.isShow && !noInputCodeMap[keyCode]) {
+		keyBoardData.sheet.textareaInstance.setValue('')
+	}
 });
 
 export default function keyBoardInit(sheet: any) {

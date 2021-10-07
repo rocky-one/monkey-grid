@@ -1,6 +1,6 @@
 import Table from './Table'
 import { SheetOptions, PointRange } from '../interface/SheetInterface'
-import { setSheetRowColCount, insertTableDataToSheet, setLeftTopByFrozenData, numToABC } from './utils/sheetUtils'
+import { setSheetRowColCount, insertTableDataToSheet, setLeftTopByFrozenData, numToABC, setWidthHeightByMergeCells } from './utils/sheetUtils'
 import ScrollBar from '../scrollBar/ScrollBar'
 import CreateTextarea from './CreateTextarea'
 import watch from '../event/watch'
@@ -27,19 +27,12 @@ class Sheet {
         this.calcClientWidthHeight()
         this.initScroll()
         this.textareaInstance = new CreateTextarea({
-            container: this.options.layout.container
+            container: this.options.layout.container,
+            sheet: this
         })
         watch(this, 'selectedCell', () => {
-            const cell = this.selectedCell
-            this.textareaInstance.resetPosition({
-                width: cell.width,
-                height: cell.height,
-                left: cell.x,
-                top: cell.y,
-                scrollLeft: this.scrollBar.getHorizontal().scrollLeft,
-                scrollTop: this.scrollBar.getVertical().scrollTop
-            })
-            this.textareaInstance.setValue(this.selectedCell.value)
+            this.textareaInstance.hide()
+            this.textareaInstance.changeSelectedCell(this)
         })
     }
     tables: any[]
@@ -86,6 +79,7 @@ class Sheet {
     selectedCell: any = null
     selectedMoveRange: any = [null, null, null, null]
     textareaInstance: any = null
+    isDbClick: boolean = false
     public addTable = (name: string, row: number, col: number, dataSource: any[]) => {
         const table = new Table({
             name,
@@ -133,6 +127,13 @@ class Sheet {
     public setMergeCells = (row: number, col: number, endRow: number, endCol: number) => {
         this.mergeCells[`${row}${col}`] = [endRow - row, endCol - col]
     }
+    public setMergeCellsByRange = () => {
+        if (this.selectedRange.length) {
+            this.setMergeCells(this.selectedRange[0], this.selectedRange[1], this.selectedRange[2], this.selectedRange[3])
+            setWidthHeightByMergeCells(this.selectedRange[0], this.selectedRange[1], this.selectedCell, this.sheetData, this.mergeCells)
+            this.point()
+        }
+    }
     public removeMergeCells = () => {
 
     }
@@ -157,9 +158,9 @@ class Sheet {
         
     }
     // 设置单元格值
-    public setCellValue = (row: number, col: number, value: any) => {
+    public setCellValue = (row: number, col: number, value: any, point: boolean = true) => {
         this.sheetData[row][col].value = value
-        this.nextTick(this.point)
+        point && this.nextTick(this.point)
     }
     // 计算冻结行高
     // yOffsetFlag 是否需要计算序列号的高度
@@ -259,7 +260,7 @@ class Sheet {
                     cell = sheetData[cell.pointer[0]][cell.pointer[1]]
                 }
                 cell.backgroundColor = cell.backgroundColor || '#E1FFFF'
-                this.pointCell(cell, undefined, cell.y)
+                this.pointCell(cell, undefined, cell.y, i, j)
                 // 冻结的最后一行，更新maxY
                 if (i === this.frozenRowCount - 1) {
                     if (cell.y + cell.height > maxY) {
@@ -302,7 +303,7 @@ class Sheet {
                     x -= horizontal.scrollLeft
                 }
                 cell.backgroundColor = cell.backgroundColor || '#E1FFFF'
-                this.pointCell(cell, cell.x, y)
+                this.pointCell(cell, cell.x, y, i, j)
                 // 冻结的最后一行，更新maxY
                 if (j === this.frozenColCount - 1) {
                     if (cell.x + cell.width > maxX) {
@@ -335,7 +336,7 @@ class Sheet {
                     pointCellMap[`${cell.pointer[0]}${cell.pointer[1]}`] = true
                     cell = sheetData[cell.pointer[0]][cell.pointer[1]]
                 }
-                this.pointCell(cell)
+                this.pointCell(cell, undefined, undefined, i, j)
             }
         }
         canvasContext.strokeStyle = "#ccc"
@@ -435,7 +436,6 @@ class Sheet {
         const scrollTop = this.scrollBar.getVertical().scrollTop
         const frozenColX = this.calcFrozenWidth(false)
         const frozenRowY = this.calcFrozenHeight(false)
-
         if (this.selectedRange.length) {
             const selected: any = {
                 x: null,
@@ -444,22 +444,30 @@ class Sheet {
                 height: 0,
                 fristCell: null
             }
+            let isFrozenCol = false
+            let isFrozenRow = false
             for (let i = this.selectedRange[0]; i <= this.selectedRange[2]; i++) {
                 let colNum = this.selectedRange[1]
                 const cell = this.sheetData[i][colNum]
+                if (!isFrozenCol) {
+                    isFrozenCol = getCellInFrozenByIndex(i, colNum, this) === 'col'
+                }
+                if (!isFrozenRow) {
+                    isFrozenRow = getCellInFrozenByIndex(i, colNum, this) === 'row'
+                }
                 if (cell && !cell.pointer) {
                     selected.height += cell.height
                     if (selected.x === null) {
                         // 如果选中的是冻结区域不需要减去scrollLeft
-                        selected.x = cell.x - (this.selectedRangeInFrozenCol ? 0 : scrollLeft)
+                        selected.x = cell.x - (isFrozenCol ? 0 : scrollLeft)
                     }
                     if (selected.y === null) {
-                        selected.y = cell.y - (this.selectedRangeInFrozenRow ? 0 : scrollTop)
+                        selected.y = cell.y - (isFrozenRow ? 0 : scrollTop)
                     }
                 }
             }
             // 选中区域跨冻结和body，需要减去scrollTop，避免滚动时选中区域高度错误
-            if (this.selectedRangeInFrozenRow) {
+            if (isFrozenRow) {
                 selected.height -= scrollTop
                 if (selected.height <= this.selectedCell.height) {
                     selected.height = this.selectedCell.height
@@ -478,7 +486,6 @@ class Sheet {
                 }
             }
 
-
             for (let j = this.selectedRange[1]; j <= this.selectedRange[3]; j++) {
                 let rowNum = this.selectedRange[0]
                 const cell = this.sheetData[rowNum][j]
@@ -487,7 +494,7 @@ class Sheet {
                 }
             }
             // 选中区域跨冻结和body，需要减去scrollLeft，避免滚动时选中区域宽度错误
-            if (this.selectedRangeInFrozenCol) {
+            if (isFrozenCol) {
                 selected.width -= scrollLeft
                 if (selected.width <= this.selectedCell.width) {
                     selected.width = this.selectedCell.width
@@ -591,6 +598,8 @@ class Sheet {
 
             canvasContext.closePath()
 
+            canvasContext.lineWidth = 1
+
         }
     }
     /**
@@ -631,10 +640,6 @@ class Sheet {
         // 冻结行头
         this.pointFrozenRow(startColIndex - this.frozenColCount, endColIndex, pointCellMap)
 
-        // 绘制冻结区域选中效果
-        this.pointSelectedRange()
-        canvasContext.lineWidth = 1
-
         // 头部列标
         this.pointTopOrder(startColIndex, endColIndex)
 
@@ -653,7 +658,12 @@ class Sheet {
         // 如果有行列标，绘制左上角空白区域
         this.pointLeftTopByFrozen()
 
+        // 绘制冻结区域选中效果
+        this.pointSelectedRange()
 
+        if (this.textareaInstance.isShow) {
+            this.textareaInstance.updatePosition();
+        }
 
     }
     // 绘制背景颜色 context: CanvasRenderingContext2D
@@ -695,22 +705,24 @@ class Sheet {
             this.point()
         })
     }
-    private pointCell = (cell: any, x?: number, y?: number) => {
+    private pointCell = (cell: any, x: number, y: number, row?: number, col?: number) => {
         const scrollLeft = this.scrollBar.getHorizontal().scrollLeft
         const scrollTop = this.scrollBar.getVertical().scrollTop
         const canvasContext = this.options.canvasContext
         const lineX = x !== undefined ? x : cell.x - scrollLeft
         const lineY = y !== undefined ? y : cell.y - scrollTop
-
         canvasContext.strokeStyle = '#227346';
         canvasContext.moveTo(lineX + 0.5, lineY + cell.height + 0.5)
         canvasContext.lineTo(lineX + cell.width + 0.5, lineY + cell.height + 0.5)
 
         canvasContext.moveTo(lineX + cell.width + 0.5, lineY + 0.5)
         canvasContext.lineTo(lineX + cell.width + 0.5, lineY + cell.height + 0.5)
+
+
         // 单元格背景颜色
         this.paintCellBgColor(lineX, lineY, cell.width, cell.height, cell.backgroundColor || '#FFFFFF')
 
+        
         if (cell.value) {
             let fontX = x !== undefined ? x + 4 : cell.x - scrollLeft + 4
             let fontY = y !== undefined ? y + (cell.height / 2) + (this.font / 2) : cell.y - scrollTop + (cell.height / 2) + (this.font / 2)
@@ -718,6 +730,7 @@ class Sheet {
             canvasContext.fillStyle = '#000'
             canvasContext.fillText(cell.value, fontX, fontY)
         }
+
     }
     public getRowCount() {
         return this.sheetData.length

@@ -39,6 +39,7 @@ class MonkeyGrid {
     ratio: number = 1
     selectedSheetIndex: number = -1
     mouseDownFlag: boolean = false
+    mouseDownTime: number = 0
     public addSheet = (name: string, rowCount: number, colCount: number) => {
         const sheet = new Sheet({
             name,
@@ -88,9 +89,17 @@ class MonkeyGrid {
         // canvasContext.translate(ratio, ratio)
         this.canvasContext = canvasContext
         mouseDown(this.layout.canvas, (event: Event) => {
-            this.mouseDownFlag = true
-            const {offsetX, offsetY}: any = event
+            const now = new Date().getTime()
             const sheet = this.sheets[this.selectedSheetIndex]
+            sheet.isDbClick = false
+            this.mouseDownFlag = true
+            if (now - this.mouseDownTime < 300) {
+                sheet.isDbClick = true
+                this.mouseDownFlag = false
+                console.log('双击')
+            }
+            this.mouseDownTime = now
+            const {offsetX, offsetY}: any = event
             const {sheetData, pointRange, frozenRowCount, frozenColCount} = sheet
             const inFrozenRow = inFrozenRowByXY(offsetY, frozenRowCount, sheetData)
             const inFrozenCol = inFrozenColByXY(offsetX, frozenColCount, sheetData)
@@ -109,62 +118,73 @@ class MonkeyGrid {
 
         mouseUp(this.layout.canvas, (event: Event) => {
             this.mouseDownFlag = false
+            setTimeout(() => {
+                this.mouseDownFlag = false
+                const sheet = this.sheets[this.selectedSheetIndex]
+                sheet.setMergeCellsByRange()
+            }, 100)
+            
         })
+    }
+    calcCellSelectedRange = (cell) => {
+        if(cell) {
+            const sheet = this.sheets[this.selectedSheetIndex]
+            const selectedRange = sheet.selectedRange
+            const mergeCells = sheet.mergeCells
+            const selectedCellRange = sheet.selectedCell.range
+            if(selectedCellRange) {
+                const row = cell.range[0]
+                const col = cell.range[1]
+                selectedRange[2] = row
+                selectedRange[3] = col
+                // 反方向选中
+                if(row < selectedCellRange[0]) {
+                    selectedRange[0] = row
+                    selectedRange[2] = selectedCellRange[0]
+                }
+                if(col < selectedCellRange[1]) {
+                    selectedRange[1] = col
+                    selectedRange[3] = selectedCellRange[1]
+                }
+                sheet.selectedRange = selectedRange
+            }
+            // 如果当前区域有合并单元格 需要找出最大的边界值
+            for(let i = selectedRange[0]; i <= selectedRange[2]; i++) {
+                for(let j = selectedRange[1]; j <= selectedRange[3]; j++) {
+                    const cell = sheet.sheetData[i][j]
+                    const pointer = cell.pointer || [i, j]
+                    const mergeCellEnd = mergeCells[`${pointer[0]}${pointer[1]}`]
+                    if (mergeCellEnd) {
+                        let mergeStartRow = cell.pointer ? cell.pointer[0] : i
+                        let mergeStartCol = cell.pointer ? cell.pointer[1] : j
+                        let mergeEndRow = mergeStartRow + mergeCellEnd[0]
+                        let mergeEndCol = mergeStartCol + mergeCellEnd[1]
+                        if (mergeStartRow < selectedRange[0]) {
+                            selectedRange[0] = mergeStartRow
+                        }
+                        if (mergeEndRow > selectedRange[2]) {
+                            selectedRange[2] = mergeEndRow
+                        }
+                        if (mergeStartCol < selectedRange[1]) {
+                            selectedRange[1] = mergeStartCol
+                        }
+                        if (mergeEndCol > selectedRange[3]) {
+                            selectedRange[3] = mergeEndCol
+                        }
+                        sheet.selectedRange = selectedRange
+                    }
+                }
+            }
+        }
     }
     private onMouseMove = () => {
         return throllte((event: Event) => {
             if(this.mouseDownFlag) {
                 const {offsetX, offsetY}: any = event
                 const sheet = this.sheets[this.selectedSheetIndex]
-                const cell = findCellByXY(offsetX, offsetY, sheet, false)
+                const cell = findCellByXY(offsetX, offsetY, sheet)
                 if(cell) {
-                    const row = cell.range[0]
-                    const col = cell.range[1]
-                    const selectedRange = sheet.selectedRange
-                    const mergeCells = sheet.mergeCells
-                    const selectedCellRange = sheet.selectedCell.range
-                    if(selectedCellRange) {
-                        selectedRange[2] = row
-                        selectedRange[3] = col
-                        // 反方向选中
-                        if(row < selectedCellRange[0]) {
-                            selectedRange[0] = row
-                            selectedRange[2] = selectedCellRange[0]
-                        }
-                        if(col < selectedCellRange[1]) {
-                            selectedRange[1] = col
-                            selectedRange[3] = selectedCellRange[1]
-                        }
-                        sheet.selectedRange = selectedRange
-                    }
-
-                    // 如果当前区域有合并单元格 需要找出最大的边界值
-                    for(let i = selectedRange[0]; i <= selectedRange[2]; i++) {
-                        for(let j = selectedRange[1]; j <= selectedRange[3]; j++) {
-                            const cell = sheet.sheetData[i][j]
-                            const pointer = cell.pointer || [i, j]
-                            const mergeCellEnd = mergeCells[`${pointer[0]}${pointer[1]}`]
-                            if (mergeCellEnd) {
-                                let mergeStartRow = cell.pointer ? cell.pointer[0] : i
-                                let mergeStartCol = cell.pointer ? cell.pointer[1] : j
-                                let mergeEndRow = mergeStartRow + mergeCellEnd[0]
-                                let mergeEndCol = mergeStartCol + mergeCellEnd[1]
-                                if (mergeStartRow < selectedRange[0]) {
-                                    selectedRange[0] = mergeStartRow
-                                }
-                                if (mergeEndRow > selectedRange[2]) {
-                                    selectedRange[2] = mergeEndRow
-                                }
-                                if (mergeStartCol < selectedRange[1]) {
-                                    selectedRange[1] = mergeStartCol
-                                }
-                                if (mergeEndCol > selectedRange[3]) {
-                                    selectedRange[3] = mergeEndCol
-                                }
-                                sheet.selectedRange = selectedRange
-                            }
-                        }
-                    }
+                    this.calcCellSelectedRange(cell)
                     sheet.point()
                 }
             }

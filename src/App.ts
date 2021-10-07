@@ -19,7 +19,6 @@ for(let i = 0;i<rowLen;i++){
 // data[5][3].colspan = 4
 // data[7][3].rowspan = 3
 // data[7][3].colspan = 3
-console.log(document.getElementById('tableBox'),'d')
 const mG = new MonkeyGrid({
 	container: document.getElementById('tableBox'),
 	width: 800,

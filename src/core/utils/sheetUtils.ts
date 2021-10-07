@@ -117,7 +117,6 @@ export function insertTableDataToSheet(row: number, col: number, tableData: any[
  * @param data 
  */
 export function setWidthHeightByMergeCells(row: number, col: number, cell: any, data: any[], mergeCells: any) {
-    
     if (!cell || cell.pointer) return false
     const mergeCell = mergeCells[`${row}${col}`]
     if(!mergeCell) return false
@@ -127,42 +126,22 @@ export function setWidthHeightByMergeCells(row: number, col: number, cell: any, 
     let height = 0
     let width = 0
     for (let i = row; i <= endRow; i++) {
-        height += data[i][col].height
+        const cell = data[i][col];
+        if (!cell.pointer) {
+            height +=cell.height
+        }
         for (let j = col; j <= endCol; j++) {
-            if (i === row) {
+            if (i === row && !data[i][j].pointer) {
                 width += data[i][j].width
             }
-            data[i][j] = {
-                pointer: [row, col]
+            if (i !== row || j !== col) {
+                data[i][j].pointer = [row, col]
             }
         }
     }
     leftTopCell.height = height
     leftTopCell.width = width
     data[row][col] = leftTopCell
-
-    // if (!cell || !cell.rowspan || !cell.colspan) return false
-    // let endRow = row + cell.rowspan
-    // let endCol = col + cell.colspan
-    // if (cell.rowspan > 1 || cell.colspan > 1) {
-    //     const leftTopCell = data[row][col]
-    //     let height = 0
-    //     let width = 0
-    //     for (let i = row; i < endRow; i++) {
-    //         height += data[i][col].height
-    //         for (let j = col; j < endCol; j++) {
-    //             if (i === row) {
-    //                 width += data[i][j].width
-    //             }
-    //             data[i][j] = {
-    //                 pointer: [row, col]
-    //             }
-    //         }
-    //     }
-    //     leftTopCell.height = height
-    //     leftTopCell.width = width
-    //     data[row][col] = leftTopCell
-    // }
 }
 
 
@@ -248,7 +227,6 @@ export function numToABC(n:number) {
     let ordz = 'z'.charCodeAt(0)
     let len = ordz - orda + 1
     let s = ''
-   
     while( n >= 0 ) {
         s = String.fromCharCode(n % len + orda) + s
         n = Math.floor(n / len) - 1

@@ -292,8 +292,9 @@ export function findCellByXY(x: number, y: number, sheet: any, isFindPointerOrig
                     if (cell.pointer && isFindPointerOrigin) {
                         let rowspan = cell.rowspan ? cell.rowspan - 1 : 0
                         let colspan = cell.colspan ? cell.colspan - 1 : 0
+                        const pointerCell = sheetData[cell.pointer[0]][cell.pointer[1]]
                         return {
-                            ...cell,
+                            ...pointerCell,
                             range: [cell.pointer[0], cell.pointer[1], cell.pointer[0] + rowspan, cell.pointer[1] + colspan]
                         }
                     }else {

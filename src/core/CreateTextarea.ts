@@ -1,4 +1,48 @@
 import * as domCore from '../utils/dom'
+
+// 处理剪切板数据 \n 换行   \t 下一个单元格   \r\n 换行
+const getClipboardData = (clipboardData: any) => {
+	if (clipboardData) {
+		let txt = clipboardData.getData('text')
+		let copyData = new Array()
+		if (!txt) {
+			return false
+		}
+		let lineWarp = ''
+		while (txt.length > 0) {
+			let c = txt.charAt(txt.length - 1)
+			if (c === '\n') {
+				txt = txt.substring(0, txt.length - 1)
+				lineWarp = `${c}${lineWarp}`
+			} else if (c === '\r') {
+				txt = txt.substring(0, txt.length - 1)
+				lineWarp = `${c}${lineWarp}`
+			}else {
+				break;
+			}
+		}
+		if (lineWarp) {
+			let prows = txt.split(lineWarp)
+			// 解决web端和Excel端读取剪切板数据的差异性
+			for (let i = 0; i < prows.length; i++) {
+				copyData[i] = prows[i].split('\t').map(v => {
+					return v.replace(/^\"|\"$/g, '')
+				});
+			}
+		} else {
+			copyData[0] = [txt]
+		}
+		
+		let height = copyData.length || 0,
+			width = copyData[0].length || 0
+		return {
+			copyData,
+			height,
+			width
+		}
+	}
+}
+
 /**
  * container 容器
  * blurCb 失去焦点回调
@@ -6,17 +50,15 @@ import * as domCore from '../utils/dom'
 class CreateTextarea {
     constructor(option) {
         this.option = option || {}
-        this.onCopy = option.onCopy
-        this.onPaste = option.onPaste
         this.init()
     }
     instance: any = null
     option: any = {}
-    onCopy: Function
-    onPaste: Function
     outerConainer: HTMLElement
     container: HTMLElement
     textarea: HTMLElement
+    isShow: boolean = false
+    isFocus: boolean = false
     init = () => {
         this.container = domCore.createDom('div', {}, {
             position: 'absolute',
@@ -27,7 +69,7 @@ class CreateTextarea {
             resize: 'none',
             outline: 'none',
             backgroundColor: 'white',
-            zIndex: 2000,
+            zIndex: -1,
             top: 0,
             left: 0,
             width: 0,
@@ -53,31 +95,72 @@ class CreateTextarea {
             textAlign: 'left',
             width: '100%',
             height: '100%',
-            float: 'none'
+            float: 'none',
+            fontSize: '12px'
         })
         this.container.appendChild(this.textarea)
         const con = this.outerConainer = this.option.container || document.body
         con.appendChild(this.container)
-        this.textarea.addEventListener('blur', this._blur, false)
+        this.textarea.addEventListener('blur', this.blur)
         this.textarea.addEventListener('copy', this.onCopy)
         this.textarea.addEventListener('paste', this.onPaste)
+        this.textarea.addEventListener('input', this.onChange)
     }
-    _blur = (event) => {
-        this.option.blurCb(event.target)
+    onCopy = (event) => {
+        console.log(event)
     }
-    blur = () => {
-        this.textarea.blur()
+    onPaste = (event) => {
+        const sheet = this.option.sheet
+        const clipboardData = event.clipboardData || window.clipboardData
+        const clipObj: any = getClipboardData(clipboardData)
+        const data = clipObj.copyData
+        const range = sheet.selectedCell.range
+        const row = range[0]
+        const col = range[1]
+
+        data.forEach((vals: any[], i: number) => {
+            vals.forEach((v: any, j: number) => {
+                sheet.setCellValue(row + i, j + col, v, false)
+            })
+        })
+        this.setValue(data[0][0])
+        sheet.point()
+        event.preventDefault()
+    }
+    onChange = (event) => {
+        this.show()
+        const sheet = this.option.sheet
+        sheet.setCellValue(sheet.selectedCell.range[0], sheet.selectedCell.range[1], event.target.innerText, false);
+    }
+    blur = (event) => {
+        const sheet = this.option.sheet
+        sheet.setCellValue(sheet.selectedCell.range[0], sheet.selectedCell.range[1], event.target.innerText);
+        this.isFocus = false
     }
     setValue = (value = '') => {
         if (!this.textarea) {
-          this.init()
+            this.init()
         }
-        console.log(value, 321)
         this.textarea.innerText = value
     }
     getValue = () => {
         return this.textarea.innerText
     }
+    show = () => {
+        if (this.isShow) {
+            return
+        }
+        this.isShow = true
+        this.container.style.zIndex = '2'
+    }
+    hide = () => {
+        if (!this.isShow) {
+            return
+        }
+        this.isShow = false
+        this.container.style.zIndex = '-1'
+    }
+
     focus = (checkAll = false) => {
         setTimeout(() => {
             if (window.getSelection) {//ie11 10 9 ff safari
@@ -104,10 +187,26 @@ class CreateTextarea {
                     range.select();
                 }
             }
+            this.isFocus = true
         }, 0)
     }
-    resetPosition = (style) => {
+    resetPosition = (style: any = {}) => {
         setTimeout(() => {
+            this.updatePosition(style)
+        }, 20)
+    }
+    updatePosition = (style: any) => {
+        const sheet = this.option.sheet
+            const cell = sheet.selectedCell
+            const newStyle = {
+                width: cell.width,
+                height: cell.height,
+                left: cell.x,
+                top: cell.y,
+                scrollLeft: sheet.scrollBar.getHorizontal().scrollLeft,
+                scrollTop: sheet.scrollBar.getVertical().scrollTop
+            }
+            style = Object.assign(newStyle, style)
             const heightCutFour = style.height - 5 > 0 ? style.height - 5 : 0
             const widthCutFour = style.width - 5 > 0 ? style.width - 5 : 0
             const top = style.top - style.scrollTop > 0 ? style.top - style.scrollTop : 0
@@ -135,21 +234,32 @@ class CreateTextarea {
             }
             if (width === 0) {
                 this.container.style.border = null
-                this.container.style.boxShadow = null
+                // this.container.style.boxShadow = null
             } else {
-                this.container.style.border = null//'2px solid rgb(82, 146, 247)'
-                this.container.style.boxShadow = 'rgba(0, 0, 0, 0.4) 1px 2px 5px'
+                this.container.style.border = null
+                // this.container.style.boxShadow = 'rgba(0, 0, 0, 0.4) 1px 2px 5px'
             }
-        }, 20)
+    }
+    changeSelectedCell = (sheet: any) => {
+        this.resetPosition()
+        this.setValue(sheet.selectedCell.value)
+        if (sheet.isDbClick) {
+            this.show()
+        }
+        this.focus()
     }
     destroy = () => {
-        this.textarea.removeEventListener('blur', this._blur, false)
+        this.textarea.removeEventListener('blur', this.blur)
+        this.textarea.removeEventListener('copy', this.onCopy)
+        this.textarea.removeEventListener('paste', this.onPaste)
+        this.textarea.removeEventListener('input', this.onChange)
         if (this.outerConainer && this.container) {
             this.outerConainer.removeChild(this.container)
         }
         this.container = null
         this.instance = null
         this.textarea = null
+        this.option = null
     }
     getInstance = (option) => {
         if (!this.instance) {

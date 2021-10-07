@@ -11,3 +11,7 @@ declare module '*.less' {
 declare interface Window {
     clipboardData: any
 }
+
+declare interface Document {
+    selection: any
+}
