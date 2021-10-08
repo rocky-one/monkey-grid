@@ -39,8 +39,21 @@ export interface Vertical {
 export interface VerticalEventRecord {
     mouseDownPageX: number,
     mouseDownPageY: number,
-    mouseMoveIng: Boolean,
-    mouseMoveY: number
+    mouseDownFlag: Boolean,
+    mouseMoveY: number,
+    scrollTop: number,
+    preVY: number,
+    preMoveVY: number
+}
+
+export interface HorizontalEventRecord {
+    mouseDownPageX: number,
+    mouseDownPageY: number,
+    mouseDownFlag: Boolean,
+    mouseMoveY: number,
+    scrollLeft: number,
+    preHX: number,
+    preMoveHX: number
 }
 
 export interface Horizontal {

@@ -127,28 +127,11 @@ class MonkeyGrid {
         })
     }
     calcCellSelectedRange = (cell) => {
-        if(cell) {
-            const sheet = this.sheets[this.selectedSheetIndex]
-            const selectedRange = sheet.selectedRange
-            const mergeCells = sheet.mergeCells
-            const selectedCellRange = sheet.selectedCell.range
-            if(selectedCellRange) {
-                const row = cell.range[0]
-                const col = cell.range[1]
-                selectedRange[2] = row
-                selectedRange[3] = col
-                // 反方向选中
-                if(row < selectedCellRange[0]) {
-                    selectedRange[0] = row
-                    selectedRange[2] = selectedCellRange[0]
-                }
-                if(col < selectedCellRange[1]) {
-                    selectedRange[1] = col
-                    selectedRange[3] = selectedCellRange[1]
-                }
-                sheet.selectedRange = selectedRange
-            }
-            // 如果当前区域有合并单元格 需要找出最大的边界值
+        const sheet = this.sheets[this.selectedSheetIndex]
+        const mergeCells = sheet.mergeCells
+        // 如果当前选中区域有合并单元格 找出最大边界
+        function findMergeBound(selectedRange) {
+            let lastSelectedRange = [...selectedRange].toString()
             for(let i = selectedRange[0]; i <= selectedRange[2]; i++) {
                 for(let j = selectedRange[1]; j <= selectedRange[3]; j++) {
                     const cell = sheet.sheetData[i][j]
@@ -172,9 +155,36 @@ class MonkeyGrid {
                             selectedRange[3] = mergeEndCol
                         }
                         sheet.selectedRange = selectedRange
+                        // 上一次和当前不同递归
+                        // 上一次和当前如果相同说明找到边界
+                        if(lastSelectedRange !== selectedRange.toString()) {
+                            findMergeBound(selectedRange)
+                        }
                     }
                 }
             }
+        }
+        if(cell) {
+            const selectedRange = sheet.selectedRange
+            const selectedCellRange = sheet.selectedCell.range
+            if(selectedCellRange) {
+                const row = cell.range[0]
+                const col = cell.range[1]
+                selectedRange[2] = row
+                selectedRange[3] = col
+                // 反方向选中
+                if(row < selectedCellRange[0]) {
+                    selectedRange[0] = row
+                    selectedRange[2] = selectedCellRange[0]
+                }
+                if(col < selectedCellRange[1]) {
+                    selectedRange[1] = col
+                    selectedRange[3] = selectedCellRange[1]
+                }
+                sheet.selectedRange = selectedRange
+            }
+            // 如果当前区域有合并单元格 需要找出最大的边界值
+            findMergeBound(selectedRange)
         }
     }
     private onMouseMove = () => {

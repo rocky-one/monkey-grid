@@ -1,7 +1,9 @@
 import {
     ContainerV,
     ContainerH,
-    Vertical, Horizontal
+    Vertical, Horizontal,
+    VerticalEventRecord,
+    HorizontalEventRecord
 } from './ScrollInterface'
 /**
  * @desc 计算纵向滚动条滑块大小
@@ -57,7 +59,7 @@ export function calcHorizontalSliderSize(horizontal: Horizontal) {
     }
     return {
         sliderWidth,
-        sliderMaxTop: scrollClientWidth - sliderWidth
+        sliderMaxLeft: scrollClientWidth - sliderWidth
     }
 }
 
@@ -76,3 +78,17 @@ export function calcHorizontalSliderLeft(container, scrollBarContainer, slider, 
     return left
 }
 
+export function getScrollTopBySliderMoveY(vertical: Vertical, verticalEventRecord: VerticalEventRecord, mouseMoveY: number) {
+    const p = mouseMoveY / vertical.sliderMaxTop
+    const scrollTop = vertical.maxScrollTop * p + verticalEventRecord.scrollTop
+
+    return scrollTop
+}
+
+
+export function getScrollLeftBySliderMoveX(horizontal: Horizontal, horizontalEventRecord: HorizontalEventRecord, mouseMoveX: number) {
+    const p = mouseMoveX / horizontal.sliderMaxLeft
+    const scrollLeft = horizontal.maxScrollLeft * p + horizontalEventRecord.scrollLeft
+
+    return scrollLeft
+}

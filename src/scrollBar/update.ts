@@ -18,8 +18,12 @@ export function updateVerticalSliderTop(vertical: Vertical):Vertical {
     return vertical
 }
 
-export function updateVerticalScrollTop(vertical: Vertical, scrollTop: number = 0):Vertical {
-    vertical.scrollTop += scrollTop
+export function updateVerticalScrollTop(vertical: Vertical, scrollTop: number = 0, cover: boolean = false):Vertical {
+    if (cover) {
+        vertical.scrollTop = scrollTop
+    } else {
+        vertical.scrollTop += scrollTop
+    }
     if(vertical.scrollTop >= vertical.maxScrollTop){
         vertical.scrollTop = vertical.maxScrollTop
     }else if(vertical.scrollTop <= 0){
@@ -31,8 +35,8 @@ export function updateVerticalScrollTop(vertical: Vertical, scrollTop: number = 
 /**
  * @desc 鼠标滚动后更新scroll信息
  */
-export function updateVerticalScroll(vertical: Vertical, scrollTop: number):Vertical  {
-    updateVerticalScrollTop(vertical, scrollTop)
+export function updateVerticalScroll(vertical: Vertical, scrollTop: number, cover: boolean = false):Vertical  {
+    updateVerticalScrollTop(vertical, scrollTop, cover)
     updateVerticalSliderTop(vertical)
     return vertical
 }
@@ -56,8 +60,13 @@ export function updateHorizotalSliderLeft(horizotal: Horizontal):Horizontal {
     return horizotal
 }
 
-export function updateHorizotalScrollLeft(horizotal: Horizontal, scrollLeft: number = 0):Horizontal {
-    horizotal.scrollLeft += scrollLeft
+export function updateHorizotalScrollLeft(horizotal: Horizontal, scrollLeft: number = 0, cover: boolean = false):Horizontal {
+    if (cover) {
+        horizotal.scrollLeft = scrollLeft
+    } else {
+        horizotal.scrollLeft += scrollLeft
+    }
+    
     if(horizotal.scrollLeft >= horizotal.maxScrollLeft){
         horizotal.scrollLeft = horizotal.maxScrollLeft
     }else if(horizotal.scrollLeft <= 0){
@@ -66,8 +75,8 @@ export function updateHorizotalScrollLeft(horizotal: Horizontal, scrollLeft: num
     return horizotal
 }
 
-export function updateHorizotalScroll(horizotal: Horizontal, scrollLeft: number): Horizontal {
-    updateHorizotalScrollLeft(horizotal, scrollLeft)
+export function updateHorizotalScroll(horizotal: Horizontal, scrollLeft: number, cover: boolean = false): Horizontal {
+    updateHorizotalScrollLeft(horizotal, scrollLeft, cover)
     updateHorizotalSliderLeft(horizotal)
     return horizotal
 }

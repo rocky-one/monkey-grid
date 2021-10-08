@@ -1,6 +1,6 @@
 import { explorerType } from '../utils/helper'
 import { addEvent, removeEvent } from '../utils/event'
-import { VerticalEventRecord } from './ScrollInterface'
+import { VerticalEventRecord, HorizontalEventRecord } from './ScrollInterface'
 
 /**
  * @desc 鼠标滚轮事件
@@ -29,11 +29,20 @@ export function removeMousewheel(ele: HTMLElement, cb: Function):void {
     })
 }
 
-export function mouseDownSlider(verticalEventRecord: VerticalEventRecord): Function {
+export function mouseDownSlider(verticalEventRecord: VerticalEventRecord, vertical): Function {
     return function(e: MouseEvent) {
-        console.log('down')
+        verticalEventRecord.mouseDownFlag = true
         verticalEventRecord.mouseDownPageX = e.pageX
         verticalEventRecord.mouseDownPageY = e.pageY
-        console.log(verticalEventRecord)
+        verticalEventRecord.scrollTop = vertical.scrollTop
+    }
+}
+
+export function mouseDownSliderH(horizontalEventRecord: HorizontalEventRecord, horizontal): Function {
+    return function(e: MouseEvent) {
+        horizontalEventRecord.mouseDownFlag = true
+        horizontalEventRecord.mouseDownPageX = e.pageX
+        horizontalEventRecord.mouseDownPageY = e.pageY
+        horizontalEventRecord.scrollLeft = horizontal.scrollLeft
     }
 }
