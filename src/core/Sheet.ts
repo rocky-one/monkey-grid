@@ -6,6 +6,22 @@ import CreateTextarea from './CreateTextarea'
 import watch from '../event/watch'
 import { calcStartRowIndex, calcEndRowIndex, calcStartColIndex, calcEndColIndex, getCellInFrozenByIndex } from '../utils/helper'
 import { ROW_HEIGHT, COL_WIDTH, FOOTER_HEIGHT, RIGHT_SCROLL_WIDTH, LEFT_ORDER_WIDTH, HEADER_ORDER_HEIGHT } from './const'
+import Record from './Record'
+
+// 10月 - 11月
+// 1. 回撤， 修改value、复制粘贴、合并单元格(暂时不实现)
+// 2. addTable 边界检测
+// 3. 单元格样式设置setCellStyle
+// 4. 单元格格式设置 数字、日期、字符串、下拉
+// 5. 拖拽选中 超出可视区域时 自动滚动。插入行列，移除行列。选中区域对应行头列头选中效果
+// 6. 二开 自定义render
+// 7. 架构
+
+// 12月
+// 1. ssr官方文档系统
+// 2. demo搭建
+// 3. 上线
+
 class Sheet {
     constructor(options: SheetOptions) {
         this.tables = []
@@ -34,6 +50,7 @@ class Sheet {
             this.textareaInstance.hide()
             this.textareaInstance.changeSelectedCell(this)
         })
+        this.record = new Record({ sheet: this})
     }
     tables: any[]
     rowsHeight: number[] = []
@@ -80,6 +97,7 @@ class Sheet {
     selectedMoveRange: any = [null, null, null, null]
     textareaInstance: any = null
     isDbClick: boolean = false
+    record: any
     public addTable = (name: string, row: number, col: number, dataSource: any[]) => {
         const table = new Table({
             name,
@@ -145,6 +163,12 @@ class Sheet {
     public setColsWidth = (cols = []) => {
         cols.forEach(item => this.colsWidth[item.col] = item.width)
     }
+    public setSelectedCell = (selectedCell) => {
+        this.selectedCell = selectedCell
+    }
+    public setSelectedRange = (selectedRange) => {
+        this.selectedRange = selectedRange
+    }
     private nextTick = (callback: Function, flag: string | number = Math.random()) => {
         if (!this[flag]) {
             const p = Promise.resolve()
@@ -155,12 +179,54 @@ class Sheet {
             })
             this[flag] = true;
         }
-        
     }
     // 设置单元格值
-    public setCellValue = (row: number, col: number, value: any, point: boolean = true) => {
-        this.sheetData[row][col].value = value
-        point && this.nextTick(this.point)
+    public setCellValue = (
+        row: number,
+        col: number,
+        value: any,
+        extend: any = {
+            point: true,
+            record: true
+        }
+    ) => {
+        const oldVal = this.sheetData[row][col].value
+        // 当上一次value和当前value不一样时 赋值、记录
+        // 注意excel中相同value的更改也会被记录
+        if (oldVal !== value) {
+            this.sheetData[row][col].value = value
+            if (extend.record) {
+                this.record.add({
+                    undo: {
+                        setCellValue: [{
+                            row,
+                            col,
+                            value: oldVal,
+                            extend: {
+                                point: true,
+                                record: false
+                            }
+                        }],
+                        setSelectedCell: {...this.selectedCell, value: oldVal},
+                        setSelectedRange: [...this.selectedRange]
+                    },
+                    redo: {
+                        setCellValue: [{
+                            row,
+                            col,
+                            value,
+                            extend: {
+                                point: true,
+                                record: false
+                            }
+                        }],
+                        setSelectedCell: {...this.selectedCell, value},
+                        setSelectedRange: [...this.selectedRange]
+                    }
+                })
+            }
+            extend.point && this.nextTick(this.point)
+        }
     }
     // 计算冻结行高
     // yOffsetFlag 是否需要计算序列号的高度

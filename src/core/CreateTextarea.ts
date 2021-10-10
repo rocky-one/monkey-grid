@@ -1,5 +1,5 @@
 import * as domCore from '../utils/dom'
-
+import { getHasShortcutKey } from '../event/keyBoard'
 // 处理剪切板数据 \n 换行   \t 下一个单元格   \r\n 换行
 const getClipboardData = (clipboardData: any) => {
 	if (clipboardData) {
@@ -117,24 +117,42 @@ class CreateTextarea {
         const range = sheet.selectedCell.range
         const row = range[0]
         const col = range[1]
-
+        const setCellValueData = []
         data.forEach((vals: any[], i: number) => {
             vals.forEach((v: any, j: number) => {
-                sheet.setCellValue(row + i, j + col, v, false)
+                const oldVal = sheet.sheetData[row + i][j + col].value
+                sheet.setCellValue(row + i, j + col, v, {point: false, record: false})
+                setCellValueData.push({
+                    row: row + i,
+                    col: j + col,
+                    oldValue: oldVal,
+                    value: v,
+                    extend: {
+                        point: true,
+                        record: false
+                    }
+                })
             })
         })
         this.setValue(data[0][0])
         sheet.point()
+        sheet.record.add({
+            setCellValue: setCellValueData,
+            setSelectedCell: {...sheet.selectedCell},
+            setSelectedRange: [...sheet.selectedRange]
+        })
         event.preventDefault()
     }
     onChange = (event) => {
-        this.show()
-        const sheet = this.option.sheet
-        sheet.setCellValue(sheet.selectedCell.range[0], sheet.selectedCell.range[1], event.target.innerText, false);
+        if (!getHasShortcutKey()) {
+            this.show()
+        }
+        // const sheet = this.option.sheet
+        // sheet.setCellValue(sheet.selectedCell.range[0], sheet.selectedCell.range[1], event.target.innerText, {point: false})
     }
     blur = (event) => {
         const sheet = this.option.sheet
-        sheet.setCellValue(sheet.selectedCell.range[0], sheet.selectedCell.range[1], event.target.innerText);
+        sheet.setCellValue(sheet.selectedCell.range[0], sheet.selectedCell.range[1], event.target.innerText)
         this.isFocus = false
     }
     setValue = (value = '') => {

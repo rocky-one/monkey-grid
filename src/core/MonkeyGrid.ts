@@ -89,29 +89,31 @@ class MonkeyGrid {
         // canvasContext.translate(ratio, ratio)
         this.canvasContext = canvasContext
         mouseDown(this.layout.canvas, (event: Event) => {
-            const now = new Date().getTime()
-            const sheet = this.sheets[this.selectedSheetIndex]
-            sheet.isDbClick = false
-            this.mouseDownFlag = true
-            if (now - this.mouseDownTime < 300) {
-                sheet.isDbClick = true
-                this.mouseDownFlag = false
-                console.log('双击')
-            }
-            this.mouseDownTime = now
-            const {offsetX, offsetY}: any = event
-            const {sheetData, pointRange, frozenRowCount, frozenColCount} = sheet
-            const inFrozenRow = inFrozenRowByXY(offsetY, frozenRowCount, sheetData)
-            const inFrozenCol = inFrozenColByXY(offsetX, frozenColCount, sheetData)
-            sheet.selectedRangeInFrozenRow = inFrozenRow
-            sheet.selectedRangeInFrozenCol = inFrozenCol
-            const cell = findCellByXY(offsetX, offsetY, sheet)
-            if(cell) {
-                // 避免同一个引用，否则后面修改 sheet.selectedRange 会影响初始的sheet.selectedCell.range
-                sheet.selectedRange = [...cell.range]
-                sheet.selectedCell = cell
-            }
-            sheet.point()            
+            setTimeout(() => {
+                const now = new Date().getTime()
+                const sheet = this.sheets[this.selectedSheetIndex]
+                sheet.isDbClick = false
+                this.mouseDownFlag = true
+                if (now - this.mouseDownTime < 300) {
+                    sheet.isDbClick = true
+                    this.mouseDownFlag = false
+                    console.log('双击')
+                }
+                this.mouseDownTime = now
+                const {offsetX, offsetY}: any = event
+                const {sheetData, pointRange, frozenRowCount, frozenColCount} = sheet
+                const inFrozenRow = inFrozenRowByXY(offsetY, frozenRowCount, sheetData)
+                const inFrozenCol = inFrozenColByXY(offsetX, frozenColCount, sheetData)
+                sheet.selectedRangeInFrozenRow = inFrozenRow
+                sheet.selectedRangeInFrozenCol = inFrozenCol
+                const cell = findCellByXY(offsetX, offsetY, sheet)
+                if(cell) {
+                    // 避免同一个引用，否则后面修改 sheet.selectedRange 会影响初始的sheet.selectedCell.range
+                    sheet.selectedRange = [...cell.range]
+                    sheet.selectedCell = cell
+                }
+                sheet.point()
+            }, 0)
         })
         const moveFn = this.onMouseMove()
         mouseMove(this.layout.canvas, moveFn)
@@ -120,8 +122,8 @@ class MonkeyGrid {
             this.mouseDownFlag = false
             setTimeout(() => {
                 this.mouseDownFlag = false
-                const sheet = this.sheets[this.selectedSheetIndex]
-                sheet.setMergeCellsByRange()
+                // const sheet = this.sheets[this.selectedSheetIndex]
+                // sheet.setMergeCellsByRange()
             }, 100)
             
         })

@@ -1,4 +1,3 @@
-import { PointRange } from './../interface/SheetInterface';
 import keyboardJS from 'keyboardjs'
 import { forEachSheetDataBySelectedRange } from '../core/utils/sheetUtils'
 
@@ -15,7 +14,6 @@ const execCommandCopy = (text: string) => {
 	target.style.position = 'absolute'
 	target.style.left = '-9999px'
 	target.style.top = '0'
-	// target.id = 'textareaCopy'
 	document.body.appendChild(target)
 	target.textContent = text
 	target.focus()
@@ -24,48 +22,6 @@ const execCommandCopy = (text: string) => {
 	document.body.removeChild(target)
 }
 
-// 处理剪切板数据 \n 换行   \t 下一个单元格   \r\n 换行
-const getClipboardData = (clipboardData: any) => {
-	if (clipboardData) {
-		let txt = clipboardData.getData('text')
-		let copyData = new Array()
-		if (!txt) {
-			return false
-		}
-		let lineWarp = ''
-		while (txt.length > 0) {
-			let c = txt.charAt(txt.length - 1)
-			if (c === '\n') {
-				txt = txt.substring(0, txt.length - 1)
-				lineWarp = `${c}${lineWarp}`
-			} else if (c === '\r') {
-				txt = txt.substring(0, txt.length - 1)
-				lineWarp = `${c}${lineWarp}`
-			}else {
-				break;
-			}
-		}
-		if (lineWarp) {
-			let prows = txt.split(lineWarp)
-			// 解决web端和Excel端读取剪切板数据的差异性
-			for (let i = 0; i < prows.length; i++) {
-				copyData[i] = prows[i].split('\t').map(v => {
-					return v.replace(/^\"|\"$/g, '')
-				});
-			}
-		} else {
-			copyData[0] = [txt]
-		}
-		
-		let height = copyData.length || 0,
-			width = copyData[0].length || 0
-		return {
-			copyData,
-			height,
-			width
-		}
-	}
-}
 keyboardJS.bind('command + c', (e) => {
 	const sheet = keyBoardData.sheet
 	if (!sheet) return
@@ -83,35 +39,34 @@ keyboardJS.bind('command + c', (e) => {
 		}
 	})
 	execCommandCopy(value)
-	console.log(value, 'command--c')
 })
 
-// keyboardJS.bind('command + v', (e) => {
-// 	e.stopImmediatePropagation();
-// 	let clipboardData = window.clipboardData || e.clipboardData; // IE || chrome
-// 	console.log(e, clipboardData, 'clipboardData')
-// 	const clipObj = getClipboardData(clipboardData);
-// 	console.log(clipObj, 'command--v')
-// })
+// 回撤
+keyboardJS.bind('command + z', (e) => {
+	const sheet = keyBoardData.sheet
+	const record = sheet.record
+	record.undo()
+})
 
-function paste(event: any) {
-	const clipboardData = event.clipboardData || window.clipboardData
-	const clipObj: any = getClipboardData(clipboardData)
-	console.log(clipObj, 'command--v')
-	const data = clipObj.copyData
-	const range = keyBoardData.sheet.selectedCell.range
-	const row = range[0]
-	const col = range[1]
+keyboardJS.bind('control + z', (e) => {
+	const sheet = keyBoardData.sheet
+	const record = sheet.record
+	record.undo()
+})
 
-	data.forEach((vals: any[], i: number) => {
-		vals.forEach((v: any, j: number) => {
-			keyBoardData.sheet.setCellValue(row + i, j + col, v)
-		})
-	})
-	// event.preventDefault();
-}
+// 返回撤
+keyboardJS.bind('command + shift + z', (e) => {
+	const sheet = keyBoardData.sheet
+	const record = sheet.record
+	record.redo()
+})
 
-// document.addEventListener('paste', paste);
+keyboardJS.bind('control + y', (e) => {
+	const sheet = keyBoardData.sheet
+	const record = sheet.record
+	record.redo()
+})
+
 
 // 当获取到焦点时 不需要响应的键盘按键
 const noInputCodeMap = {
@@ -127,20 +82,40 @@ const noInputCodeMap = {
 	37: '左',
 	39: '右'
 }
+const keyDownMap = {
+	17: false, //'control',
+	91: false, //'command',
+}
 
-keyboardJS.bind('', (e) => {
-	const keyCode = e.keyCode
+export const getHasShortcutKey = () => {
+	return Object.keys(keyDownMap).find(key => keyDownMap[key])
+}
+
+keyboardJS.bind('', (event) => {
+	const keyCode = event.keyCode
+	if (keyDownMap.hasOwnProperty(keyCode)) {
+		keyDownMap[keyCode] = true
+	}
 	// 选中一个单元格 直接录入时 需要清空单元格value
-	if (!keyBoardData.sheet.textareaInstance.isShow && !noInputCodeMap[keyCode]) {
+	if (!keyBoardData.sheet.textareaInstance.isShow && !noInputCodeMap[keyCode] && !getHasShortcutKey()) {
 		keyBoardData.sheet.textareaInstance.setValue('')
 	}
 });
+
+function onKeyUp(event: any) {
+	const keyCode = event.keyCode
+	if (keyDownMap.hasOwnProperty(keyCode)) {
+		keyDownMap[keyCode] = false
+	}
+}
+
+window.addEventListener('keyup', onKeyUp)
 
 export default function keyBoardInit(sheet: any) {
 	keyBoardData.sheet = sheet
 
 	return () => {
 		Object.keys(keyBoardData).forEach(key => keyBoardData[key] = null)
-		document.removeEventListener('paste', paste);
+		window.removeEventListener('keyup', onKeyUp)
 	}
 }
