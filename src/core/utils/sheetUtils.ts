@@ -10,7 +10,7 @@ export function setSheetRowColCount(
 ) {
     const dataRowLen = data.length
     const dataColLen = dataRowLen ? data[0].length : 0
-    // 当整个sheet的行比当前数据的行多时 可以直接插入
+    // 当整个sheet的行比当前数据的行多时 直接截取掉多余的行
     if (dataRowLen > rowCount) {
         data.splice(rowCount)
     }
@@ -87,22 +87,45 @@ export function setSheetRowColCount(
 }
 
 /**
- * @desc 把table数据插入到sheetData中 
+ * @desc 把table数据插入到sheetData中, sheetData长度不够自动补全
  * @param row 
  * @param col 
  * @param tableData 
  * @param sheetData 
  */
-export function insertTableDataToSheet(row: number, col: number, tableData: any[], sheetData: any[], mergeCells: any) {
+export function insertTableDataToSheet(row: number, col: number, tableData: any[], sheet: any) {
+    let sheetData = sheet.sheetData
+    const mergeCells = sheet.mergeCells
     let rowLen = tableData.length
-    let colLen = tableData.length ? tableData[0].length : 0
+    let maxRowLen = row + tableData.length
+    let maxColLen = col + tableData[0] ? tableData[0].length : 0
+    let rowCount = sheetData.length
+    let colCount = sheetData[0] ? sheetData[0].length : 0
+    let flag = false
+    const hasValue = checkHasValueByRange(row, col, maxRowLen - 1, maxColLen - 1, sheetData)
+    if (hasValue) {
+        console.error('当前区域有值，不能新建table')
+    }
+
+    // 超出行边界
+    if (maxRowLen > rowCount) {
+        rowCount = maxRowLen
+        flag = true
+    }
+    // 超出列边界
+    if (maxColLen > colCount) {
+        colCount = maxColLen
+        flag = true
+    }
+    if (flag) {
+        sheetData = setSheetRowColCount(sheetData, rowCount, colCount, 100, 24, sheet.xOffset, sheet.yOffset)
+    }
     // 注意这里需要检测是否覆盖已有数据和边界问题 ，如果该区域有数据存在给出提示 做调整 111
     for (let i = 0; i < rowLen; i++) {
         const r = tableData[i]
         for (let j = 0; j < r.length; j++) {
-            let cell = sheetData[row + i][col + j]
             setWidthHeightByMergeCells(i, j, r[j], tableData, mergeCells)
-            sheetData[row + i][col + j] = r[j] ? Object.assign(cell, r[j]) : r[j]
+            sheetData[row + i][col + j] = r[j]
         }
     }
 
@@ -279,4 +302,32 @@ export function forEachSheetDataBySelectedRange(selectedRange: number[], sheetDa
             }
         }
     }
+}
+
+/**
+ * @desc 检测一个区域内是否有值
+ * @param row 
+ * @param col 
+ * @param endRow 
+ * @param endCol 
+ */
+export function checkHasValueByRange(row: number, col: number, endRow: number, endCol: number, sheetData: any[]) {
+    if (row > sheetData.length) {
+        return false
+    }
+    if (col > sheetData[0].length) {
+        return false
+    }
+
+    endRow = endRow > sheetData.length ? sheetData.length : endRow + 1
+    endCol = endCol > sheetData[0].length ? sheetData[0].length : endCol + 1
+    for (let i = row; i < endRow; i++) {
+        const rowData = sheetData[i]
+        for (let j = col; j < endCol; j++) {
+            if (rowData[j].value) {
+                return true
+            }
+        }
+    }
+    return false
 }

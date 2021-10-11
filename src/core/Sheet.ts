@@ -108,7 +108,7 @@ class Sheet {
             yOffset: this.yOffset
         })
         this.tables.push(table)
-        this.sheetData = insertTableDataToSheet(row, col, table.getData(), this.sheetData, this.mergeCells)
+        this.sheetData = insertTableDataToSheet(row, col, table.getData(), this)
         setLeftTopByFrozenData(this.sheetData, this.frozenRowCount, this.frozenColCount)
         return table
     }
@@ -166,7 +166,7 @@ class Sheet {
     public setSelectedCell = (selectedCell) => {
         this.selectedCell = selectedCell
     }
-    public setSelectedRange = (selectedRange) => {
+    public setSelectedRange = (selectedRange: number[]) => {
         this.selectedRange = selectedRange
     }
     private nextTick = (callback: Function, flag: string | number = Math.random()) => {
