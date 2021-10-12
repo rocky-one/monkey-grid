@@ -9,13 +9,16 @@ import { ROW_HEIGHT, COL_WIDTH, FOOTER_HEIGHT, RIGHT_SCROLL_WIDTH, LEFT_ORDER_WI
 import Record from './Record'
 
 // 10月 - 11月
+
 // 1. 回撤， 修改value、复制粘贴、合并单元格(暂时不实现)
-// 2. addTable 边界检测
+// 2. addTable 边界检测 --- 优化sheetData数据结构，把x,y,width,height提取到映射表中
+// 绘制时，实时计算当前区域，实时计算单元格x、y、width、height，实时计算合并单元格width、height
 // 3. 单元格样式设置setCellStyle
 // 4. 单元格格式设置 数字、日期、字符串、下拉
 // 5. 拖拽选中 超出可视区域时 自动滚动。插入行列，移除行列。选中区域对应行头列头选中效果
 // 6. 二开 自定义render
 // 7. 架构
+// 8. 拖拽行列宽高
 
 // 12月
 // 1. ssr官方文档系统
@@ -50,7 +53,7 @@ class Sheet {
             this.textareaInstance.hide()
             this.textareaInstance.changeSelectedCell(this)
         })
-        this.record = new Record({ sheet: this})
+        this.record = new Record({ sheet: this })
     }
     tables: any[]
     rowsHeight: number[] = []
@@ -59,6 +62,8 @@ class Sheet {
     colCount: number
     options: SheetOptions
     sheetData: any[]
+    rowDataMap: any[]
+    colDataMap: any[]
     mergeCells: any
     font: number = 12
     pointStartRow: number = 0
@@ -104,12 +109,15 @@ class Sheet {
             row,
             col,
             dataSource,
-            xOffset: this.xOffset,
-            yOffset: this.yOffset
+            sheet: this
         })
         this.tables.push(table)
         this.sheetData = insertTableDataToSheet(row, col, table.getData(), this)
         setLeftTopByFrozenData(this.sheetData, this.frozenRowCount, this.frozenColCount)
+
+        this.scrollBar.resetScrollBar(this.getScrollHeight(), this.getScrollWidth())
+        this.scrollBar.verticalScrollTo(this.sheetData[row][0].y)
+        this.scrollBar.horizontalScrollTo(this.sheetData[0][col].x)
         return table
     }
     public getTable = (name: string) => {
@@ -207,7 +215,7 @@ class Sheet {
                                 record: false
                             }
                         }],
-                        setSelectedCell: {...this.selectedCell, value: oldVal},
+                        setSelectedCell: { ...this.selectedCell, value: oldVal },
                         setSelectedRange: [...this.selectedRange]
                     },
                     redo: {
@@ -220,7 +228,7 @@ class Sheet {
                                 record: false
                             }
                         }],
-                        setSelectedCell: {...this.selectedCell, value},
+                        setSelectedCell: { ...this.selectedCell, value },
                         setSelectedRange: [...this.selectedRange]
                     }
                 })
@@ -599,7 +607,7 @@ class Sheet {
                                 // 往上滚动，当前选中的单元格超过冻结区域时不需要绘制
                                 if (cell.y + hei - st <= frozenRowY) {
                                     continue;
-                                // 往上滚动，卡在冻结区域和body各一半时需要重新计算选中的单元格高度和当前单元格y坐标
+                                    // 往上滚动，卡在冻结区域和body各一半时需要重新计算选中的单元格高度和当前单元格y坐标
                                 } else if (cell.y - st < frozenRowY && cellBottomY - st > frozenRowY) {
                                     y = frozenRowY
                                     hei = cellBottomY - st - frozenRowY
@@ -613,7 +621,7 @@ class Sheet {
                                 // 往左滚动，当前选中的单元格超过冻结区域时不需要绘制
                                 if (cell.x + wid - sl <= frozenColX) {
                                     continue;
-                                // 往左滚动，卡在冻结区域和body各一半时需要重新计算选中的单元格宽度和当前单元格x坐标
+                                    // 往左滚动，卡在冻结区域和body各一半时需要重新计算选中的单元格宽度和当前单元格x坐标
                                 } else if (cell.x - sl < frozenColX && cellRightX - sl > frozenColX) {
                                     x = frozenColX
                                     wid = cellRightX - sl - frozenColX
@@ -788,7 +796,7 @@ class Sheet {
         // 单元格背景颜色
         this.paintCellBgColor(lineX, lineY, cell.width, cell.height, cell.backgroundColor || '#FFFFFF')
 
-        
+
         if (cell.value) {
             let fontX = x !== undefined ? x + 4 : cell.x - scrollLeft + 4
             let fontY = y !== undefined ? y + (cell.height / 2) + (this.font / 2) : cell.y - scrollTop + (cell.height / 2) + (this.font / 2)

@@ -26,7 +26,8 @@ export function calcVerticalSliderSize(vertival: Vertical) {
     }
     return {
         sliderHeight,
-        sliderMaxTop: scrollClientHeight - sliderHeight
+        sliderMaxTop: scrollClientHeight - sliderHeight,
+        maxScrollTop: vertival.scrollHeight - vertival.clientHeight,
     }
 }
 
@@ -59,7 +60,8 @@ export function calcHorizontalSliderSize(horizontal: Horizontal) {
     }
     return {
         sliderWidth,
-        sliderMaxLeft: scrollClientWidth - sliderWidth
+        sliderMaxLeft: scrollClientWidth - sliderWidth,
+        maxScrollLeft: horizontal.scrollWidth - horizontal.clientWidth,
     }
 }
 

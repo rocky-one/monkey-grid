@@ -96,36 +96,45 @@ export function setSheetRowColCount(
 export function insertTableDataToSheet(row: number, col: number, tableData: any[], sheet: any) {
     let sheetData = sheet.sheetData
     const mergeCells = sheet.mergeCells
-    let rowLen = tableData.length
     let maxRowLen = row + tableData.length
-    let maxColLen = col + tableData[0] ? tableData[0].length : 0
+    let maxColLen = col + (tableData[0] ? tableData[0].length : 0)
     let rowCount = sheetData.length
     let colCount = sheetData[0] ? sheetData[0].length : 0
+    if (maxRowLen < rowCount) {
+        maxRowLen = rowCount
+    }
+    if (maxColLen < colCount) {
+        maxColLen = colCount
+    }
+
     let flag = false
     const hasValue = checkHasValueByRange(row, col, maxRowLen - 1, maxColLen - 1, sheetData)
     if (hasValue) {
         console.error('当前区域有值，不能新建table')
+        return sheetData
     }
 
     // 超出行边界
-    if (maxRowLen > rowCount) {
+    if (row > rowCount || maxRowLen > rowCount) {
         rowCount = maxRowLen
         flag = true
     }
     // 超出列边界
-    if (maxColLen > colCount) {
+    if (col > colCount || maxColLen > colCount) {
         colCount = maxColLen
         flag = true
     }
     if (flag) {
-        sheetData = setSheetRowColCount(sheetData, rowCount, colCount, 100, 24, sheet.xOffset, sheet.yOffset)
+        sheet.setRowColCount(rowCount, colCount)
+        // sheetData = setSheetRowColCount(sheetData, rowCount, colCount, 100, 24, sheet.xOffset, sheet.yOffset)
     }
     // 注意这里需要检测是否覆盖已有数据和边界问题 ，如果该区域有数据存在给出提示 做调整 111
-    for (let i = 0; i < rowLen; i++) {
+    for (let i = 0; i < tableData.length; i++) {
         const r = tableData[i]
         for (let j = 0; j < r.length; j++) {
-            setWidthHeightByMergeCells(i, j, r[j], tableData, mergeCells)
-            sheetData[row + i][col + j] = r[j]
+            const cell = Object.assign(sheetData[row + i][col + j], r[j])
+            sheetData[row + i][col + j] = cell
+            setWidthHeightByMergeCells(row + i, col + j, cell, sheetData, mergeCells)
         }
     }
 
@@ -139,32 +148,32 @@ export function insertTableDataToSheet(row: number, col: number, tableData: any[
  * @param cell 
  * @param data 
  */
-export function setWidthHeightByMergeCells(row: number, col: number, cell: any, data: any[], mergeCells: any) {
+export function setWidthHeightByMergeCells(startRow: number, startCol: number, cell: any, data: any[], mergeCells: any) {
     if (!cell || cell.pointer) return false
-    const mergeCell = mergeCells[`${row}${col}`]
-    if(!mergeCell) return false
-    let endRow = row + mergeCell[0]
-    let endCol = col + mergeCell[1]
-    const leftTopCell = data[row][col]
+    const mergeCell = mergeCells[`${startRow}${startCol}`]
+    if (!mergeCell) return false
+    let endRow = startRow + mergeCell[0]
+    let endCol = startCol + mergeCell[1]
+    const leftTopCell = data[startRow][startCol]
     let height = 0
     let width = 0
-    for (let i = row; i <= endRow; i++) {
-        const cell = data[i][col];
+    for (let i = startRow; i <= endRow; i++) {
+        const cell = data[i][startCol];
         if (!cell.pointer) {
-            height +=cell.height
+            height += cell.height
         }
-        for (let j = col; j <= endCol; j++) {
-            if (i === row && !data[i][j].pointer) {
+        for (let j = startCol; j <= endCol; j++) {
+            if (i === startRow && !data[i][j].pointer) {
                 width += data[i][j].width
             }
-            if (i !== row || j !== col) {
-                data[i][j].pointer = [row, col]
+            if (i !== startRow || j !== startCol) {
+                data[i][j].pointer = [startRow, startCol]
             }
         }
     }
     leftTopCell.height = height
     leftTopCell.width = width
-    data[row][col] = leftTopCell
+    data[startRow][startCol] = leftTopCell
 }
 
 
@@ -179,7 +188,7 @@ export function setLeftTopByFrozenData(sheetData: any, frozenRowCount: number, f
                 sheetData[i][j].value = ''
                 sheetData[i][j].rowspan = frozenRowCount
                 sheetData[i][j].colspan = frozenColCount
-            }else {
+            } else {
                 sheetData[i][j].pointer = [0, 0]
             }
             if (i === 0) {
@@ -238,19 +247,19 @@ export function getHeaderABC(col: number) {
     let sign = integer
     while (sign > base) {
         let rem = sign % base
-        sign = Math.floor((sign - rem ) / base)
+        sign = Math.floor((sign - rem) / base)
         sum++
         str = ABC_MAP[rem]
     }
 
 }
 
-export function numToABC(n:number) {
+export function numToABC(n: number) {
     let orda = 'a'.charCodeAt(0)
     let ordz = 'z'.charCodeAt(0)
     let len = ordz - orda + 1
     let s = ''
-    while( n >= 0 ) {
+    while (n >= 0) {
         s = String.fromCharCode(n % len + orda) + s
         n = Math.floor(n / len) - 1
     }
@@ -260,25 +269,25 @@ export function numToABC(n:number) {
 
 
 function ABCToNum(a) {
-    if(a==null || a.length==0){
+    if (a == null || a.length == 0) {
         return NaN;
     }
-    let str=a.toLowerCase().split("");
-    let num=0;
+    let str = a.toLowerCase().split("");
+    let num = 0;
     let al = str.length;
-    let getCharNumber = function(charx){
-        return charx.charCodeAt() -96;
+    let getCharNumber = function (charx) {
+        return charx.charCodeAt() - 96;
     };
     let numout = 0;
     let charnum = 0;
-    for(let i = 0; i < al; i++){
+    for (let i = 0; i < al; i++) {
         charnum = getCharNumber(str[i]);
-        numout += charnum * Math.pow(26, al-i-1);
+        numout += charnum * Math.pow(26, al - i - 1);
     };
-    if(numout==0){
+    if (numout == 0) {
         return NaN;
     }
-    return numout-1;
+    return numout - 1;
 };
 
 const columeHeader_word = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
@@ -292,7 +301,7 @@ const columeHeader_word_index = { 'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5
  */
 export function forEachSheetDataBySelectedRange(selectedRange: number[], sheetData: any, cb: Function, pointerFlag: boolean = true) {
     if (selectedRange.length) {
-        for(let i = selectedRange[0]; i <= selectedRange[2]; i++) {
+        for (let i = selectedRange[0]; i <= selectedRange[2]; i++) {
             for (let j = selectedRange[1]; j <= selectedRange[3]; j++) {
                 let cell = sheetData[i][j]
                 if (pointerFlag && cell.pointer) {

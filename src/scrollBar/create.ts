@@ -26,7 +26,7 @@ export function createVerticalScroll(vertical: Vertical, ele?: HTMLElement) {
     })
     vScrollBox.appendChild(vSlider)
     ele && ele.appendChild(vScrollBox)
-    
+
     return {
         viewScroll: vScrollBox,
         viewSlider: vSlider,
@@ -59,7 +59,7 @@ export function createHorizontalScroll(horizontal: Horizontal, ele?: HTMLElement
     })
     hScrollBox.appendChild(hSlider)
     ele && ele.appendChild(hScrollBox)
-    
+
     return {
         viewScroll: hScrollBox,
         viewSlider: hSlider,

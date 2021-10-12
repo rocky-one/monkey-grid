@@ -4,21 +4,42 @@ export function defer(callback) {
     setTimeout(callback, 0)
 }
 
+export function getPointerCell(row: number, col: number, sheetData: any) {
+    const cell = sheetData[row][col]
+    if (cell.pointer) {
+        return sheetData[cell.pointer[0]][cell.pointer[1]]
+    }
+    return cell
+}
 // 初始化数据
-export function initData(data = [], xOffset = 0, yOffset = 0, rowHeight = 24, colWidth = 100) {
-    let y = yOffset
+export function initData(data = [], startRow: number, startCol: number, sheet: any) {
+    const xOffset = sheet.xOffset
+    const yOffset = sheet.yOffset
+    const rowHeight = 24
+    const colWidth = 100
+    // startRow: number, startCol: number,
+    let startY = yOffset
+    if (startRow > 0) {
+        const yCell = getPointerCell(startRow, 0, sheet.sheetData)
+        startY = yCell.y + yCell.height
+    }
+    let startX = xOffset
+    if (startCol > 0) {
+        const xCell = getPointerCell(startRow, 0, sheet.sheetData)
+        startX = xCell.x + xCell.width
+    }
     for (let i = 0; i < data.length; i++) {
         const row = data[i]
-        let x = xOffset
+        let x = startX
         for (let j = 0; j < row.length; j++) {
             const cell = row[j]
-            cell.width = cell.width || colWidth
-            cell.height = cell.height || rowHeight
-            cell.y = y
-            cell.x = x
-            x += colWidth
+            // cell.width = cell.width || colWidth
+            // cell.height = cell.height || rowHeight
+            // cell.y = startY
+            // cell.x = x
+            // x += cell.width
         }
-        y += rowHeight
+        startY += rowHeight
     }
     return data
 }

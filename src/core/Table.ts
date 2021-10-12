@@ -6,19 +6,21 @@ export interface TableOptions{
     row: number,
     col: number,
     dataSource: any,
-    xOffset: number,
-    yOffset: number
+    sheet: any
 }
 class Table {
     constructor(options: TableOptions) {
         this.name = options.name
         this.row = options.row
         this.col = options.col
-        this.dataSource = initData(options.dataSource, options.xOffset, options.yOffset)
+        this.sheet = options.sheet
+        this.dataSource = options.dataSource
+        // this.dataSource = initData(options.dataSource, this.row, this.col, this.sheet)
     }
     name: string
     row: number
     col: number
+    sheet: any
     dataSource: any[]
     public getData = () => {
         return this.dataSource

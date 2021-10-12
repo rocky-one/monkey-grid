@@ -1,16 +1,16 @@
 import { Vertical, Horizontal } from './ScrollInterface'
 import { calcVerticalSliderTop, calcHorizontalSliderLeft } from './calc'
 
-export function updateVerticalSliderTop(vertical: Vertical):Vertical {
+export function updateVerticalSliderTop(vertical: Vertical): Vertical {
     const sliderTop = calcVerticalSliderTop(
         {
-        scrollHeight: vertical.scrollHeight,
-        clientHeight: vertical.clientHeight
+            scrollHeight: vertical.scrollHeight,
+            clientHeight: vertical.clientHeight
         },
         {
             clientHeight: vertical.scrollClientHeight
-        }, 
-        vertical.viewSlider, 
+        },
+        vertical.viewSlider,
         vertical.scrollTop
     )
     vertical.viewSlider.style.top = `${sliderTop}px`
@@ -18,15 +18,15 @@ export function updateVerticalSliderTop(vertical: Vertical):Vertical {
     return vertical
 }
 
-export function updateVerticalScrollTop(vertical: Vertical, scrollTop: number = 0, cover: boolean = false):Vertical {
+export function updateVerticalScrollTop(vertical: Vertical, scrollTop: number = 0, cover: boolean = false): Vertical {
     if (cover) {
         vertical.scrollTop = scrollTop
     } else {
         vertical.scrollTop += scrollTop
     }
-    if(vertical.scrollTop >= vertical.maxScrollTop){
+    if (vertical.scrollTop >= vertical.maxScrollTop) {
         vertical.scrollTop = vertical.maxScrollTop
-    }else if(vertical.scrollTop <= 0){
+    } else if (vertical.scrollTop <= 0) {
         vertical.scrollTop = 0
     }
     return vertical
@@ -35,7 +35,7 @@ export function updateVerticalScrollTop(vertical: Vertical, scrollTop: number = 
 /**
  * @desc 鼠标滚动后更新scroll信息
  */
-export function updateVerticalScroll(vertical: Vertical, scrollTop: number, cover: boolean = false):Vertical  {
+export function updateVerticalScroll(vertical: Vertical, scrollTop: number, cover: boolean = false): Vertical {
     updateVerticalScrollTop(vertical, scrollTop, cover)
     updateVerticalSliderTop(vertical)
     return vertical
@@ -43,7 +43,7 @@ export function updateVerticalScroll(vertical: Vertical, scrollTop: number, cove
 
 
 
-export function updateHorizotalSliderLeft(horizotal: Horizontal):Horizontal {
+export function updateHorizotalSliderLeft(horizotal: Horizontal): Horizontal {
     const sliderLeft = calcHorizontalSliderLeft(
         {
             scrollWidth: horizotal.scrollWidth,
@@ -51,8 +51,8 @@ export function updateHorizotalSliderLeft(horizotal: Horizontal):Horizontal {
         },
         {
             clientWidth: horizotal.scrollClientWidth
-        }, 
-        horizotal.viewSlider, 
+        },
+        horizotal.viewSlider,
         horizotal.scrollLeft
     )
     horizotal.viewSlider.style.left = `${sliderLeft}px`
@@ -60,16 +60,16 @@ export function updateHorizotalSliderLeft(horizotal: Horizontal):Horizontal {
     return horizotal
 }
 
-export function updateHorizotalScrollLeft(horizotal: Horizontal, scrollLeft: number = 0, cover: boolean = false):Horizontal {
+export function updateHorizotalScrollLeft(horizotal: Horizontal, scrollLeft: number = 0, cover: boolean = false): Horizontal {
     if (cover) {
         horizotal.scrollLeft = scrollLeft
     } else {
         horizotal.scrollLeft += scrollLeft
     }
-    
-    if(horizotal.scrollLeft >= horizotal.maxScrollLeft){
+
+    if (horizotal.scrollLeft >= horizotal.maxScrollLeft) {
         horizotal.scrollLeft = horizotal.maxScrollLeft
-    }else if(horizotal.scrollLeft <= 0){
+    } else if (horizotal.scrollLeft <= 0) {
         horizotal.scrollLeft = 0
     }
     return horizotal

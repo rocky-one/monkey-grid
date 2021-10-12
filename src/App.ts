@@ -32,6 +32,14 @@ const sheet = mG.addSheet('sheet1', rowLen+20, colLen+20)
 sheet.setMergeCells(1, 1, 30, 1)
 sheet.setMergeCells(5, 3, 5, 8)
 sheet.setMergeCells(7, 3, 10, 6)
-console.log(sheet.sheetData, '3')
 sheet.addTable('table1', 0, 0, data)
 sheet.point()
+
+
+const addButton = document.getElementById('addButton')
+addButton.addEventListener('click', () => {
+	sheet.addTable('table1', 403, 10, [
+		[{value: 'gg'}, {value: 'gg11'}],
+		[{value: 'ee'}, {value: 'ee11'}]
+	])
+})

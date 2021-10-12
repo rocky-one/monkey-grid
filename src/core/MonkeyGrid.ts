@@ -66,7 +66,7 @@ class MonkeyGrid {
     public removeSheet = (name: string) => {
         const index = this.sheets.find(item => item.sheetName === name)
         const sheet: any = this.sheets.splice(index, 1)
-        if(sheet) {
+        if (sheet) {
             sheet.destroy();
         }
     }
@@ -100,14 +100,14 @@ class MonkeyGrid {
                     console.log('双击')
                 }
                 this.mouseDownTime = now
-                const {offsetX, offsetY}: any = event
-                const {sheetData, pointRange, frozenRowCount, frozenColCount} = sheet
+                const { offsetX, offsetY }: any = event
+                const { sheetData, pointRange, frozenRowCount, frozenColCount } = sheet
                 const inFrozenRow = inFrozenRowByXY(offsetY, frozenRowCount, sheetData)
                 const inFrozenCol = inFrozenColByXY(offsetX, frozenColCount, sheetData)
                 sheet.selectedRangeInFrozenRow = inFrozenRow
                 sheet.selectedRangeInFrozenCol = inFrozenCol
                 const cell = findCellByXY(offsetX, offsetY, sheet)
-                if(cell) {
+                if (cell) {
                     // 避免同一个引用，否则后面修改 sheet.selectedRange 会影响初始的sheet.selectedCell.range
                     sheet.selectedRange = [...cell.range]
                     sheet.selectedCell = cell
@@ -125,7 +125,7 @@ class MonkeyGrid {
                 // const sheet = this.sheets[this.selectedSheetIndex]
                 // sheet.setMergeCellsByRange()
             }, 100)
-            
+
         })
     }
     calcCellSelectedRange = (cell) => {
@@ -134,8 +134,8 @@ class MonkeyGrid {
         // 如果当前选中区域有合并单元格 找出最大边界
         function findMergeBound(selectedRange) {
             let lastSelectedRange = [...selectedRange].toString()
-            for(let i = selectedRange[0]; i <= selectedRange[2]; i++) {
-                for(let j = selectedRange[1]; j <= selectedRange[3]; j++) {
+            for (let i = selectedRange[0]; i <= selectedRange[2]; i++) {
+                for (let j = selectedRange[1]; j <= selectedRange[3]; j++) {
                     const cell = sheet.sheetData[i][j]
                     const pointer = cell.pointer || [i, j]
                     const mergeCellEnd = mergeCells[`${pointer[0]}${pointer[1]}`]
@@ -159,27 +159,27 @@ class MonkeyGrid {
                         sheet.selectedRange = selectedRange
                         // 上一次和当前不同递归
                         // 上一次和当前如果相同说明找到边界
-                        if(lastSelectedRange !== selectedRange.toString()) {
+                        if (lastSelectedRange !== selectedRange.toString()) {
                             findMergeBound(selectedRange)
                         }
                     }
                 }
             }
         }
-        if(cell) {
+        if (cell) {
             const selectedRange = sheet.selectedRange
             const selectedCellRange = sheet.selectedCell.range
-            if(selectedCellRange) {
+            if (selectedCellRange) {
                 const row = cell.range[0]
                 const col = cell.range[1]
                 selectedRange[2] = row
                 selectedRange[3] = col
                 // 反方向选中
-                if(row < selectedCellRange[0]) {
+                if (row < selectedCellRange[0]) {
                     selectedRange[0] = row
                     selectedRange[2] = selectedCellRange[0]
                 }
-                if(col < selectedCellRange[1]) {
+                if (col < selectedCellRange[1]) {
                     selectedRange[1] = col
                     selectedRange[3] = selectedCellRange[1]
                 }
@@ -191,11 +191,11 @@ class MonkeyGrid {
     }
     private onMouseMove = () => {
         return throllte((event: Event) => {
-            if(this.mouseDownFlag) {
-                const {offsetX, offsetY}: any = event
+            if (this.mouseDownFlag) {
+                const { offsetX, offsetY }: any = event
                 const sheet = this.sheets[this.selectedSheetIndex]
                 const cell = findCellByXY(offsetX, offsetY, sheet)
-                if(cell) {
+                if (cell) {
                     this.calcCellSelectedRange(cell)
                     sheet.point()
                 }

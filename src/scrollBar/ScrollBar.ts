@@ -108,18 +108,25 @@ class ScrollBar {
                 this.options.horizontalScrollCb(this.horizontal)
             }
         }
-
     }
     private onMousewheel = () => {
         // 需要判断是否有滚动条 如果没有滚动条 事件需要不触发 throllte(this.onMouse, 40)
         mousewheel(this.options.eventBindEle, this.onMouse)
     }
     public resetScrollBar = (scrollHeight: number, scrollWidth: number) => {
+
         this.vertical.scrollHeight = scrollHeight
         this.updateVertical(calcVerticalSliderSize(this.vertical))
         setNodeStyle(this.vertical.viewSlider, {
             height: `${this.vertical.sliderHeight}px`,
             top: '0'
+        })
+
+        this.horizontal.scrollWidth = scrollWidth
+        this.updateHorizontal(calcHorizontalSliderSize(this.horizontal))
+        setNodeStyle(this.horizontal.viewSlider, {
+            innerWidth: `${this.horizontal.sliderWidth}px`,
+            left: '0'
         })
     }
     public getVertical = () => {
@@ -128,8 +135,16 @@ class ScrollBar {
     public getHorizontal = () => {
         return this.horizontal
     }
+    public verticalScrollTo = (scrollTop: number) => {
+        this.vertical = updateVerticalScroll(this.vertical, scrollTop, true)
+        this.options.verticalScrollCb(this.vertical)
+    }
+    public horizontalScrollTo = (scrollLeft: number) => {
+        this.horizontal = updateHorizotalScroll(this.horizontal, scrollLeft, true)
+        this.options.horizontalScrollCb(this.horizontal)
+    }
     private updateVertical = (vertical: Vertical = {}) => {
-        this.vertical = Object.assign(this.vertical, vertical);
+        this.vertical = Object.assign(this.vertical, vertical)
     }
     private updateHorizontal = (horizontal: Horizontal) => {
         this.horizontal = Object.assign(this.horizontal, horizontal)
@@ -174,7 +189,6 @@ class ScrollBar {
                     }
                 }
                 const scrollTop = getScrollTopBySliderMoveY(this.vertical, this.verticalEventRecord, moveY)
-
                 if (moveY !== 0 && !verticalBoundary) {
                     this.vertical = updateVerticalScroll(this.vertical, scrollTop, true)
                     this.options.verticalScrollCb(this.vertical)
@@ -206,8 +220,8 @@ class ScrollBar {
                 }
             }
         }
-        
-        
+
+
     }
     private onMouseMoveSlider = () => {
         addEvent(document.body, 'mousemove', this.mouseMoveSlider)
