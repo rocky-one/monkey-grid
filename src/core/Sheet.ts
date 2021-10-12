@@ -1,6 +1,6 @@
 import Table from './Table'
 import { SheetOptions, PointRange } from '../interface/SheetInterface'
-import { setSheetRowColCount, insertTableDataToSheet, setLeftTopByFrozenData, numToABC, setWidthHeightByMergeCells } from './utils/sheetUtils'
+import { setSheetRowColCount, setSheetDataByCount, insertTableDataToSheet, setLeftTopByFrozenData, numToABC, setWidthHeightByMergeCells } from './utils/sheetUtils'
 import ScrollBar from '../scrollBar/ScrollBar'
 import CreateTextarea from './CreateTextarea'
 import watch from '../event/watch'
@@ -62,8 +62,8 @@ class Sheet {
     colCount: number
     options: SheetOptions
     sheetData: any[]
-    rowDataMap: any[]
-    colDataMap: any[]
+    rowDataMap: any[] = []
+    colDataMap: any[] = []
     mergeCells: any
     font: number = 12
     pointStartRow: number = 0
@@ -143,7 +143,7 @@ class Sheet {
         this.sheetName = name
     }
     public setRowColCount = (rowCount: number, colCount: number) => {
-        this.sheetData = setSheetRowColCount(this.sheetData, rowCount, colCount, 100, 24, this.xOffset, this.yOffset)
+        this.sheetData = setSheetDataByCount(this, rowCount, colCount, 100, 24)
         this.rowCount = rowCount
         this.colCount = colCount
         this.rowsHeight = new Array(rowCount).fill(ROW_HEIGHT)

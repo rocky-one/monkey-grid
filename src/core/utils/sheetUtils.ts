@@ -1,4 +1,95 @@
 
+export function setSheetDataByCount(
+    sheet: any,
+    rowCount: number,
+    colCount: number,
+    cellWidth: number,
+    cellHeight: number,
+) {
+    let sheetData = sheet.sheetData
+    const rowDataMap = sheet.rowDataMap
+    const colDataMap = sheet.colDataMap
+
+    const xOffset = sheet.xOffset
+    const yOffset = sheet.yOffset
+    const dataRowLen = sheetData.length
+    const dataColLen = dataRowLen ? sheetData[0].length : 0
+    // 初始化时指向同一个对象，节省内存
+    const emptyCell = {
+        value: ''
+    }
+    // 当整个sheet的行比当前数据的行多时 直接截取掉多余的行
+    if (dataRowLen > rowCount) {
+        sheetData.splice(rowCount)
+        rowDataMap.splice(rowCount)
+    }
+    // 列同上
+    if (dataColLen > colCount) {
+        sheetData.forEach(row => {
+            row.splice(colCount)
+        })
+        colDataMap.splice(colCount)
+        // 补全当前sheetData右侧缺失的列
+    } else if (dataRowLen) {
+        const rowMapLast = rowDataMap[rowDataMap.length - 1]
+        const colMapLast = colDataMap[colDataMap.length - 1]
+        let startX = colMapLast.x + rowMapLast.width
+
+        for (let i = 0; i < dataRowLen; i++) {
+            sheetData[i].push(...new Array(colCount - dataColLen).fill(emptyCell))
+        }
+
+        for (let j = dataColLen; j < colCount; j++) {
+            colDataMap.push({
+                x: startX,
+                height: cellHeight
+            })
+            startX += cellWidth
+        }
+    }
+    // 如果当前sheet没有数据
+    if (dataRowLen === 0) {
+        const emptyCols = new Array(colCount).fill(emptyCell)
+        sheetData = new Array(rowCount).fill(emptyCols)
+
+        let startY = yOffset
+        for (let i = 0; i < rowCount; i++) {
+            rowDataMap.push({
+                y: startY,
+                width: cellWidth
+            })
+            startY += cellHeight
+        }
+
+        let startX = xOffset
+        for (let j = 0; j < colCount; j++) {
+            colDataMap.push({
+                x: startX,
+                height: cellHeight
+            })
+            startX += cellWidth
+        }
+    } else {
+        const startRow = dataRowLen
+        const rowMapLast = rowDataMap[rowDataMap.length - 1]
+        const colMapLast = colDataMap[colDataMap.length - 1]
+        let startY = rowMapLast.y + colMapLast.height
+
+        for (let i = startRow; i < rowCount; i++) {
+            rowDataMap.push({
+                y: startY,
+                width: cellWidth
+            })
+            startY += cellHeight
+
+            sheetData.push(new Array(colCount).fill(emptyCell))
+        }
+    }
+    
+    console.log(sheetData, rowDataMap, colDataMap)
+    return sheetData
+}
+
 export function setSheetRowColCount(
     data: any[],
     rowCount: number,
