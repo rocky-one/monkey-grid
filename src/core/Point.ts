@@ -337,14 +337,12 @@ export default class Point extends Base {
 
             canvasContext.moveTo(selected.x + selected.width + 1, selected.y)
             canvasContext.lineTo(selected.x + selected.width + 1, selected.y + selected.height - 3)
-
             canvasContext.stroke()
 
             canvasContext.fillStyle = '#227346'
             canvasContext.fillRect(selected.x + selected.width - 2, selected.y + selected.height - 2, 5, 5)
 
             canvasContext.closePath()
-
             canvasContext.lineWidth = 1
 
         }
@@ -424,7 +422,6 @@ export default class Point extends Base {
         canvasContext.strokeStyle = '#227346';
         canvasContext.moveTo(lineX + 0.5, lineY + cell.height + 0.5)
         canvasContext.lineTo(lineX + cell.width + 0.5, lineY + cell.height + 0.5)
-
         canvasContext.moveTo(lineX + cell.width + 0.5, lineY + 0.5)
         canvasContext.lineTo(lineX + cell.width + 0.5, lineY + cell.height + 0.5)
 
