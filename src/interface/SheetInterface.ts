@@ -16,6 +16,8 @@ export interface SheetOptions {
     ratio: number
     frozenRowCount?: number
     frozenColCount?: number
+    rowHeight?: number
+    colWidth?: number
 }
 
 export interface PointRange {

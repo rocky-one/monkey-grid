@@ -29,7 +29,7 @@ keyboardJS.bind('command + c', (e) => {
 	const selectedRange = sheet.selectedRange
 	const sheetData = sheet.sheetData
 	let value = ''
-	forEachSheetDataBySelectedRange(selectedRange, sheetData, (cell: any, row: number, col: number) => {
+	forEachSheetDataBySelectedRange(selectedRange, sheetData, sheet.getCellInfo, (cell: any, row: number, col: number) => {
 		if (!cell.pointer) {
 			if (col === selectedRange[3]) {
 				value += `${cell.value}\n`

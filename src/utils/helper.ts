@@ -17,7 +17,6 @@ export function initData(data = [], startRow: number, startCol: number, sheet: a
     const yOffset = sheet.yOffset
     const rowHeight = 24
     const colWidth = 100
-    // startRow: number, startCol: number,
     let startY = yOffset
     if (startRow > 0) {
         const yCell = getPointerCell(startRow, 0, sheet.sheetData)
@@ -86,17 +85,21 @@ export function getPixelRatio(context: any) {
  * @param sheetData 
  * @param rowHeight 
  */
-export function calcStartRowIndex(scrollTop: number, sheetData: any[], yOffset: number, rowsHeight: number[]): number {
+export function calcStartRowIndex(sheet: any): number {
+    const sheetData = sheet.sheetData
+    const scrollTop = sheet.scrollBar.getVertical().scrollTop
+    const yOffset = sheet.yOffset
+
     if (scrollTop === 0) return 0
+
     const sheetLen = sheetData.length
     const top = scrollTop + yOffset
     let start = 0
     let end = sheetLen - 1
     while (start <= end) {
         let mid = Math.floor(start + (end - start) / 2);
-        const cell = sheetData[mid][0]
-        const height = rowsHeight[mid]
-        if (cell.y + height >= top && cell.y <= top) {
+        const cell = sheet.getCellInfo(mid, 0)
+        if (cell.y + cell.height >= top && cell.y <= top) {
             return mid;
         } else if (cell.y < top) {
             start = mid + 1;
@@ -112,10 +115,10 @@ export function calcStartRowIndex(scrollTop: number, sheetData: any[], yOffset: 
  * @param containerHeight 
  * @param sheetData 
  */
-export function calcEndRowIndex(startRow: number, containerHeight: number, sheetData: any[], rowsHeight: number[]): number {
+export function calcEndRowIndex(startRow: number, containerHeight: number, sheetData: any[], rowDataMap: any[]): number {
     let height = 0
     for (let i = startRow + 1; i < sheetData.length; i++) {
-        height += rowsHeight[i]
+        height += rowDataMap[i].height
         if (height > containerHeight) {
             return i
         }
@@ -129,17 +132,18 @@ export function calcEndRowIndex(startRow: number, containerHeight: number, sheet
  * @param sheetData 
  * @param colsWidth 这里需要使用列头的宽计算，如果采用cell.width存在colspan的情况计算不对
  */
-export function calcStartColIndex(scrollLeft: number, sheetData: any[], xOffset: number, colsWidth: number[]): number {
+export function calcStartColIndex(sheet: any): number {
+    const scrollLeft = sheet.scrollBar.getHorizontal().scrollLeft
+    const xOffset = sheet.xOffset
     if (scrollLeft === 0) return 0
-    const sheetLen = sheetData[0].length
+    const colLen = sheet.colDataMap.length
     const left = scrollLeft + xOffset
     let start = 0
-    let end = sheetLen - 1
+    let end = colLen - 1
     while (start <= end) {
         let mid = Math.floor(start + (end - start) / 2)
-        const cell = sheetData[0][mid]
-        const width = colsWidth[mid]
-        if (cell.x + width >= left && cell.x <= left) {
+        const cell = sheet.getCellInfo(0, mid)
+        if (cell.x + cell.width >= left && cell.x <= left) {
             return mid;
         } else if (cell.x < left) {
             start = mid + 1;
@@ -155,11 +159,11 @@ export function calcStartColIndex(scrollLeft: number, sheetData: any[], xOffset:
  * @param containerWidth 
  * @param sheetData 
  */
-export function calcEndColIndex(startCol: number, containerWidth: number, sheetData: any[], colsWidth: number[]): number {
+export function calcEndColIndex(startCol: number, containerWidth: number, sheetData: any[], colDataMap: any[]): number {
     if (!sheetData[0]) return 0
     let width = 0
     for (let j = startCol + 1; j < sheetData[0].length; j++) {
-        width += colsWidth[j]
+        width += colDataMap[j].width
         if (width > containerWidth) {
             return j
         }
@@ -206,31 +210,33 @@ export function throllte(fn: Function, time: number) {
  * @param frozenRowCount 
  * @param sheetData 
  */
-export function inFrozenRowByXY(y: number, frozenRowCount: number, sheetData: any) {
+export function inFrozenRowByXY(y: number, frozenRowCount: number, sheetData: any, getCellInfo: Function) {
     if( frozenRowCount <= 0) {
         return false
     }
-    let y2 = sheetData[0][0].y
+    let y2 = getCellInfo(0, 0).y
     for(let i = 0; i < frozenRowCount; i++) {
-        if(sheetData[i][0]) {
-            if(sheetData[i][0].pointer) {
+        const cell = getCellInfo(i, 0)
+        if(cell) {
+            if(cell.pointer) {
                 continue
             }
-            y2 += sheetData[i][0].height
+            y2 += cell.height
         }
     }
     return y <= y2
 }
-export function inFrozenColByXY(x: number, frozenColCount: number, sheetData: any) {
+export function inFrozenColByXY(x: number, frozenColCount: number, sheetData: any, getCellInfo: Function) {
     if( frozenColCount <= 0) {
         return false
     }
-    let x2 = sheetData[0][0].x
+    let x2 = getCellInfo(0, 0).x
     for(let i = 0; i < frozenColCount; i++) {
-        if(sheetData[0][i].pointer) {
+        const cell = getCellInfo(0, i)
+        if(cell.pointer) {
             continue
         }
-        x2 += sheetData[0][i].width
+        x2 += cell.width
     }
     return x <= x2
 }
@@ -297,8 +303,6 @@ export function findCellByXY(x: number, y: number, sheet: any, isFindPointerOrig
     if (frozenFlag !== 'col') {
         x += scrollLeft
     }
-    // x += scrollLeft
-    // y += scrollTop
     endColIndex = pointRange.endColIndex
     endRowIndex = pointRange.endRowIndex
     for (let i = startRowIndex; i <= endRowIndex; i++) {
@@ -306,19 +310,19 @@ export function findCellByXY(x: number, y: number, sheet: any, isFindPointerOrig
         if (!row) {
             return false
         }
-        if (y >= row[0].y &&  y <= row[0].y + row[0].height) {
+        const first = sheet.getCellInfo(i, 0)
+        if (y >= first.y &&  y <= first.y + first.height) {
             for (let j = startColIndex; j <= endColIndex; j++) {
-                const cell = row[j]
+                const cell = sheet.getCellInfo(i, j)
                 if (x >= cell.x && x <= cell.x + cell.width) {
                     if (cell.pointer && isFindPointerOrigin) {
-                        let rowspan = cell.rowspan ? cell.rowspan - 1 : 0
-                        let colspan = cell.colspan ? cell.colspan - 1 : 0
-                        const pointerCell = sheetData[cell.pointer[0]][cell.pointer[1]]
+                        const pointerCell = sheet.getCellInfo(cell.pointer[0], cell.pointer[1])
+                        const mergeCell = sheet.mergeCells[`${cell.pointer[0]}${cell.pointer[1]}`] || [1, 1]
                         return {
                             ...pointerCell,
-                            range: [cell.pointer[0], cell.pointer[1], cell.pointer[0] + rowspan, cell.pointer[1] + colspan]
+                            range: [cell.pointer[0], cell.pointer[1], cell.pointer[0] + mergeCell[0]-1, cell.pointer[1] + mergeCell[1]-1]
                         }
-                    }else {
+                    } else {
                         return {
                             ...cell,
                             range: [i, j, i, j]

@@ -29,17 +29,20 @@ const mG = new MonkeyGrid({
 	frozenColCount: 2
 })
 const sheet = mG.addSheet('sheet1', rowLen+20, colLen+20)
-sheet.setMergeCells(1, 1, 30, 1)
-sheet.setMergeCells(5, 3, 5, 8)
-sheet.setMergeCells(7, 3, 10, 6)
+sheet.setMergeCells(1, 1, 12, 1)
+sheet.setMergeCells(5, 3, 1, 5)
+sheet.setMergeCells(7, 3, 3, 3)
 sheet.addTable('table1', 0, 0, data)
 sheet.point()
 
-
+// console.log(sheet.getCellInfo(0,0), sheet.getCellInfo(0,1))
 const addButton = document.getElementById('addButton')
 addButton.addEventListener('click', () => {
-	sheet.addTable('table1', 403, 10, [
-		[{value: 'gg'}, {value: 'gg11'}],
-		[{value: 'ee'}, {value: 'ee11'}]
-	])
+	// sheet.addTable('table1', 403, 10, [
+	// 	[{value: 'gg'}, {value: 'gg11'}],
+	// 	[{value: 'ee'}, {value: 'ee11'}]
+	// ])
+
+	// sheet.setRowHeight(8, 40)
+	// sheet.setColWidth(4, 120)
 })

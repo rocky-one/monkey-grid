@@ -1,12 +1,13 @@
 import Table from './Table'
 import { SheetOptions, PointRange } from '../interface/SheetInterface'
-import { setSheetRowColCount, setSheetDataByCount, insertTableDataToSheet, setLeftTopByFrozenData, numToABC, setWidthHeightByMergeCells } from './utils/sheetUtils'
+import { setSheetDataByCount, insertTableDataToSheet, numToABC, getCellWidthHeight } from './utils/sheetUtils'
 import ScrollBar from '../scrollBar/ScrollBar'
 import CreateTextarea from './CreateTextarea'
 import watch from '../event/watch'
 import { calcStartRowIndex, calcEndRowIndex, calcStartColIndex, calcEndColIndex, getCellInFrozenByIndex } from '../utils/helper'
 import { ROW_HEIGHT, COL_WIDTH, FOOTER_HEIGHT, RIGHT_SCROLL_WIDTH, LEFT_ORDER_WIDTH, HEADER_ORDER_HEIGHT } from './const'
 import Record from './Record'
+
 
 // 10月 - 11月
 
@@ -28,21 +29,28 @@ import Record from './Record'
 class Sheet {
     constructor(options: SheetOptions) {
         this.tables = []
-        this.rowCount = 100
-        this.colCount = 10
-        this.options = options
+        this.options = Object.assign({
+            rowHeight: ROW_HEIGHT,
+            colWidth: COL_WIDTH,
+            frozenRowCount: 0,
+            frozenColCount: 0,
+        }, options)
+        this.rowCount = options.rowCount || 100
+        this.colCount = options.colCount || 10
+        this.rowHeight = this.options.rowHeight
+        this.colWidth = this.options.colWidth
         this.sheetData = []
         this.mergeCells = {}
-        this.frozenRowCount = options.frozenRowCount || 0
-        this.frozenColCount = options.frozenColCount || 0
+        this.frozenRowCount = this.options.frozenRowCount
+        this.frozenColCount = this.options.frozenColCount
         // 有序号时的偏移量
         this.xOffset = this.options.order ? LEFT_ORDER_WIDTH : 0
         this.yOffset = this.options.headerOrder ? HEADER_ORDER_HEIGHT : 0
         // 计算可视区域宽高
         this.clientWidth = this.options.width - RIGHT_SCROLL_WIDTH - this.xOffset
         this.clientHeight = this.options.height - FOOTER_HEIGHT - this.yOffset
-        this.setSheetName(options.name)
-        this.setRowColCount(options.rowCount, options.colCount)
+        this.setSheetName(this.options.name)
+        this.setRowColCount(this.rowCount, this.colCount)
         this.calcClientWidthHeight()
         this.initScroll()
         this.textareaInstance = new CreateTextarea({
@@ -56,8 +64,8 @@ class Sheet {
         this.record = new Record({ sheet: this })
     }
     tables: any[]
-    rowsHeight: number[] = []
-    colsWidth: number[] = []
+    rowHeight: number = ROW_HEIGHT
+    colWidth: number = COL_WIDTH
     rowCount: number
     colCount: number
     options: SheetOptions
@@ -113,11 +121,9 @@ class Sheet {
         })
         this.tables.push(table)
         this.sheetData = insertTableDataToSheet(row, col, table.getData(), this)
-        setLeftTopByFrozenData(this.sheetData, this.frozenRowCount, this.frozenColCount)
-
         this.scrollBar.resetScrollBar(this.getScrollHeight(), this.getScrollWidth())
-        this.scrollBar.verticalScrollTo(this.sheetData[row][0].y)
-        this.scrollBar.horizontalScrollTo(this.sheetData[0][col].x)
+        this.scrollBar.verticalScrollTo(this.getCellInfo(row, 0).y)
+        this.scrollBar.horizontalScrollTo(this.getCellInfo(0, col).x)
         return table
     }
     public getTable = (name: string) => {
@@ -127,49 +133,136 @@ class Sheet {
     public getSheetData = () => {
         return this.sheetData
     }
-    public getCellRange = (x: number, y: number, xx: number, yy: number) => {
-        const cells = []
-        for (let i = x; i <= xx; i++) {
-            for (let j = y; j <= yy; j++) {
-                cells.push({ ...this.sheetData[i][j] })
-            }
+    // 根据行列坐标获取映射单元格宽高等信息
+    public getCellInfo = (row: number, col: number, pointerFlag?: boolean) => {
+        const rowDataMap = this.rowDataMap
+        const colDataMap = this.colDataMap
+        // 获取到指针指向cell
+        const pointer = this.sheetData[row][col].pointer
+        if (pointerFlag && pointer) {
+            row = pointer[0]
+            col = pointer[1]
         }
-        return cells
-    }
-    public getCellByRowCol = (row: number, col: number) => {
-        return this.sheetData[row][col]
+        return {
+            ...this.sheetData[row][col],
+            ...getCellWidthHeight(row, col, this),
+            x: colDataMap[col].x,
+            y: rowDataMap[row].y
+        }
     }
     public setSheetName = (name: string) => {
         this.sheetName = name
     }
     public setRowColCount = (rowCount: number, colCount: number) => {
-        this.sheetData = setSheetDataByCount(this, rowCount, colCount, 100, 24)
+        this.sheetData = setSheetDataByCount(this, rowCount, colCount)
         this.rowCount = rowCount
         this.colCount = colCount
-        this.rowsHeight = new Array(rowCount).fill(ROW_HEIGHT)
-        this.colsWidth = new Array(colCount).fill(COL_WIDTH)
         this.calcScrollWidthHeight()
     }
-    public setMergeCells = (row: number, col: number, endRow: number, endCol: number) => {
-        this.mergeCells[`${row}${col}`] = [endRow - row, endCol - col]
+    public setMergeCells = (row: number, col: number, rowCount: number, colCount: number) => {
+        this.mergeCells[`${row}${col}`] = [rowCount, colCount]
+        const sheetData = this.sheetData
+        const endRow = row + rowCount
+        const endCol = col + colCount
+        // 修改指针指向
+        for (let i = row; i < endRow; i++) {
+            for (let j = col; j < endCol; j++) {
+                if (i === row && j === col) {
+                    if (sheetData[i][j].pointer) {
+                        sheetData[i][j].pointer = null
+                        delete sheetData[i][j].pointer
+                    }
+                } else {
+                    if (sheetData[i][j].empty) {
+                        sheetData[i][j] = {
+                            pointer: [row, col]
+                        }
+                    } else {
+                        sheetData[i][j].pointer = [row, col]
+                    }
+                    if (this.mergeCells[`${i}${j}`]) {
+                        delete this.mergeCells[`${i}${j}`]
+                    }
+                }
+            }
+        }
     }
     public setMergeCellsByRange = () => {
-        if (this.selectedRange.length) {
-            this.setMergeCells(this.selectedRange[0], this.selectedRange[1], this.selectedRange[2], this.selectedRange[3])
-            setWidthHeightByMergeCells(this.selectedRange[0], this.selectedRange[1], this.selectedCell, this.sheetData, this.mergeCells)
+        const selectedRange = this.selectedRange
+        if (selectedRange.length) {
+            this.setMergeCells(
+                selectedRange[0],
+                selectedRange[1],
+                selectedRange[2] - selectedRange[0] + 1,
+                selectedRange[3] - selectedRange[1] + 1
+            )
             this.point()
         }
     }
-    public removeMergeCells = () => {
-
+    public removeMergeCells = (row: number, col: number, rowCount: number, colCount: number) => {
+        // this.mergeCells[`${row}${col}`] = [rowCount, colCount]
+        const sheetData = this.sheetData
+        const endRow = row + rowCount
+        const endCol = col + colCount
+        // 先判断当前区域是否可以移除合并，有些边界情况需要处理
+        for (let i = row; i < endRow; i++) {
+            for (let j = col; j < endCol; j++) {
+                const cell = this.getCellInfo(i, j, true)
+                if (cell.pointer) {
+                    // 说明超出边界了
+                    if (cell.pointer[0] < row || cell.pointer[0] > endRow || cell.pointer[1] < col ||  cell.pointer[1] > endCol) {
+                        console.error('当前单元格区域不能取消合并，请重新选择')
+                        return false
+                    }
+                }
+            }
+        }
+        // 修改指针指向
+        for (let i = row; i < endRow; i++) {
+            for (let j = col; j < endCol; j++) {
+                this.mergeCells[`${i}${j}`] = null
+                sheetData[i][j].pointer = null
+            }
+        }
+        // this.selectedRange = []
+    }
+    public removeMergeCellsByRange = () => {
+        const selectedRange = this.selectedRange
+        if (selectedRange.length) {
+            this.removeMergeCells(
+                selectedRange[0],
+                selectedRange[1],
+                selectedRange[2] - selectedRange[0] + 1,
+                selectedRange[3] - selectedRange[1] + 1
+            )
+            this.point()
+        }
     }
     // 设置行高
-    public setRowsHeight = (rows = []) => {
-        rows.forEach(item => this.rowsHeight[item.row] = item.height)
+    public setRowHeight = (row: any, height: number) => {
+        if (Array.isArray(row)) {
+            row.forEach(item => {
+                this.rowDataMap[item.row].height = item.height
+            })
+        } else {
+            const oldHeight = this.rowDataMap[row].height
+            if (oldHeight === height) return
+            this.rowDataMap[row].height = height
+        }
+        this.updateRow(row)
     }
     // 设置列高
-    public setColsWidth = (cols = []) => {
-        cols.forEach(item => this.colsWidth[item.col] = item.width)
+    public setColWidth = (col: number, width: number) => {
+        if (Array.isArray(col)) {
+            col.forEach(item => {
+                this.colDataMap[item.col].width = item.width
+            })
+        } else {
+            const oldWidth = this.colDataMap[col].width
+            if (oldWidth === width) return
+            this.colDataMap[col].width = width
+        }
+        this.updataCol(col)
     }
     public setSelectedCell = (selectedCell) => {
         this.selectedCell = selectedCell
@@ -177,7 +270,35 @@ class Sheet {
     public setSelectedRange = (selectedRange: number[]) => {
         this.selectedRange = selectedRange
     }
-    private nextTick = (callback: Function, flag: string | number = Math.random()) => {
+    private updateRowDataMapY = (startRow: number = 0) => {
+        const startCell = this.rowDataMap[startRow]
+        let startY = startCell.y + startCell.height
+        for (let i = startRow + 1; i < this.rowDataMap.length; i++) {
+            this.rowDataMap[i].y = startY
+            startY += this.rowDataMap[i].height
+        }
+    }
+    private updateColDataMapX = (startCol: number = 0) => {
+        const startCell = this.colDataMap[startCol]
+        let startX = startCell.x + startCell.width
+        for (let i = startCol + 1; i < this.colDataMap.length; i++) {
+            this.colDataMap[i].x = startX
+            startX += this.colDataMap[i].width
+        }
+    }
+    private updateRow = (row: number = 0) => {
+        this.updateRowDataMapY(row)
+        this.calcScrollWidthHeight()
+        this.scrollBar.resetScrollBar(this.getScrollHeight(), this.getScrollWidth())
+        this.nextTick(this.point, 'next-updateRow')
+    }
+    private updataCol = (startCol: number = 0) => {
+        this.updateColDataMapX(startCol)
+        this.calcScrollWidthHeight()
+        this.scrollBar.resetScrollBar(this.getScrollHeight(), this.getScrollWidth())
+        this.nextTick(this.point, 'next-updateCol')
+    }
+    private nextTick = (callback: Function, flag: string) => {
         if (!this[flag]) {
             const p = Promise.resolve()
             p.then(() => {
@@ -198,7 +319,14 @@ class Sheet {
             record: true
         }
     ) => {
-        const oldVal = this.sheetData[row][col].value
+
+        let cell = this.sheetData[row][col]
+        if (cell.empty) {
+            this.sheetData[row][col] = {
+                value: ''
+            }
+        }
+        const oldVal = this.sheetData[row][col]
         // 当上一次value和当前value不一样时 赋值、记录
         // 注意excel中相同value的更改也会被记录
         if (oldVal !== value) {
@@ -233,18 +361,16 @@ class Sheet {
                     }
                 })
             }
-            extend.point && this.nextTick(this.point)
+            extend.point && this.nextTick(this.point, 'next-setCellValue')
         }
     }
     // 计算冻结行高
     // yOffsetFlag 是否需要计算序列号的高度
     private calcFrozenHeight = (yOffsetFlag: boolean = true) => {
         if (this.frozenRowCount > 0) {
-            const frozenRowIndex = this.frozenRowCount - 1
-            const frozenLastRow = this.sheetData[frozenRowIndex]
-            if (frozenLastRow) {
-                return frozenLastRow[0].y + frozenLastRow[0].height - (yOffsetFlag ? this.yOffset : 0)
-            }
+            const rowDataMap = this.rowDataMap
+            const last = rowDataMap[this.frozenRowCount - 1]
+            return last.y + last.height - (yOffsetFlag ? this.yOffset : 0)
         }
         return 0
     }
@@ -252,13 +378,9 @@ class Sheet {
     // xOffsetFlag 是否需要计算序列号的宽度
     private calcFrozenWidth = (xOffsetFlag: boolean = true) => {
         if (this.frozenColCount > 0) {
-            const frozenFristRow = this.sheetData[0]
-            if (frozenFristRow) {
-                const lastColCell = frozenFristRow[this.frozenColCount - 1]
-                if (lastColCell) {
-                    return lastColCell.x + lastColCell.width - (xOffsetFlag ? this.xOffset : 0)
-                }
-            }
+            const colDataMap = this.colDataMap
+            const last = colDataMap[this.frozenColCount - 1]
+            return last.x + last.width - (xOffsetFlag ? this.xOffset : 0)
         }
         return 0
     }
@@ -268,15 +390,14 @@ class Sheet {
     }
     // 计算内容区域的宽高 需要减去偏移量以及冻结窗口
     public calcScrollWidthHeight = () => {
-        const lastRow = this.sheetData[this.rowCount - 1]
+        const lastRowCell = this.getCellInfo(this.rowCount - 1, 0)
         // 更新内容宽高 用来创建滚动条
-        if (lastRow) {
-            this.scrollHeight = lastRow[0].y + lastRow[0].height - this.yOffset - this.calcFrozenHeight()
+        if (lastRowCell) {
+            this.scrollHeight = lastRowCell.y + lastRowCell.height - this.yOffset - this.calcFrozenHeight()
         }
-
-        const lastCell = lastRow[lastRow.length - 1]
-        if (lastCell) {
-            this.scrollWidth = lastCell.x + lastCell.width - this.xOffset - this.calcFrozenWidth()
+        const lastColCell = this.getCellInfo(this.rowCount - 1, this.colCount - 1)
+        if (lastColCell) {
+            this.scrollWidth = lastColCell.x + lastColCell.width - this.xOffset - this.calcFrozenWidth()
         }
     }
     public getScrollHeight = () => this.scrollHeight
@@ -296,6 +417,67 @@ class Sheet {
     public setScrollBar = (scrollBar: ScrollBar) => {
         this.scrollBar = scrollBar
     }
+    public calcCellSelectedRange = (cell) => {
+        const mergeCells = this.mergeCells
+        // 如果当前选中区域有合并单元格 找出最大边界
+        const findMergeBound = (selectedRanges) => {
+            const selectedRange = [...selectedRanges]
+            let lastSelectedRange = [...selectedRange].toString()
+            for (let i = selectedRange[0]; i <= selectedRange[2]; i++) {
+                for (let j = selectedRange[1]; j <= selectedRange[3]; j++) {
+                    const cell = this.getCellInfo(i, j)
+                    const pointer = cell.pointer || [i, j]
+                    const mergeCellEnd = mergeCells[`${pointer[0]}${pointer[1]}`]
+                    if (mergeCellEnd) {
+                        let mergeStartRow = cell.pointer ? cell.pointer[0] : i
+                        let mergeStartCol = cell.pointer ? cell.pointer[1] : j
+                        let mergeEndRow = mergeStartRow + mergeCellEnd[0] - 1
+                        let mergeEndCol = mergeStartCol + mergeCellEnd[1] - 1
+                        if (mergeStartRow < selectedRange[0]) {
+                            selectedRange[0] = mergeStartRow
+                        }
+                        if (mergeEndRow > selectedRange[2]) {
+                            selectedRange[2] = mergeEndRow
+                        }
+                        if (mergeStartCol < selectedRange[1]) {
+                            selectedRange[1] = mergeStartCol
+                        }
+                        if (mergeEndCol > selectedRange[3]) {
+                            selectedRange[3] = mergeEndCol
+                        }
+                        this.selectedRange = selectedRange
+                        // 上一次和当前不同递归
+                        // 上一次和当前如果相同说明找到边界
+                        if (lastSelectedRange !== selectedRange.toString()) {
+                            findMergeBound(selectedRange)
+                        }
+                    }
+                }
+            }
+        }
+        if (cell) {
+            const selectedRange = this.selectedRange
+            const selectedCellRange = this.selectedCell.range
+            if (selectedCellRange) {
+                const row = cell.range[0]
+                const col = cell.range[1]
+                selectedRange[2] = row
+                selectedRange[3] = col
+                // 反方向选中
+                if (row < selectedCellRange[0]) {
+                    selectedRange[0] = row
+                    selectedRange[2] = selectedCellRange[0]
+                }
+                if (col < selectedCellRange[1]) {
+                    selectedRange[1] = col
+                    selectedRange[3] = selectedCellRange[1]
+                }
+                this.selectedRange = selectedRange
+            }
+            // 如果当前区域有合并单元格 需要找出最大的边界值
+            findMergeBound(selectedRange)
+        }
+    }
     /**
      * 设置冻结行
      */
@@ -311,28 +493,19 @@ class Sheet {
     /**
      * 绘制冻结行
      */
-    private pointFrozenRow = (startColIndex, endColIndex, pointCellMap) => {
+    private pointFrozenRow = (startColIndex, endColIndex) => {
         const isFrozenRowCount = this.frozenRowCount > 0
         if (!isFrozenRowCount) return
-        const sheetData = this.sheetData
         const canvasContext = this.options.canvasContext
         // 记住冻结行到达的最大Y坐标，选中区域时用来判断当前鼠标的坐标是否在冻结区域
         let maxY = 0;
         canvasContext.beginPath()
         // 绘制冻结行头
         for (let i = 0; i < this.frozenRowCount; i++) {
-            const row = sheetData[i]
             for (let j = startColIndex; j <= endColIndex; j++) {
-                let cell = row[j]
+                let cell = this.getCellInfo(i, j, true)
                 // 当前单元格已经被绘制过就跳出
-                if (!cell || pointCellMap[`${i}${j}`]) continue
-                if (cell.pointer && pointCellMap[`${cell.pointer[0]}${cell.pointer[1]}`]) continue
-
-                // 重新定向到指针单元格
-                if (cell.pointer) {
-                    pointCellMap[`${cell.pointer[0]}${cell.pointer[1]}`] = true
-                    cell = sheetData[cell.pointer[0]][cell.pointer[1]]
-                }
+                if (!cell || cell.pointer) continue
                 cell.backgroundColor = cell.backgroundColor || '#E1FFFF'
                 this.pointCell(cell, undefined, cell.y, i, j)
                 // 冻结的最后一行，更新maxY
@@ -348,10 +521,9 @@ class Sheet {
         canvasContext.closePath()
         canvasContext.stroke()
     }
-    private pointFrozenCol = (startRowIndex, endRowIndex, pointCellMap) => {
+    private pointFrozenCol = (startRowIndex, endRowIndex) => {
         const isFrozenColCount = this.frozenColCount > 0
         if (!isFrozenColCount) return
-        const sheetData = this.sheetData
         const horizontal = this.scrollBar.getHorizontal()
         const vertical = this.scrollBar.getVertical()
         const canvasContext = this.options.canvasContext
@@ -360,17 +532,10 @@ class Sheet {
         canvasContext.beginPath()
         // 绘制冻结行头
         for (let i = startRowIndex; i <= endRowIndex; i++) {
-            const row = sheetData[i]
             for (let j = 0; j < this.frozenColCount; j++) {
-                let cell = row[j]
+                let cell = this.getCellInfo(i, j, true)
                 // 当前单元格已经被绘制过就跳出
-                if (!cell || pointCellMap[`${i}${j}`]) continue
-                if (cell.pointer && pointCellMap[`${cell.pointer[0]}${cell.pointer[1]}`]) continue
-                // 重新定向到指针单元格
-                if (cell.pointer) {
-                    pointCellMap[`${cell.pointer[0]}${cell.pointer[1]}`] = true
-                    cell = sheetData[cell.pointer[0]][cell.pointer[1]]
-                }
+                if (!cell || cell.pointer) continue
                 let x = cell.x
                 let y = cell.y - vertical.scrollTop
                 if (!isFrozenColCount) {
@@ -391,25 +556,19 @@ class Sheet {
         canvasContext.closePath()
         canvasContext.stroke()
     }
-    private pointBody = (pointCellMap, startRowIndex, endRowIndex, startColIndex, endColIndex) => {
-        const sheetData = this.sheetData
+    private pointBody = (
+        startRowIndex: number,
+        endRowIndex: number,
+        startColIndex: number,
+        endColIndex: number
+    ) => {
         const canvasContext = this.options.canvasContext
         canvasContext.beginPath()
         // 绘制table部分
         for (let i = startRowIndex; i <= endRowIndex; i++) {
-            const row = sheetData[i]
             for (let j = startColIndex; j <= endColIndex; j++) {
-                let cell = row[j]
-                // 当前单元格已经被绘制过就跳出，合并单元格的情况，因为后面的数据和前面的一样
-                if (!cell || pointCellMap[`${i}${j}`]) continue
-                if (cell.pointer && pointCellMap[`${cell.pointer[0]}${cell.pointer[1]}`]) continue
-
-                // 如果当前开始的位置的单元格是合并单元格，且不是第一个位置，重新定向到指针单元格，也就是第一个带合并信息的单元格。
-                // 因为第一个带合并信息的单元格的合并信息和坐标是准确的
-                if (cell.pointer) {
-                    pointCellMap[`${cell.pointer[0]}${cell.pointer[1]}`] = true
-                    cell = sheetData[cell.pointer[0]][cell.pointer[1]]
-                }
+                let cell = this.getCellInfo(i, j, true)
+                if (!cell || cell.pointer) continue
                 this.pointCell(cell, undefined, undefined, i, j)
             }
         }
@@ -420,13 +579,11 @@ class Sheet {
     private pointLeftOrder = (startRowIndex: number, endRowIndex: number, frozenRow?: boolean) => {
         const hasOrder = this.options.order
         if (!hasOrder) return
-        const sheetData = this.sheetData
         const vertical = this.scrollBar.getVertical()
         const canvasContext = this.options.canvasContext
         canvasContext.beginPath()
         for (let i = startRowIndex; i <= endRowIndex; i++) {
-            const row = sheetData[i]
-            const cell = row[0]
+            const cell = this.getCellInfo(i, 0)
             let y = frozenRow ? cell.y : cell.y - vertical.scrollTop
             this.pointCell({
                 color: '#000',
@@ -441,19 +598,18 @@ class Sheet {
         canvasContext.stroke()
     }
     private pointTopOrder = (startColIndex, endColIndex, frozen?: boolean) => {
-        const sheetData = this.sheetData
         const headerOrder = this.options.headerOrder
         if (!headerOrder) return
         const scrollLeft = this.scrollBar.getHorizontal().scrollLeft
         const canvasContext = this.options.canvasContext
         canvasContext.beginPath()
         for (let j = startColIndex; j <= endColIndex; j++) {
-            const cell = sheetData[0][j]
+            const cell = this.getCellInfo(0, j)
             let x = frozen ? cell.x : cell.x - scrollLeft
             this.pointCell({
                 color: '#000',
                 value: numToABC(j),
-                width: this.colsWidth[j],
+                width: cell.width,
                 height: HEADER_ORDER_HEIGHT,
                 backgroundColor: '#AFEEEE'
             }, x, 0)
@@ -464,22 +620,23 @@ class Sheet {
     }
     /**
      * 绘制body区域左上角冻结的空白区域
-     * @param pointCellMap
+     * @param
      */
-    private pointLeftTopByFrozenOnBody = (pointCellMap) => {
-        let cell: any
-        if (this.sheetData.length) {
-            if (this.sheetData[0].length) {
-                cell = this.sheetData[0][0]
-            }
+    private pointLeftTopByFrozenOnBody = () => {
+        const frozenRowCount = this.frozenRowCount
+        const frozenColCount = this.frozenColCount
+        if (!frozenRowCount || !frozenColCount) {
+            return
         }
-        if (!cell) return
-        pointCellMap['00'] = true
-
         const canvasContext = this.options.canvasContext
         canvasContext.beginPath()
-        cell.backgroundColor = '#E1FFFF'
-        this.pointCell(cell, cell.x, cell.y)
+        for (let i = 0; i < frozenRowCount; i++) {
+            for (let j = 0; j < frozenColCount; j++) {
+                const cell = this.getCellInfo(i, j, true)
+                cell.backgroundColor = '#E1FFFF'
+                this.pointCell(cell, cell.x, cell.y)
+            }
+        }
         canvasContext.strokeStyle = "#ccc"
         canvasContext.closePath()
         canvasContext.stroke()
@@ -522,7 +679,7 @@ class Sheet {
             let isFrozenRow = false
             for (let i = this.selectedRange[0]; i <= this.selectedRange[2]; i++) {
                 let colNum = this.selectedRange[1]
-                const cell = this.sheetData[i][colNum]
+                const cell = this.getCellInfo(i, colNum)
                 if (!isFrozenCol) {
                     isFrozenCol = getCellInFrozenByIndex(i, colNum, this) === 'col'
                 }
@@ -562,7 +719,7 @@ class Sheet {
 
             for (let j = this.selectedRange[1]; j <= this.selectedRange[3]; j++) {
                 let rowNum = this.selectedRange[0]
-                const cell = this.sheetData[rowNum][j]
+                const cell = this.getCellInfo(rowNum, j)
                 if (cell && !cell.pointer) {
                     selected.width += cell.width
                 }
@@ -591,7 +748,7 @@ class Sheet {
             for (let i = this.selectedRange[0]; i <= this.selectedRange[2]; i++) {
                 for (let j = this.selectedRange[1]; j <= this.selectedRange[3]; j++) {
                     if (i != this.selectedCell.range[0] || j != this.selectedCell.range[1]) {
-                        const cell = this.getCellByRowCol(i, j)
+                        const cell = this.getCellInfo(i, j)
                         if (!cell.pointer) {
                             let sl = scrollLeft
                             let st = scrollTop
@@ -681,17 +838,15 @@ class Sheet {
      */
     public point = () => {
         const sheetData = this.sheetData
-        const horizontal = this.scrollBar.getHorizontal()
-        const vertical = this.scrollBar.getVertical()
+        // const horizontal = this.scrollBar.getHorizontal()
+        // const vertical = this.scrollBar.getVertical()
         const canvasContext = this.options.canvasContext
-        canvasContext.lineWidth = 1;
-        let startRowIndex = calcStartRowIndex(vertical.scrollTop, sheetData, this.yOffset, this.rowsHeight)
-        let endRowIndex = calcEndRowIndex(startRowIndex, this.clientHeight, sheetData, this.rowsHeight)
-        let startColIndex = calcStartColIndex(horizontal.scrollLeft, sheetData, this.xOffset, this.colsWidth)
-        let endColIndex = calcEndColIndex(startColIndex, this.clientWidth, sheetData, this.colsWidth)
+        canvasContext.lineWidth = 1
+        let startRowIndex = calcStartRowIndex(this)
+        let endRowIndex = calcEndRowIndex(startRowIndex, this.clientHeight, sheetData, this.rowDataMap)
+        let startColIndex = calcStartColIndex(this)
+        let endColIndex = calcEndColIndex(startColIndex, this.clientWidth, sheetData, this.colDataMap)
         canvasContext.font = `${this.font}px Arial`
-        // 记录当前单元格是否已经被绘制，有单元格合并的情况需要跳过
-        const pointCellMap = {}
         startRowIndex = startRowIndex + this.frozenRowCount
         endRowIndex = endRowIndex + this.frozenRowCount
         startColIndex = startColIndex + this.frozenColCount
@@ -705,14 +860,13 @@ class Sheet {
         this.pointRange.startColIndex = startColIndex
         this.pointRange.endColIndex = endColIndex
         // 绘制table部分
-        this.pointBody(pointCellMap, startRowIndex, endRowIndex, startColIndex, endColIndex)
-
+        this.pointBody(startRowIndex, endRowIndex, startColIndex, endColIndex)
         canvasContext.lineWidth = 1
         // 冻结列头
-        this.pointFrozenCol(startRowIndex, endRowIndex, pointCellMap)
+        this.pointFrozenCol(startRowIndex, endRowIndex)
 
         // 冻结行头
-        this.pointFrozenRow(startColIndex - this.frozenColCount, endColIndex, pointCellMap)
+        this.pointFrozenRow(startColIndex - this.frozenColCount, endColIndex)
 
         // 头部列标
         this.pointTopOrder(startColIndex, endColIndex)
@@ -727,7 +881,7 @@ class Sheet {
         this.pointLeftOrder(0, this.frozenRowCount - 1, true)
 
         // 如果有冻结行列，绘制body区域左上角冻结区域
-        this.pointLeftTopByFrozenOnBody(pointCellMap)
+        this.pointLeftTopByFrozenOnBody()
 
         // 如果有行列标，绘制左上角空白区域
         this.pointLeftTopByFrozen()
@@ -738,7 +892,6 @@ class Sheet {
         if (this.textareaInstance.isShow) {
             this.textareaInstance.updatePosition();
         }
-
     }
     // 绘制背景颜色 context: CanvasRenderingContext2D
     private paintCellBgColor = (x: number, y: number, width: number, height: number, fillStyle: string, customStyle?: string) => {
@@ -792,10 +945,8 @@ class Sheet {
         canvasContext.moveTo(lineX + cell.width + 0.5, lineY + 0.5)
         canvasContext.lineTo(lineX + cell.width + 0.5, lineY + cell.height + 0.5)
 
-
         // 单元格背景颜色
         this.paintCellBgColor(lineX, lineY, cell.width, cell.height, cell.backgroundColor || '#FFFFFF')
-
 
         if (cell.value) {
             let fontX = x !== undefined ? x + 4 : cell.x - scrollLeft + 4
@@ -804,18 +955,13 @@ class Sheet {
             canvasContext.fillStyle = '#000'
             canvasContext.fillText(cell.value, fontX, fontY)
         }
-
     }
     public getRowCount() {
-        return this.sheetData.length
+        return this.rowDataMap.length
     }
 
     public getColCount() {
-        if (this.sheetData.length) {
-            const row = this.sheetData[0]
-            if (row) return row.length
-        }
-        return 0
+        return this.colDataMap.length
     }
     public destroy = () => {
         this.tables.forEach(t => t.destroy())

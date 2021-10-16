@@ -4,7 +4,6 @@ import {
     getScrollTopBySliderMoveY,
     getScrollLeftBySliderMoveX
 } from './calc'
-import { throllte } from '../utils/helper'
 import { createVerticalScroll, createHorizontalScroll, setNodeStyle } from './create'
 import { updateVerticalScroll, updateHorizotalScroll } from './update'
 import { addEvent, removeEvent } from '../utils/event'

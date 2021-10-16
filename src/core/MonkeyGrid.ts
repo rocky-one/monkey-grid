@@ -102,8 +102,8 @@ class MonkeyGrid {
                 this.mouseDownTime = now
                 const { offsetX, offsetY }: any = event
                 const { sheetData, pointRange, frozenRowCount, frozenColCount } = sheet
-                const inFrozenRow = inFrozenRowByXY(offsetY, frozenRowCount, sheetData)
-                const inFrozenCol = inFrozenColByXY(offsetX, frozenColCount, sheetData)
+                const inFrozenRow = inFrozenRowByXY(offsetY, frozenRowCount, sheetData, sheet.getCellInfo)
+                const inFrozenCol = inFrozenColByXY(offsetX, frozenColCount, sheetData, sheet.getCellInfo)
                 sheet.selectedRangeInFrozenRow = inFrozenRow
                 sheet.selectedRangeInFrozenCol = inFrozenCol
                 const cell = findCellByXY(offsetX, offsetY, sheet)
@@ -124,6 +124,9 @@ class MonkeyGrid {
                 this.mouseDownFlag = false
                 // const sheet = this.sheets[this.selectedSheetIndex]
                 // sheet.setMergeCellsByRange()
+                // setTimeout(() => {
+                //     sheet.removeMergeCellsByRange()
+                // }, 2000)
             }, 100)
 
         })
@@ -136,7 +139,7 @@ class MonkeyGrid {
             let lastSelectedRange = [...selectedRange].toString()
             for (let i = selectedRange[0]; i <= selectedRange[2]; i++) {
                 for (let j = selectedRange[1]; j <= selectedRange[3]; j++) {
-                    const cell = sheet.sheetData[i][j]
+                    const cell = sheet.getCellInfo(i, j)
                     const pointer = cell.pointer || [i, j]
                     const mergeCellEnd = mergeCells[`${pointer[0]}${pointer[1]}`]
                     if (mergeCellEnd) {
@@ -196,7 +199,7 @@ class MonkeyGrid {
                 const sheet = this.sheets[this.selectedSheetIndex]
                 const cell = findCellByXY(offsetX, offsetY, sheet)
                 if (cell) {
-                    this.calcCellSelectedRange(cell)
+                    sheet.calcCellSelectedRange(cell)
                     sheet.point()
                 }
             }
