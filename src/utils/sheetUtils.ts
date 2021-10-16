@@ -216,7 +216,6 @@ export function insertTableDataToSheet(row: number, col: number, tableData: any[
     if (flag) {
         sheet.setRowColCount(rowCount, colCount)
     }
-    // 注意这里需要检测是否覆盖已有数据和边界问题 ，如果该区域有数据存在给出提示 做调整 111
     for (let i = 0; i < tableData.length; i++) {
         const r = tableData[i]
         for (let j = 0; j < r.length; j++) {
@@ -228,49 +227,15 @@ export function insertTableDataToSheet(row: number, col: number, tableData: any[
             let newRow = row + i
             let newCol = col + j
             sheetData[newRow][newCol] = cell
-
-            // if (cell.rowspan > 1 || cell.colspan > 1) {
-            //     sheet.setMergeCells(newRow, newCol, newRow + cell.rowspan, newCol + cell.colspan)
-            // }
+            // 如果初始化数据中有合并信息 直接处理
+            if (cell.rowspan > 1 || cell.colspan > 1) {
+                sheet.setMergeCells(newRow, newCol, (cell.rowspan || 1), (cell.colspan || 1))
+            }
         }
     }
     return sheetData
 }
 
-/**
- * @desc 支持按sheetData和tableData计算合并单元格，注意row col索引需要对应
- * @param row 
- * @param col 
- * @param cell 
- * @param data 
- */
-// export function setWidthHeightByMergeCells(startRow: number, startCol: number, cell: any, data: any[], mergeCells: any) {
-//     if (!cell || cell.pointer) return false
-//     const mergeCell = mergeCells[`${startRow}${startCol}`]
-//     if (!mergeCell) return false
-//     let endRow = startRow + mergeCell[0]
-//     let endCol = startCol + mergeCell[1]
-//     const leftTopCell = data[startRow][startCol]
-//     let height = 0
-//     let width = 0
-//     for (let i = startRow; i <= endRow; i++) {
-//         const cell = data[i][startCol];
-//         if (!cell.pointer) {
-//             height += cell.height
-//         }
-//         for (let j = startCol; j <= endCol; j++) {
-//             if (i === startRow && !data[i][j].pointer) {
-//                 width += data[i][j].width
-//             }
-//             if (i !== startRow || j !== startCol) {
-//                 data[i][j].pointer = [startRow, startCol]
-//             }
-//         }
-//     }
-//     leftTopCell.height = height
-//     leftTopCell.width = width
-//     data[startRow][startCol] = leftTopCell
-// }
 
 export function getCellWidthHeight(row: number, col: number, sheet: any) {
     const mergeCell = sheet.mergeCells[`${row}${col}`] || [1, 1]
@@ -288,7 +253,9 @@ export function getCellWidthHeight(row: number, col: number, sheet: any) {
 
     return {
         width,
-        height
+        height,
+        endRow,
+        endCol
     }
 }
 

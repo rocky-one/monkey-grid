@@ -1,5 +1,5 @@
 import keyboardJS from 'keyboardjs'
-import { forEachSheetDataBySelectedRange } from '../core/utils/sheetUtils'
+import { forEachSheetDataBySelectedRange } from '../utils/sheetUtils'
 
 const keyBoardData = {
 	sheet: null

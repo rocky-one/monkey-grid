@@ -3,12 +3,12 @@ import * as domCore from '../utils/dom'
 import { OptionsInterface } from '../interface/BaseInterface'
 import ScrollBar from '../scrollBar/ScrollBar'
 import Sheet from './Sheet'
-import { mouseDown, mouseEvent, mouseMove, mouseUp, removeMouseMove } from '../event/mouseEvent'
+import { mouseDown, mouseMove, mouseUp, removeMouseDown, removeMouseMove, removeMouseUp } from '../event/mouseEvent'
 import { getPixelRatio, getObjectAttrDefault, findCellByXY, inFrozenRowByXY, inFrozenColByXY, throllte } from '../utils/helper'
-// import { FOOTER_HEIGHT, RIGHT_SCROLL_WIDTH, LEFT_ORDER_WIDTH, HEADER_ORDER_HEIGHT } from './const'
-import '../style/app.less'
 import watch from '../event/watch'
 import keyBoardInit from '../event/keyBoard'
+import '../style/app.less'
+
 /**
  * @desc options参数描述
  * order 是否有序号 true | false
@@ -40,6 +40,8 @@ class MonkeyGrid {
     selectedSheetIndex: number = -1
     mouseDownFlag: boolean = false
     mouseDownTime: number = 0
+    moveFn: Function
+    isDbClick: boolean = false
     public addSheet = (name: string, rowCount: number, colCount: number) => {
         const sheet = new Sheet({
             name,
@@ -88,109 +90,38 @@ class MonkeyGrid {
         canvasContext.scale(this.ratio, this.ratio)
         // canvasContext.translate(ratio, ratio)
         this.canvasContext = canvasContext
-        mouseDown(this.layout.canvas, (event: Event) => {
-            setTimeout(() => {
-                const now = new Date().getTime()
-                const sheet = this.sheets[this.selectedSheetIndex]
-                sheet.isDbClick = false
-                this.mouseDownFlag = true
-                if (now - this.mouseDownTime < 300) {
-                    sheet.isDbClick = true
-                    this.mouseDownFlag = false
-                    console.log('双击')
-                }
-                this.mouseDownTime = now
-                const { offsetX, offsetY }: any = event
-                const { sheetData, pointRange, frozenRowCount, frozenColCount } = sheet
-                const inFrozenRow = inFrozenRowByXY(offsetY, frozenRowCount, sheetData, sheet.getCellInfo)
-                const inFrozenCol = inFrozenColByXY(offsetX, frozenColCount, sheetData, sheet.getCellInfo)
-                sheet.selectedRangeInFrozenRow = inFrozenRow
-                sheet.selectedRangeInFrozenCol = inFrozenCol
-                const cell = findCellByXY(offsetX, offsetY, sheet)
-                if (cell) {
-                    // 避免同一个引用，否则后面修改 sheet.selectedRange 会影响初始的sheet.selectedCell.range
-                    sheet.selectedRange = [...cell.range]
-                    sheet.selectedCell = cell
-                }
-                sheet.point()
-            }, 0)
-        })
-        const moveFn = this.onMouseMove()
-        mouseMove(this.layout.canvas, moveFn)
 
-        mouseUp(this.layout.canvas, (event: Event) => {
-            this.mouseDownFlag = false
-            setTimeout(() => {
-                this.mouseDownFlag = false
-                // const sheet = this.sheets[this.selectedSheetIndex]
-                // sheet.setMergeCellsByRange()
-                // setTimeout(() => {
-                //     sheet.removeMergeCellsByRange()
-                // }, 2000)
-            }, 100)
-
-        })
+        this.moveFn = this.onMouseMove()
+        mouseDown(this.layout.canvas, this.onMouseDown)
+        mouseMove(this.layout.canvas, this.moveFn)
+        mouseUp(this.layout.canvas, this.onMouseUp)
     }
-    calcCellSelectedRange = (cell) => {
-        const sheet = this.sheets[this.selectedSheetIndex]
-        const mergeCells = sheet.mergeCells
-        // 如果当前选中区域有合并单元格 找出最大边界
-        function findMergeBound(selectedRange) {
-            let lastSelectedRange = [...selectedRange].toString()
-            for (let i = selectedRange[0]; i <= selectedRange[2]; i++) {
-                for (let j = selectedRange[1]; j <= selectedRange[3]; j++) {
-                    const cell = sheet.getCellInfo(i, j)
-                    const pointer = cell.pointer || [i, j]
-                    const mergeCellEnd = mergeCells[`${pointer[0]}${pointer[1]}`]
-                    if (mergeCellEnd) {
-                        let mergeStartRow = cell.pointer ? cell.pointer[0] : i
-                        let mergeStartCol = cell.pointer ? cell.pointer[1] : j
-                        let mergeEndRow = mergeStartRow + mergeCellEnd[0]
-                        let mergeEndCol = mergeStartCol + mergeCellEnd[1]
-                        if (mergeStartRow < selectedRange[0]) {
-                            selectedRange[0] = mergeStartRow
-                        }
-                        if (mergeEndRow > selectedRange[2]) {
-                            selectedRange[2] = mergeEndRow
-                        }
-                        if (mergeStartCol < selectedRange[1]) {
-                            selectedRange[1] = mergeStartCol
-                        }
-                        if (mergeEndCol > selectedRange[3]) {
-                            selectedRange[3] = mergeEndCol
-                        }
-                        sheet.selectedRange = selectedRange
-                        // 上一次和当前不同递归
-                        // 上一次和当前如果相同说明找到边界
-                        if (lastSelectedRange !== selectedRange.toString()) {
-                            findMergeBound(selectedRange)
-                        }
-                    }
-                }
+    private onMouseDown = (event: Event) => {
+        setTimeout(() => {
+            const now = new Date().getTime()
+            const sheet = this.sheets[this.selectedSheetIndex]
+            this.isDbClick = false
+            this.mouseDownFlag = true
+            if (now - this.mouseDownTime < 300) {
+                this.isDbClick = true
+                this.mouseDownFlag = false
+                console.log('双击')
             }
-        }
-        if (cell) {
-            const selectedRange = sheet.selectedRange
-            const selectedCellRange = sheet.selectedCell.range
-            if (selectedCellRange) {
-                const row = cell.range[0]
-                const col = cell.range[1]
-                selectedRange[2] = row
-                selectedRange[3] = col
-                // 反方向选中
-                if (row < selectedCellRange[0]) {
-                    selectedRange[0] = row
-                    selectedRange[2] = selectedCellRange[0]
-                }
-                if (col < selectedCellRange[1]) {
-                    selectedRange[1] = col
-                    selectedRange[3] = selectedCellRange[1]
-                }
-                sheet.selectedRange = selectedRange
+            this.mouseDownTime = now
+            const { offsetX, offsetY }: any = event
+            const { sheetData, frozenRowCount, frozenColCount } = sheet
+            const inFrozenRow = inFrozenRowByXY(offsetY, frozenRowCount, sheetData, sheet.getCellInfo)
+            const inFrozenCol = inFrozenColByXY(offsetX, frozenColCount, sheetData, sheet.getCellInfo)
+            sheet.selectedRangeInFrozenRow = inFrozenRow
+            sheet.selectedRangeInFrozenCol = inFrozenCol
+            const cell = findCellByXY(offsetX, offsetY, sheet)
+            if (cell) {
+                // 避免同一个引用，否则后面修改 sheet.selectedRange 会影响初始的sheet.selectedCell.range
+                sheet.selectedRange = [...cell.range]
+                sheet.selectedCell = cell
             }
-            // 如果当前区域有合并单元格 需要找出最大的边界值
-            findMergeBound(selectedRange)
-        }
+            sheet.point()
+        }, 0)
     }
     private onMouseMove = () => {
         return throllte((event: Event) => {
@@ -205,11 +136,16 @@ class MonkeyGrid {
             }
         }, 100)
     }
-    private calcMouseMoveXY = () => {
+    private onMouseUp = (event: Event) => {
+        setTimeout(() => {
+            this.mouseDownFlag = false
+            // const sheet = this.sheets[this.selectedSheetIndex]
+            // sheet.setMergeCellsByRange()
+            // setTimeout(() => {
+            //     sheet.removeMergeCellsByRange()
+            // }, 2000)
+        }, 100)
 
-    }
-    private onRemoveMouseMode = (fn: Function) => {
-        removeMouseMove(this.layout.canvas, fn)
     }
     // 创建底部SheetTab
     private createSheetTabs = () => {
@@ -226,6 +162,9 @@ class MonkeyGrid {
         this.layout.footerScrollBox = footerScrollBox
     }
     public destroy = () => {
+        removeMouseDown(this.layout.canvas, this.onMouseDown)
+        removeMouseMove(this.layout.canvas, this.moveFn)
+        removeMouseUp(this.layout.canvas, this.onMouseUp)
         this.sheets.forEach(s => s.destroy())
         this.sheets = null
         this.options = null
