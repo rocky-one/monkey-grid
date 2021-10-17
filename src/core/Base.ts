@@ -21,7 +21,7 @@ import Record from './Record'
 // 8. 拖拽行列宽高
 
 // 12月
-// 1. ssr官方文档系统
+// 1. ssr文档系统
 // 2. demo搭建
 // 3. 上线
 
@@ -143,6 +143,13 @@ class Base {
             x: colDataMap[col].x,
             y: rowDataMap[row].y
         }
+    }
+    public setCellStyle = (row: number, col: number, style: any) => {
+        if (this.sheetData[row][col].empty) {
+            this.sheetData[row][col] = {}
+        }
+        this.sheetData[row][col].style = style
+        this.nextTick(this.point, 'next-setCellStyle')
     }
     public setSheetName = (name: string) => {
         this.sheetName = name
