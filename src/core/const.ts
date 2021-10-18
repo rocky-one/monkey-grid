@@ -15,3 +15,6 @@ export const ROW_HEIGHT = 24
 
 // 默认列宽
 export const COL_WIDTH = 100
+
+// 默认字体
+export const FONT_FAMILY = 'Arial'

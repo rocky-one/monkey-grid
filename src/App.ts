@@ -18,7 +18,12 @@ data[5][3].rowspan = 1
 data[5][3].colspan = 4
 data[7][3].rowspan = 3
 data[7][3].colspan = 3
-
+data[1][1].style = {
+	fontSize: '16px',
+	fontWeight: 600,
+	// fontFamily: 'arial',
+	color: 'red'
+}
 const mG = new MonkeyGrid({
 	container: document.getElementById('tableBox'),
 	width: 700,

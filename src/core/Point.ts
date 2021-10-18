@@ -1,6 +1,6 @@
 import { SheetOptions, PointRange } from '../interface/SheetInterface'
-import { calcStartRowIndex, calcEndRowIndex, calcStartColIndex, calcEndColIndex, getCellInFrozenByIndex } from '../utils/helper'
-import { LEFT_ORDER_WIDTH, HEADER_ORDER_HEIGHT } from './const'
+import { calcStartRowIndex, calcEndRowIndex, calcStartColIndex, calcEndColIndex, getCellInFrozenByIndex, pxToNum } from '../utils/helper'
+import { LEFT_ORDER_WIDTH, HEADER_ORDER_HEIGHT, FONT_FAMILY } from './const'
 import { numToABC } from '../utils/sheetUtils'
 import Base from './Base'
 
@@ -25,7 +25,7 @@ export default class Point extends Base {
 		let endRowIndex = calcEndRowIndex(startRowIndex, this.clientHeight, sheetData, this.rowDataMap)
 		let startColIndex = calcStartColIndex(this)
 		let endColIndex = calcEndColIndex(startColIndex, this.clientWidth, sheetData, this.colDataMap)
-		canvasContext.font = `${this.font}px Arial`
+		canvasContext.font = `${this.font}px ${FONT_FAMILY}`
 		startRowIndex = startRowIndex + this.frozenRowCount
 		endRowIndex = endRowIndex + this.frozenRowCount
 		startColIndex = startColIndex + this.frozenColCount
@@ -106,7 +106,9 @@ export default class Point extends Base {
 				value: i + 1,
 				width: LEFT_ORDER_WIDTH,
 				height: cell.height,
-				backgroundColor: '#AFEEEE'
+				style: {
+					backgroundColor: '#AFEEEE'
+				}
 			}, 0, y)
 		}
 		canvasContext.strokeStyle = "#ccc"
@@ -127,7 +129,9 @@ export default class Point extends Base {
 				value: numToABC(j),
 				width: cell.width,
 				height: HEADER_ORDER_HEIGHT,
-				backgroundColor: '#AFEEEE'
+				style: {
+					backgroundColor: '#AFEEEE'
+				}
 			}, x, 0)
 		}
 		canvasContext.strokeStyle = "#ccc"
@@ -149,7 +153,9 @@ export default class Point extends Base {
         for (let i = 0; i < frozenRowCount; i++) {
             for (let j = 0; j < frozenColCount; j++) {
                 const cell = this.getCellInfo(i, j, true)
-                cell.backgroundColor = '#E1FFFF'
+				cell.style = {
+					backgroundColor: '#AFEEEE'
+				}
                 this.pointCell(cell, cell.x, cell.y)
             }
         }
@@ -169,7 +175,9 @@ export default class Point extends Base {
                 y: 0,
                 width: LEFT_ORDER_WIDTH,
                 height: HEADER_ORDER_HEIGHT,
-                backgroundColor: '#FFFFFF',
+				style: {
+					backgroundColor: '#FFFFFF'
+				},
                 value: ''
             }
             this.pointCell(cell, cell.x, cell.y)
@@ -363,7 +371,8 @@ export default class Point extends Base {
                 let cell = this.getCellInfo(i, j, true)
                 // 当前单元格已经被绘制过就跳出
                 if (!cell || cell.pointer) continue
-                cell.backgroundColor = cell.backgroundColor || '#E1FFFF'
+				cell.style = cell.style ? Object.assign({backgroundColor: '#E1FFFF'}, cell.style) : {backgroundColor: '#E1FFFF'}
+                // cell.backgroundColor = cell.backgroundColor || '#E1FFFF'
                 this.pointCell(cell, undefined, cell.y, i, j)
                 // 冻结的最后一行，更新maxY
                 if (i === this.frozenRowCount - 1) {
@@ -398,7 +407,8 @@ export default class Point extends Base {
                 if (!isFrozenColCount) {
                     x -= horizontal.scrollLeft
                 }
-                cell.backgroundColor = cell.backgroundColor || '#E1FFFF'
+				cell.style = cell.style ? Object.assign({backgroundColor: '#E1FFFF'}, cell.style) : {backgroundColor: '#E1FFFF'}
+                // cell.backgroundColor = cell.backgroundColor || '#E1FFFF'
                 this.pointCell(cell, cell.x, y, i, j)
                 // 冻结的最后一行，更新maxY
                 if (j === this.frozenColCount - 1) {
@@ -426,14 +436,22 @@ export default class Point extends Base {
         canvasContext.lineTo(lineX + cell.width + 0.5, lineY + cell.height + 0.5)
 
         // 单元格背景颜色
-        this.paintCellBgColor(lineX, lineY, cell.width, cell.height, cell.backgroundColor || '#FFFFFF')
+        this.paintCellBgColor(lineX, lineY, cell.width, cell.height, cell.style ? cell.style.backgroundColor || '#FFFFFF' : '#FFFFFF')
 
         if (cell.value) {
             let fontX = x !== undefined ? x + 4 : cell.x - scrollLeft + 4
             let fontY = y !== undefined ? y + (cell.height / 2) + (this.font / 2) : cell.y - scrollTop + (cell.height / 2) + (this.font / 2)
             // 字体
-            canvasContext.fillStyle = '#000'
+            canvasContext.fillStyle = cell.style && cell.style.color || '#000'
+			if (cell.style && cell.style.fontSize) {
+				canvasContext.font = `
+					${cell.style.fontStyle ? cell.style.fontStyle : 'normal'} ${cell.style.fontVariant ? cell.style.fontVariant : 'normal'} ${cell.style.fontWeight ? cell.style.fontWeight : 'normal'} ${pxToNum(cell.style.fontSize)}px ${cell.style.fontFamily ? cell.style.fontFamily : FONT_FAMILY}
+				`
+			}
             canvasContext.fillText(cell.value, fontX, fontY)
+			if (cell.style && cell.style.fontSize) {
+				canvasContext.font = `${this.font}px ${FONT_FAMILY}`
+			}
         }
     }
 	// 绘制背景颜色 context: CanvasRenderingContext2D
