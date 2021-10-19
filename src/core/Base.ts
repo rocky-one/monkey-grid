@@ -144,12 +144,21 @@ class Base {
             y: rowDataMap[row].y
         }
     }
+    // 设置单元格样式
     public setCellStyle = (row: number, col: number, style: any) => {
         if (this.sheetData[row][col].empty) {
             this.sheetData[row][col] = {}
         }
         this.sheetData[row][col].style = style
         this.nextTick(this.point, 'next-setCellStyle')
+    }
+    // 设置单元格 格式
+    public setFormatter = (row: number, col: number, format: string) => {
+        if (this.sheetData[row][col].empty) {
+            this.sheetData[row][col] = {}
+        }
+        this.sheetData[row][col].format = format
+        this.nextTick(this.point, 'next-setFormatter')
     }
     public setSheetName = (name: string) => {
         this.sheetName = name

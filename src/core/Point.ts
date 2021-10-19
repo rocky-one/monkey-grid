@@ -156,7 +156,9 @@ export default class Point extends Base {
 				cell.style = {
 					backgroundColor: '#AFEEEE'
 				}
-                this.pointCell(cell, cell.x, cell.y)
+				cell.width -= 1
+				cell.height -= 1
+                this.pointCell(cell, cell.x + 1, cell.y + 1)
             }
         }
         canvasContext.strokeStyle = "#ccc"

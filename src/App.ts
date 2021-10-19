@@ -22,7 +22,8 @@ data[1][1].style = {
 	fontSize: '16px',
 	fontWeight: 600,
 	// fontFamily: 'arial',
-	color: 'red'
+	color: 'red',
+	backgroundColor: 'green'
 }
 const mG = new MonkeyGrid({
 	container: document.getElementById('tableBox'),
@@ -50,4 +51,9 @@ addButton.addEventListener('click', () => {
 	// sheet.setRowHeight(8, 40)
 	// sheet.setColWidth(4, 120)
 	sheet.removeMergeCells(7, 4, 3, 3)
+
+	sheet.setCellStyle(7, 3, {
+		backgroundColor: '#000',
+		color: '#fff'
+	})
 })
