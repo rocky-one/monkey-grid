@@ -40,8 +40,8 @@ class Base {
         this.colWidth = this.options.colWidth
         this.sheetData = []
         this.mergeCells = {}
-        this.frozenRowCount = this.options.frozenRowCount
-        this.frozenColCount = this.options.frozenColCount
+        this.frozenRowCount = this.options.frozenRowCount || 0
+        this.frozenColCount = this.options.frozenColCount || 0
         // 有序号时的偏移量
         this.xOffset = this.options.order ? LEFT_ORDER_WIDTH : 0
         this.yOffset = this.options.headerOrder ? HEADER_ORDER_HEIGHT : 0
@@ -278,6 +278,7 @@ class Base {
     public setSelectedRange = (selectedRange: number[]) => {
         this.selectedRange = selectedRange
     }
+    
     private updateRowDataMapY = (startRow: number = 0) => {
         const startCell = this.rowDataMap[startRow]
         let startY = startCell.y + startCell.height
@@ -334,6 +335,7 @@ class Base {
             }
         }
         const oldVal = this.sheetData[row][col]
+        // 记录操作
         // 当上一次value和当前value不一样时 赋值、记录
         // 注意excel中相同value的更改也会被记录
         if (oldVal !== value) {
@@ -427,6 +429,7 @@ class Base {
     public calcCellSelectedRange = (cell) => {
         const mergeCells = this.mergeCells
         // 如果当前选中区域有合并单元格 找出最大边界
+        // 此处可优化计算，当合并区域小于选中区域是可跳过计算 111
         const findMergeBound = (selectedRanges) => {
             const selectedRange = [...selectedRanges]
             let lastSelectedRange = [...selectedRange].toString()

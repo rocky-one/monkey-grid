@@ -412,3 +412,17 @@ export function checkHasValueByRange(row: number, col: number, endRow: number, e
     }
     return false
 }
+
+export function getColNumByPageX(offsetX: number, sheet: any) {
+    const scrollLeft = sheet.scrollBar.getHorizontal().scrollLeft
+    const startColIndex = sheet.pointRange.startColIndex
+    const colDataMap = sheet.colDataMap
+    const x = offsetX + scrollLeft
+    let width = 0
+    for (let j = startColIndex; j < colDataMap.length; j++) {
+        width = colDataMap[j].x + colDataMap[j].width
+        if (width >= x) {
+            return j
+        }
+    }
+}

@@ -67,6 +67,17 @@ class ScrollBar {
 
     mouseDownSlider: Function
     mouseDownSliderH: Function
+    autoScrollInfo: any = {
+        autoScrollTop: false,
+        autoScrollDown: false,
+        autoScrollLeft: false,
+        autoScrollRight: false,
+        topTimer: null,
+        bottomTimer: null,
+        leftTimer: null,
+        rightTimer: null
+    }
+    
     private onMouse = (e: any, { deltaX, deltaY }) => {
         e.preventDefault()
         // sliderHeight > 0 说明有滚动条，只有 有滚动的时候事件才能被触发
@@ -142,6 +153,36 @@ class ScrollBar {
         this.horizontal = updateHorizotalScroll(this.horizontal, scrollLeft, true)
         this.options.horizontalScrollCb(this.horizontal)
     }
+    // 是否超出边界
+    // 上边界
+    public getVerticalDownBoundary = () => {
+        return this.vertical.sliderTop <= 0
+    }
+    // 下边界
+    public getVerticalUpBoundary = () => {
+        return this.vertical.sliderTop >= this.vertical.sliderMaxTop
+    }
+    public autoScrollIngTop = (cb: Function, time: number = 100) => {
+        if (this.getVerticalDownBoundary() || this.getVerticalUpBoundary()) {
+            this.stopAutoScrollIngTop()
+            return
+        }
+        if (!this.autoScrollInfo.autoScrollTop) {
+            this.autoScrollInfo.topTimer = setInterval(() => {
+                if (cb && typeof cb === 'function') {
+                    cb()
+                }
+                const scrollTop = this.getVertical().scrollTop
+                this.verticalScrollTo(scrollTop + 24)
+                this.autoScrollInfo.autoScrollTop = true
+            }, time)
+        }
+    }
+    public stopAutoScrollIngTop = () => {
+        this.autoScrollInfo.topTimer && clearInterval(this.autoScrollInfo.topTimer)
+        this.autoScrollInfo.topTimer = null
+        this.autoScrollInfo.autoScrollTop = false
+    }
     private updateVertical = (vertical: Vertical = {}) => {
         this.vertical = Object.assign(this.vertical, vertical)
     }
@@ -166,7 +207,7 @@ class ScrollBar {
     }
 
 
-    private mouseMoveSlider = (event) => {
+    private mouseMoveSlider = (event: MouseEvent) => {
         // 纵向滚动条被按下
         if (this.verticalEventRecord.mouseDownFlag) {
             // sliderHeight > 0 说明有滚动条，只有 有滚动的时候事件才能被触发
@@ -177,15 +218,11 @@ class ScrollBar {
                 let verticalBoundary = false
                 let moveY = event.pageY - this.verticalEventRecord.mouseDownPageY
                 if (this.verticalEventRecord.preVY <= this.verticalEventRecord.preMoveVY) {
-                    // console.log('向下滚动')
-                    if (this.vertical.sliderTop >= this.vertical.sliderMaxTop) {
-                        verticalBoundary = true
-                    }
+                    // console.log('向下')
+                    verticalBoundary = this.getVerticalDownBoundary()
                 } else {
-                    // console.log('向上滚动')
-                    if (this.vertical.sliderTop <= 0) {
-                        verticalBoundary = true
-                    }
+                    // console.log('向上')
+                    verticalBoundary = this.getVerticalUpBoundary()
                 }
                 const scrollTop = getScrollTopBySliderMoveY(this.vertical, this.verticalEventRecord, moveY)
                 if (moveY !== 0 && !verticalBoundary) {
@@ -219,8 +256,6 @@ class ScrollBar {
                 }
             }
         }
-
-
     }
     private onMouseMoveSlider = () => {
         addEvent(document.body, 'mousemove', this.mouseMoveSlider)

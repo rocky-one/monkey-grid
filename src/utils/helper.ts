@@ -286,16 +286,6 @@ export function findCellByXY(x: number, y: number, sheet: any, isFindPointerOrig
     let endRowIndex = frozenRowCount - 1
     let startColIndex = 0
     let endColIndex = frozenColCount - 1
-    // if(!sheet.selectedRangeInFrozenRow) {
-    //     y += scrollTop
-    //     startRowIndex = pointRange.startRowIndex
-    //     endRowIndex = pointRange.endRowIndex
-    // }
-    // if(!sheet.selectedRangeInFrozenCol) {
-    //     x += scrollLeft
-    //     startColIndex = pointRange.startColIndex
-    //     endColIndex = pointRange.endColIndex
-    // }
     const frozenFlag = getCellInFrozenByXY(x, y, sheet.frozenInfo)
     if (frozenFlag !== 'row') {
         y += scrollTop

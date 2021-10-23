@@ -26,3 +26,12 @@ export interface PointRange {
     startColIndex: number;
     endColIndex: number;
 }
+
+
+export interface sheetParams {
+    name: string
+    rowCount?: number
+    colCount?: number
+    frozenRowCount?: number
+    frozenColCount?: number
+}

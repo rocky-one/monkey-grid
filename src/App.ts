@@ -31,10 +31,15 @@ const mG = new MonkeyGrid({
 	height: 600,
 	order: true,
 	headerOrder: true,
+	
+})
+const sheet = mG.addSheet({
+	name: 'sheet1',
+	rowCount:rowLen+20,
+	colCount: colLen+10,
 	frozenRowCount: 1,
 	frozenColCount: 2
 })
-const sheet = mG.addSheet('sheet1', rowLen+2000, colLen+2000)
 // sheet.setMergeCells(1, 1, 12, 1)
 // sheet.setMergeCells(5, 3, 1, 5)
 // sheet.setMergeCells(7, 3, 3, 3)

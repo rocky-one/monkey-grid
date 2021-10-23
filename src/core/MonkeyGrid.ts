@@ -1,10 +1,12 @@
 import { layout } from './layout'
 import * as domCore from '../utils/dom'
 import { OptionsInterface } from '../interface/BaseInterface'
+import { sheetParams } from '../interface/SheetInterface'
 import ScrollBar from '../scrollBar/ScrollBar'
 import Sheet from './Sheet'
 import { mouseDown, mouseMove, mouseUp, removeMouseDown, removeMouseMove, removeMouseUp } from '../event/mouseEvent'
 import { getPixelRatio, getObjectAttrDefault, findCellByXY, inFrozenRowByXY, inFrozenColByXY, throllte } from '../utils/helper'
+import { getColNumByPageX } from '../utils/sheetUtils'
 import watch from '../event/watch'
 import keyBoardInit from '../event/keyBoard'
 import '../style/app.less'
@@ -41,11 +43,18 @@ class MonkeyGrid {
     mouseDownFlag: boolean = false
     mouseDownTime: number = 0
     moveFn: Function
-    public addSheet = (name: string, rowCount: number, colCount: number) => {
+    documentMoveFn: Function
+    canvasRect: any
+    // 记录鼠标坐标信息
+    mouseEvent: any = {
+        preMovePageX: 0,
+        preMovePageY: 0
+    }
+    public addSheet = (params: sheetParams) => {
         const sheet = new Sheet({
-            name,
-            rowCount,
-            colCount,
+            name: params.name,
+            rowCount: params.rowCount,
+            colCount: params.colCount,
             layout: this.layout,
             canvas: this.layout.canvas,
             canvasContext: this.canvasContext,
@@ -54,8 +63,8 @@ class MonkeyGrid {
             order: getObjectAttrDefault(this.options, 'order', true),
             headerOrder: getObjectAttrDefault(this.options, 'headerOrder', true),
             ratio: this.ratio,
-            frozenRowCount: this.options.frozenRowCount,
-            frozenColCount: this.options.frozenColCount
+            frozenRowCount: params.frozenRowCount,
+            frozenColCount: params.frozenColCount
         })
         this.sheets.push(sheet)
         this.selectedSheetIndex = this.sheets.length - 1
@@ -90,13 +99,22 @@ class MonkeyGrid {
         // canvasContext.translate(ratio, ratio)
         this.canvasContext = canvasContext
 
-        this.moveFn = this.onMouseMove()
+        // this.moveFn = this.onMouseMove()
         mouseDown(this.layout.canvas, this.onMouseDown)
-        mouseMove(this.layout.canvas, this.moveFn)
-        mouseUp(this.layout.canvas, this.onMouseUp)
+        // mouseMove(this.layout.canvas, this.moveFn)
+        mouseUp(document.body, this.onMouseUp)
+
+        this.documentMoveFn = this.onDocumentMove()
+        mouseMove(document.body, this.documentMoveFn)
+
     }
-    private onMouseDown = (event: Event) => {
+    private onMouseDown = (event: MouseEvent) => {
         setTimeout(() => {
+            this.canvasRect = this.layout.canvas.getBoundingClientRect();
+            this.mouseEvent.mouseDownEvent = {
+                pageX: event.pageX,
+                pageY: event.pageY,
+            }
             const now = new Date().getTime()
             const sheet = this.sheets[this.selectedSheetIndex]
             sheet.isDbClick = false
@@ -121,28 +139,66 @@ class MonkeyGrid {
             sheet.point()
         }, 0)
     }
-    private onMouseMove = () => {
-        return throllte((event: Event) => {
+    private onMouseUp = (event: Event) => {
+        setTimeout(() => {
+            this.mouseDownFlag = false
+            const sheet = this.sheets[this.selectedSheetIndex]
+            sheet.scrollBar.stopAutoScrollIngTop()
+            // sheet.setMergeCellsByRange()
+            // setTimeout(() => {
+            //     sheet.removeMergeCellsByRange()
+            // }, 2000)
+        }, 100)
+    }
+    private onDocumentMove = () => {
+
+        return throllte((event: MouseEvent) => {
             if (this.mouseDownFlag) {
-                const { offsetX, offsetY }: any = event
+                const { pageX, pageY }: any = event
+                const offsetX = pageX - this.canvasRect.left
+                const offsetY = pageY - this.canvasRect.top
                 const sheet = this.sheets[this.selectedSheetIndex]
                 const cell = findCellByXY(offsetX, offsetY, sheet)
                 if (cell) {
                     sheet.calcCellSelectedRange(cell)
                     sheet.point()
                 }
+                this.calcMoveBound(event)
             }
         }, 100)
     }
-    private onMouseUp = (event: Event) => {
-        setTimeout(() => {
-            this.mouseDownFlag = false
-            // const sheet = this.sheets[this.selectedSheetIndex]
-            // sheet.setMergeCellsByRange()
-            // setTimeout(() => {
-            //     sheet.removeMergeCellsByRange()
-            // }, 2000)
-        }, 100)
+    private calcMoveBound = (event: MouseEvent) => {
+        const { pageX, pageY } = event
+        const { preMovePageX, preMovePageY } = this.mouseEvent
+        const sheet = this.sheets[this.selectedSheetIndex]
+        const offsetX = pageX - this.canvasRect.left
+        const colNum = getColNumByPageX(offsetX, sheet)
+        // 参数不是引用问题 111
+        console.log(colNum, 'colNum')
+        // 向下超出
+        if (pageY > this.canvasRect.bottom) {
+            sheet.scrollBar.autoScrollIngTop(() => {
+                console.log(colNum, 'colNum2')
+                sheet.calcCellSelectedRange({
+                    range: [sheet.pointRange.endRowIndex, colNum]
+                })
+            })
+        }
+        // 向下移动
+        if (pageY >= preMovePageY) {
+            
+        // 向上移动
+        } else if(pageY < preMovePageY) {
+
+        }
+
+        // 向右移动
+        if (pageX >= preMovePageX) {
+        
+        // 向左移动
+        } else if(pageX < preMovePageX){
+
+        }
 
     }
     // 创建底部SheetTab
@@ -161,8 +217,8 @@ class MonkeyGrid {
     }
     public destroy = () => {
         removeMouseDown(this.layout.canvas, this.onMouseDown)
-        removeMouseMove(this.layout.canvas, this.moveFn)
-        removeMouseUp(this.layout.canvas, this.onMouseUp)
+        removeMouseMove(document.body, this.documentMoveFn)
+        removeMouseUp(document.body, this.onMouseUp)
         this.sheets.forEach(s => s.destroy())
         this.sheets = null
         this.options = null
