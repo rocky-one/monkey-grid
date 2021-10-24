@@ -21,10 +21,12 @@ export interface SheetOptions {
 }
 
 export interface PointRange {
-    startRowIndex: number;
-    endRowIndex: number;
-    startColIndex: number;
-    endColIndex: number;
+    startRowIndex: number
+    endRowIndex: number
+    startColIndex: number
+    endColIndex: number
+    boundEndCol: 0
+	boundEndRow: 0
 }
 
 

@@ -69,13 +69,11 @@ class ScrollBar {
     mouseDownSliderH: Function
     autoScrollInfo: any = {
         autoScrollTop: false,
-        autoScrollDown: false,
         autoScrollLeft: false,
-        autoScrollRight: false,
+        autoScrollLeftTop: false,
         topTimer: null,
-        bottomTimer: null,
         leftTimer: null,
-        rightTimer: null
+        topLeftTimer: null
     }
     
     private onMouse = (e: any, { deltaX, deltaY }) => {
@@ -155,33 +153,85 @@ class ScrollBar {
     }
     // 是否超出边界
     // 上边界
-    public getVerticalDownBoundary = () => {
-        return this.vertical.sliderTop <= 0
+    public getVerticalUpBoundary = () => {
+        return this.vertical.sliderTop < 0
     }
     // 下边界
-    public getVerticalUpBoundary = () => {
+    public getVerticalDownBoundary = () => {
         return this.vertical.sliderTop >= this.vertical.sliderMaxTop
     }
-    public autoScrollIngTop = (cb: Function, time: number = 100) => {
-        if (this.getVerticalDownBoundary() || this.getVerticalUpBoundary()) {
-            this.stopAutoScrollIngTop()
-            return
-        }
+    // 左边界
+    public getHorizontalLeftBoundary = () => {
+        return this.horizontal.sliderLeft < 0
+    }
+    public getHorizontalRightBoundary = () => {
+        return this.horizontal.sliderLeft >= this.horizontal.sliderMaxLeft
+    }
+    /**
+     * 自动滚动
+     * @param speed 滚动速度 像素
+     * @param time 滚动间隔时间
+     * @param cb 回调
+     */
+    public autoScrollIngTop = (speed: number, time: number, cb?: Function) => {
+        
         if (!this.autoScrollInfo.autoScrollTop) {
             this.autoScrollInfo.topTimer = setInterval(() => {
+                if (this.getVerticalUpBoundary() || this.getVerticalDownBoundary()) {
+                    this.stopAutoScrollIngTop()
+                    return
+                }
                 if (cb && typeof cb === 'function') {
                     cb()
                 }
                 const scrollTop = this.getVertical().scrollTop
-                this.verticalScrollTo(scrollTop + 24)
+                this.verticalScrollTo(scrollTop + speed)
                 this.autoScrollInfo.autoScrollTop = true
             }, time)
         }
     }
     public stopAutoScrollIngTop = () => {
+        // if (!this.autoScrollInfo.autoScrollTop) return
         this.autoScrollInfo.topTimer && clearInterval(this.autoScrollInfo.topTimer)
         this.autoScrollInfo.topTimer = null
         this.autoScrollInfo.autoScrollTop = false
+    }
+    public autoScrollIngLeft = (speed: number, time: number, cb?: Function) => {
+        if (!this.autoScrollInfo.autoScrollLeft) {
+            this.autoScrollInfo.leftTimer = setInterval(() => {
+                if (this.getHorizontalLeftBoundary() || this.getHorizontalRightBoundary()) {
+                    this.stopAutoScrollIngLeft()
+                    return
+                }
+                this.autoScrollInfo.autoScrollLeft = true
+                if (cb && typeof cb === 'function') {
+                    cb()
+                }
+                const scrollLeft = this.getHorizontal().scrollLeft
+                this.horizontalScrollTo(scrollLeft + speed)
+            }, time)
+        }
+    }
+    public stopAutoScrollIngLeft = () => {
+        // if (!this.autoScrollInfo.autoScrollLeft) return
+        this.autoScrollInfo.leftTimer && clearInterval(this.autoScrollInfo.leftTimer)
+        this.autoScrollInfo.leftTimer = null
+        this.autoScrollInfo.autoScrollLeft = false
+    }
+    public autoScrollIngTopLeft = (params: any, cb: Function) => {
+        if (!this.autoScrollInfo.autoScrollLeftTop) {
+            this.autoScrollInfo.autoScrollLeftTop = true
+            this.stopAutoScrollIngTop()
+            this.stopAutoScrollIngLeft()
+            this.autoScrollIngTop(params.topSpeed, params.time, cb)
+            this.autoScrollIngLeft(params.leftSpeed, params.time, cb)
+        }
+    }
+    public stopAutoScrollIngTopLeft = () => {
+        if (!this.autoScrollInfo.autoScrollLeftTop) return
+        this.autoScrollInfo.autoScrollLeftTop = false
+        this.stopAutoScrollIngTop()
+        this.stopAutoScrollIngLeft()
     }
     private updateVertical = (vertical: Vertical = {}) => {
         this.vertical = Object.assign(this.vertical, vertical)
@@ -219,10 +269,10 @@ class ScrollBar {
                 let moveY = event.pageY - this.verticalEventRecord.mouseDownPageY
                 if (this.verticalEventRecord.preVY <= this.verticalEventRecord.preMoveVY) {
                     // console.log('向下')
-                    verticalBoundary = this.getVerticalDownBoundary()
+                    verticalBoundary = this.getVerticalUpBoundary()
                 } else {
                     // console.log('向上')
-                    verticalBoundary = this.getVerticalUpBoundary()
+                    verticalBoundary = this.getVerticalDownBoundary()
                 }
                 const scrollTop = getScrollTopBySliderMoveY(this.vertical, this.verticalEventRecord, moveY)
                 if (moveY !== 0 && !verticalBoundary) {

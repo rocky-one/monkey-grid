@@ -12,7 +12,11 @@ export default class Point extends Base {
 		startRowIndex: 0,
 		endRowIndex: 0,
 		startColIndex: 0,
-		endColIndex: 0
+		endColIndex: 0,
+		// 拖拽选中超出边界时，记录当前应该选中的行列位置
+		// 因为自动滚动选中后定时器问题会导致形参永远时初始值，这里改成对象指针就可以解决此问题
+		boundEndCol: 0,
+		boundEndRow: 0
 	}
 	/**
 	* 绘制整个sheet画布

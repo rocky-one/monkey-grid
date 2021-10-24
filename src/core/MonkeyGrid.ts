@@ -6,7 +6,7 @@ import ScrollBar from '../scrollBar/ScrollBar'
 import Sheet from './Sheet'
 import { mouseDown, mouseMove, mouseUp, removeMouseDown, removeMouseMove, removeMouseUp } from '../event/mouseEvent'
 import { getPixelRatio, getObjectAttrDefault, findCellByXY, inFrozenRowByXY, inFrozenColByXY, throllte } from '../utils/helper'
-import { getColNumByPageX } from '../utils/sheetUtils'
+import { getColNumByPageX, getRowNumByPageY } from '../utils/sheetUtils'
 import watch from '../event/watch'
 import keyBoardInit from '../event/keyBoard'
 import '../style/app.less'
@@ -143,12 +143,14 @@ class MonkeyGrid {
         setTimeout(() => {
             this.mouseDownFlag = false
             const sheet = this.sheets[this.selectedSheetIndex]
+            sheet.scrollBar.stopAutoScrollIngTopLeft()
             sheet.scrollBar.stopAutoScrollIngTop()
+            sheet.scrollBar.stopAutoScrollIngLeft()
             // sheet.setMergeCellsByRange()
             // setTimeout(() => {
             //     sheet.removeMergeCellsByRange()
             // }, 2000)
-        }, 100)
+        }, 40)
     }
     private onDocumentMove = () => {
 
@@ -169,37 +171,100 @@ class MonkeyGrid {
     }
     private calcMoveBound = (event: MouseEvent) => {
         const { pageX, pageY } = event
-        const { preMovePageX, preMovePageY } = this.mouseEvent
         const sheet = this.sheets[this.selectedSheetIndex]
         const offsetX = pageX - this.canvasRect.left
-        const colNum = getColNumByPageX(offsetX, sheet)
-        // 参数不是引用问题 111
-        console.log(colNum, 'colNum')
-        // 向下超出
-        if (pageY > this.canvasRect.bottom) {
-            sheet.scrollBar.autoScrollIngTop(() => {
-                console.log(colNum, 'colNum2')
+        const offsetY = pageY - this.canvasRect.top
+        sheet.pointRange.boundEndCol = getColNumByPageX(offsetX, sheet)
+        sheet.pointRange.boundEndRow = getRowNumByPageY(offsetY, sheet)
+        const upBound = pageY < this.canvasRect.top
+        const downBound = pageY > this.canvasRect.bottom
+        const leftBound = pageX < this.canvasRect.left
+        const rightBound = pageX > this.canvasRect.right
+
+        if (downBound && rightBound) {
+            sheet.scrollBar.autoScrollIngTopLeft({
+                leftSpeed: 24,
+                topSpeed: 24,
+                time: 100
+            }, () => {
                 sheet.calcCellSelectedRange({
-                    range: [sheet.pointRange.endRowIndex, colNum]
+                    range: [sheet.pointRange.endRowIndex, sheet.pointRange.endColIndex]
                 })
             })
+            return
         }
-        // 向下移动
-        if (pageY >= preMovePageY) {
-            
-        // 向上移动
-        } else if(pageY < preMovePageY) {
-
+        if (upBound && rightBound) {
+            sheet.scrollBar.autoScrollIngTopLeft({
+                leftSpeed: 24,
+                topSpeed: -24,
+                time: 100
+            }, () => {
+                sheet.calcCellSelectedRange({
+                    range: [sheet.pointRange.startRowIndex, sheet.pointRange.endColIndex]
+                })
+            })
+            return
+        }
+        if (downBound && leftBound) {
+            sheet.scrollBar.autoScrollIngTopLeft({
+                leftSpeed: -24,
+                topSpeed: 24,
+                time: 100
+            }, () => {
+                sheet.calcCellSelectedRange({
+                    range: [sheet.pointRange.endRowIndex, sheet.pointRange.startColIndex]
+                })
+            })
+            return
+        }
+        if (upBound && leftBound) {
+            sheet.scrollBar.autoScrollIngTopLeft({
+                leftSpeed: -24,
+                topSpeed: -24,
+                time: 100
+            }, () => {
+                sheet.calcCellSelectedRange({
+                    range: [sheet.pointRange.startRowIndex, sheet.pointRange.startColIndex]
+                })
+            })
+            return
+        }
+        sheet.scrollBar.stopAutoScrollIngTopLeft()
+        // 向下超出
+        if (downBound) {
+            sheet.scrollBar.autoScrollIngTop(24, 100, () => {
+                sheet.calcCellSelectedRange({
+                    range: [sheet.pointRange.endRowIndex, sheet.pointRange.boundEndCol]
+                })
+            })
+        // 向上超出
+        } else if (upBound) {
+            sheet.scrollBar.autoScrollIngTop(-24, 100, () => {
+                sheet.calcCellSelectedRange({
+                    range: [sheet.pointRange.startRowIndex, sheet.pointRange.boundEndCol]
+                })
+            })
+        } else {
+            sheet.scrollBar.stopAutoScrollIngTop()
         }
 
-        // 向右移动
-        if (pageX >= preMovePageX) {
-        
-        // 向左移动
-        } else if(pageX < preMovePageX){
-
+        // 向右超出
+        if (rightBound) {
+            sheet.scrollBar.autoScrollIngLeft(80, 100, () => {
+                sheet.calcCellSelectedRange({
+                    range: [sheet.pointRange.boundEndRow, sheet.pointRange.endColIndex]
+                })
+            })
+        // 向左超出
+        } else if (leftBound) {
+            sheet.scrollBar.autoScrollIngLeft(-80, 100, () => {
+                sheet.calcCellSelectedRange({
+                    range: [sheet.pointRange.boundEndRow, sheet.pointRange.startColIndex]
+                })
+            })
+        } else {
+            sheet.scrollBar.stopAutoScrollIngLeft()
         }
-
     }
     // 创建底部SheetTab
     private createSheetTabs = () => {

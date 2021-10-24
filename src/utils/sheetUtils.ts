@@ -426,3 +426,17 @@ export function getColNumByPageX(offsetX: number, sheet: any) {
         }
     }
 }
+
+export function getRowNumByPageY(offsetY: number, sheet: any) {
+    const scrollTop = sheet.scrollBar.getVertical().scrollTop
+    const startRowIndex = sheet.pointRange.startRowIndex
+    const rowDataMap = sheet.rowDataMap
+    const y = offsetY + scrollTop
+    let height = 0
+    for (let i = startRowIndex; i < rowDataMap.length; i++) {
+        height = rowDataMap[i].y + rowDataMap[i].height
+        if (height >= y) {
+            return i
+        }
+    }
+}
