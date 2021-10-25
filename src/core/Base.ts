@@ -474,11 +474,11 @@ class Base {
                 selectedRange[2] = row
                 selectedRange[3] = col
                 // 反方向选中
-                if (row < selectedCellRange[0]) {
+                if (row <= selectedCellRange[0]) {
                     selectedRange[0] = row
                     selectedRange[2] = selectedCellRange[0]
                 }
-                if (col < selectedCellRange[1]) {
+                if (col <= selectedCellRange[1]) {
                     selectedRange[1] = col
                     selectedRange[3] = selectedCellRange[1]
                 }

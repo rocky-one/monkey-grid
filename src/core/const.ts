@@ -18,3 +18,6 @@ export const COL_WIDTH = 100
 
 // 默认字体
 export const FONT_FAMILY = 'Arial'
+
+// 默认表格线颜色
+export const BORDER_COLOR = '#227346'

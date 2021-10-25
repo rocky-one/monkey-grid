@@ -1,6 +1,6 @@
 import { SheetOptions, PointRange } from '../interface/SheetInterface'
-import { calcStartRowIndex, calcEndRowIndex, calcStartColIndex, calcEndColIndex, getCellInFrozenByIndex, pxToNum } from '../utils/helper'
-import { LEFT_ORDER_WIDTH, HEADER_ORDER_HEIGHT, FONT_FAMILY } from './const'
+import { calcStartRowIndex, calcEndRowIndex, calcStartColIndex, calcEndColIndex, getCellInFrozenByIndex, pxToNum, getObjectAttrDefault } from '../utils/helper'
+import { LEFT_ORDER_WIDTH, HEADER_ORDER_HEIGHT, FONT_FAMILY, BORDER_COLOR } from './const'
 import { numToABC } from '../utils/sheetUtils'
 import Base from './Base'
 
@@ -54,8 +54,11 @@ export default class Point extends Base {
 		// 头部列标
 		this.pointTopOrder(startColIndex, endColIndex)
 
-		// 冻结头部列标
+		// 左上角 冻结头部列标
 		this.pointTopOrder(0, this.frozenColCount - 1, true)
+
+		//
+		this.pointCellBorder()
 
 		// 绘制左侧序号 放在后面 可以覆盖前面的
 		this.pointLeftOrder(startRowIndex, endRowIndex)
@@ -138,7 +141,7 @@ export default class Point extends Base {
 				}
 			}, x, 0)
 		}
-		canvasContext.strokeStyle = "#ccc"
+		canvasContext.strokeStyle = '#ccc'
 		canvasContext.closePath()
 		canvasContext.stroke()
 	}
@@ -333,7 +336,7 @@ export default class Point extends Base {
             // 绘制线段
             canvasContext.beginPath()
             canvasContext.lineWidth = 2
-            canvasContext.strokeStyle = '#227346'
+            canvasContext.strokeStyle = BORDER_COLOR
 
             // 选中区域边框超出上方冻结区域时 不需要绘制
             if (selected.top !== false) {
@@ -353,7 +356,7 @@ export default class Point extends Base {
             canvasContext.lineTo(selected.x + selected.width + 1, selected.y + selected.height - 3)
             canvasContext.stroke()
 
-            canvasContext.fillStyle = '#227346'
+            canvasContext.fillStyle = BORDER_COLOR
             canvasContext.fillRect(selected.x + selected.width - 2, selected.y + selected.height - 2, 5, 5)
 
             canvasContext.closePath()
@@ -414,7 +417,6 @@ export default class Point extends Base {
                     x -= horizontal.scrollLeft
                 }
 				cell.style = cell.style ? Object.assign({backgroundColor: '#E1FFFF'}, cell.style) : {backgroundColor: '#E1FFFF'}
-                // cell.backgroundColor = cell.backgroundColor || '#E1FFFF'
                 this.pointCell(cell, cell.x, y, i, j)
                 // 冻结的最后一行，更新maxY
                 if (j === this.frozenColCount - 1) {
@@ -435,9 +437,11 @@ export default class Point extends Base {
         const canvasContext = this.options.canvasContext
         const lineX = x !== undefined ? x : cell.x - scrollLeft
         const lineY = y !== undefined ? y : cell.y - scrollTop
-        canvasContext.strokeStyle = '#227346';
+        canvasContext.strokeStyle = '#ccc'
+		// 下
         canvasContext.moveTo(lineX + 0.5, lineY + cell.height + 0.5)
         canvasContext.lineTo(lineX + cell.width + 0.5, lineY + cell.height + 0.5)
+		// 左
         canvasContext.moveTo(lineX + cell.width + 0.5, lineY + 0.5)
         canvasContext.lineTo(lineX + cell.width + 0.5, lineY + cell.height + 0.5)
 
@@ -466,4 +470,29 @@ export default class Point extends Base {
         canvasContext.fillStyle = customStyle || fillStyle
         canvasContext.fillRect(x, y, width, height)
     }
+	// 绘制border
+	private pointCellBorder = () => {
+		const canvasContext = this.options.canvasContext
+		const selectedRange = this.selectedRange
+
+        canvasContext.beginPath()
+        console.log(selectedRange)
+		// 左
+        // canvasContext.moveTo(lineX + cell.width + 0.5, lineY + 0.5)
+        // canvasContext.lineTo(lineX + cell.width + 0.5, lineY + cell.height + 0.5)
+		for (let j = selectedRange[1]; j <= selectedRange[3]; j++) {
+			// 下
+			let x = this.colDataMap[j].x
+			let y = this.yOffset
+			canvasContext.moveTo(x + 0.5, this.yOffset + 0.5)
+			canvasContext.lineTo(x + this.colDataMap[j].width + 0.5, y+ 0.5)
+		}
+
+		for (let i = selectedRange[0]; i <= selectedRange[2]; i++) {
+
+		}
+        canvasContext.strokeStyle = "yellow"
+        canvasContext.closePath()
+        canvasContext.stroke()
+	}
 }
