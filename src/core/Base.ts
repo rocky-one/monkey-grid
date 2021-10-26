@@ -1,6 +1,6 @@
 import Table from './Table'
 import { SheetOptions } from '../interface/SheetInterface'
-import { setSheetDataByCount, insertTableDataToSheet, getCellWidthHeight } from '../utils/sheetUtils'
+import { setSheetDataByCount, insertTableDataToSheet, getCellMergeWidthHeight } from '../utils/sheetUtils'
 import ScrollBar from '../scrollBar/ScrollBar'
 import CreateTextarea from './CreateTextarea'
 import watch from '../event/watch'
@@ -139,7 +139,7 @@ class Base {
         }
         return {
             ...this.sheetData[row][col],
-            ...getCellWidthHeight(row, col, this),
+            ...getCellMergeWidthHeight(row, col, this),
             x: colDataMap[col].x,
             y: rowDataMap[row].y
         }

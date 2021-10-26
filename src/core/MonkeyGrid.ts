@@ -132,14 +132,13 @@ class MonkeyGrid {
             // sheet.selectedRangeInFrozenCol = inFrozenCol
             const cell = findCellByXY(offsetX, offsetY, sheet)
             if (cell) {
-                const mergeCell = sheet.mergeCells[`${cell.range[0]}${cell.range[1]}`]
-                if (mergeCell) {
-                    cell.range[2] = cell.range[0] + mergeCell[0] - 1
-                    cell.range[3] = cell.range[1] + mergeCell[1] - 1
-                }
+                // const mergeCell = sheet.mergeCells[`${cell.range[0]}${cell.range[1]}`]
+                // if (mergeCell) {
+                //     cell.range[2] = cell.range[0] + mergeCell[0] - 1
+                //     cell.range[3] = cell.range[1] + mergeCell[1] - 1
+                // }
                 // 避免同一个引用，否则后面修改 sheet.selectedRange 会影响初始的sheet.selectedCell.range
                 sheet.setSelectedRange([...cell.range])
-                console.log(cell.range, mergeCell)
                 sheet.setSelectedCell(cell)
             }
             sheet.point()

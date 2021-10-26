@@ -476,7 +476,6 @@ export default class Point extends Base {
 		const selectedRange = this.selectedRange
 
         canvasContext.beginPath()
-        console.log(selectedRange)
 		// 左
         // canvasContext.moveTo(lineX + cell.width + 0.5, lineY + 0.5)
         // canvasContext.lineTo(lineX + cell.width + 0.5, lineY + cell.height + 0.5)
@@ -484,6 +483,7 @@ export default class Point extends Base {
 			// 下
 			let x = this.colDataMap[j].x
 			let y = this.yOffset
+			// let width = this.getCellInfo()
 			canvasContext.moveTo(x + 0.5, this.yOffset + 0.5)
 			canvasContext.lineTo(x + this.colDataMap[j].width + 0.5, y+ 0.5)
 		}

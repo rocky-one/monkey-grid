@@ -1,4 +1,5 @@
 import { PointRange } from '../interface/SheetInterface'
+import {getCellWidthHeight} from './sheetUtils'
 // 延迟执行
 export function defer(callback) {
     setTimeout(callback, 0)
@@ -279,7 +280,7 @@ export function getCellInFrozenByIndex(row: number, col: number, sheet: any) {
  * @param data 
  */
 export function findCellByXY(x: number, y: number, sheet: any, isFindPointerOrigin: boolean = true) {
-    const {sheetData, pointRange, frozenRowCount, frozenColCount} = sheet
+    const {sheetData, pointRange, frozenRowCount, frozenColCount, colDataMap} = sheet
     const scrollLeft = sheet.scrollBar.getHorizontal().scrollLeft
     const scrollTop = sheet.scrollBar.getVertical().scrollTop
     let startRowIndex = 0
@@ -293,6 +294,7 @@ export function findCellByXY(x: number, y: number, sheet: any, isFindPointerOrig
     if (frozenFlag !== 'col') {
         x += scrollLeft
     }
+    console.log(x, 'xxx')
     endColIndex = pointRange.endColIndex
     endRowIndex = pointRange.endRowIndex
     for (let i = startRowIndex; i <= endRowIndex; i++) {
@@ -303,14 +305,21 @@ export function findCellByXY(x: number, y: number, sheet: any, isFindPointerOrig
         const first = sheet.getCellInfo(i, 0)
         if (y >= first.y &&  y <= first.y + first.height) {
             for (let j = startColIndex; j <= endColIndex; j++) {
-                const cell = sheet.getCellInfo(i, j)
-                if (x >= cell.x && x <= cell.x + cell.width) {
-                    if (cell.pointer && isFindPointerOrigin) {
-                        const pointerCell = sheet.getCellInfo(cell.pointer[0], cell.pointer[1])
-                        const mergeCell = sheet.mergeCells[`${cell.pointer[0]}${cell.pointer[1]}`] || [1, 1]
+                const cellWH = getCellWidthHeight(i, j, sheet)
+                if (x >= cellWH.x && x <= cellWH.x + cellWH.width) {
+                    let cell = sheet.getCellInfo(i, j)
+                    if (isFindPointerOrigin) {
+                        let pointerCell = cell
+                        let mergeCell = sheet.mergeCells[`${i}${j}`] || [1, 1]
+                        let pointer = [i, j]
+                        if (cell.pointer) {
+                            pointer = cell.pointer
+                            pointerCell = sheet.getCellInfo(cell.pointer[0], cell.pointer[1])
+                            mergeCell = sheet.mergeCells[`${cell.pointer[0]}${cell.pointer[1]}`] || [1, 1]
+                        }
                         return {
                             ...pointerCell,
-                            range: [cell.pointer[0], cell.pointer[1], cell.pointer[0] + mergeCell[0]-1, cell.pointer[1] + mergeCell[1]-1]
+                            range: [pointer[0], pointer[1], pointer[0] + mergeCell[0]-1, pointer[1] + mergeCell[1]-1]
                         }
                     } else {
                         return {

@@ -237,7 +237,7 @@ export function insertTableDataToSheet(row: number, col: number, tableData: any[
 }
 
 
-export function getCellWidthHeight(row: number, col: number, sheet: any) {
+export function getCellMergeWidthHeight(row: number, col: number, sheet: any) {
     const mergeCell = sheet.mergeCells[`${row}${col}`] || [1, 1]
     const endRow = row + (mergeCell[0] - 1)
     const endCol = col + (mergeCell[1] - 1)
@@ -256,6 +256,15 @@ export function getCellWidthHeight(row: number, col: number, sheet: any) {
         height,
         endRow,
         endCol
+    }
+}
+
+export function getCellWidthHeight(row: number, col: number, sheet: any) {
+    return {
+        width: sheet.colDataMap[col].width,
+        height: sheet.rowDataMap[row].height,
+        x: sheet.colDataMap[col].x,
+        y: sheet.colDataMap[col].y
     }
 }
 
