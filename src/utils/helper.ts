@@ -294,7 +294,6 @@ export function findCellByXY(x: number, y: number, sheet: any, isFindPointerOrig
     if (frozenFlag !== 'col') {
         x += scrollLeft
     }
-    console.log(x, 'xxx')
     endColIndex = pointRange.endColIndex
     endRowIndex = pointRange.endRowIndex
     for (let i = startRowIndex; i <= endRowIndex; i++) {
@@ -305,20 +304,20 @@ export function findCellByXY(x: number, y: number, sheet: any, isFindPointerOrig
         const first = sheet.getCellInfo(i, 0)
         if (y >= first.y &&  y <= first.y + first.height) {
             for (let j = startColIndex; j <= endColIndex; j++) {
+                // 这里需要用当前单元格的宽高和坐标比较
                 const cellWH = getCellWidthHeight(i, j, sheet)
                 if (x >= cellWH.x && x <= cellWH.x + cellWH.width) {
                     let cell = sheet.getCellInfo(i, j)
                     if (isFindPointerOrigin) {
-                        let pointerCell = cell
                         let mergeCell = sheet.mergeCells[`${i}${j}`] || [1, 1]
                         let pointer = [i, j]
                         if (cell.pointer) {
                             pointer = cell.pointer
-                            pointerCell = sheet.getCellInfo(cell.pointer[0], cell.pointer[1])
-                            mergeCell = sheet.mergeCells[`${cell.pointer[0]}${cell.pointer[1]}`] || [1, 1]
+                            cell = sheet.getCellInfo(pointer[0], pointer[1])
+                            mergeCell = sheet.mergeCells[`${pointer[0]}${pointer[1]}`] || [1, 1]
                         }
                         return {
-                            ...pointerCell,
+                            ...cell,
                             range: [pointer[0], pointer[1], pointer[0] + mergeCell[0]-1, pointer[1] + mergeCell[1]-1]
                         }
                     } else {

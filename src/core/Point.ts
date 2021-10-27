@@ -56,12 +56,11 @@ export default class Point extends Base {
 
 		// 左上角 冻结头部列标
 		this.pointTopOrder(0, this.frozenColCount - 1, true)
-
-		//
-		this.pointCellBorder()
-
+		
 		// 绘制左侧序号 放在后面 可以覆盖前面的
 		this.pointLeftOrder(startRowIndex, endRowIndex)
+        // 头部选择效果
+        this.pointCellBorder()
 
 		// 冻结序号
 		this.pointLeftOrder(0, this.frozenRowCount - 1, true)
@@ -102,6 +101,7 @@ export default class Point extends Base {
 	private pointLeftOrder = (startRowIndex: number, endRowIndex: number, frozenRow?: boolean) => {
 		const hasOrder = this.options.order
 		if (!hasOrder) return
+		const hasSelectedBg = this.selectedRange.length
 		const vertical = this.scrollBar.getVertical()
 		const canvasContext = this.options.canvasContext
 		canvasContext.beginPath()
@@ -114,7 +114,7 @@ export default class Point extends Base {
 				width: LEFT_ORDER_WIDTH,
 				height: cell.height,
 				style: {
-					backgroundColor: '#AFEEEE'
+					backgroundColor: hasSelectedBg && i >= this.selectedRange[0] && i <= this.selectedRange[2] ? '#E1E1E1' : '#FFFFFF'
 				}
 			}, 0, y)
 		}
@@ -125,6 +125,7 @@ export default class Point extends Base {
 	private pointTopOrder = (startColIndex, endColIndex, frozen?: boolean) => {
 		const headerOrder = this.options.headerOrder
 		if (!headerOrder) return
+		const hasSelectedBg = this.selectedRange.length
 		const scrollLeft = this.scrollBar.getHorizontal().scrollLeft
 		const canvasContext = this.options.canvasContext
 		canvasContext.beginPath()
@@ -137,7 +138,7 @@ export default class Point extends Base {
 				width: cell.width,
 				height: HEADER_ORDER_HEIGHT,
 				style: {
-					backgroundColor: '#AFEEEE'
+					backgroundColor: hasSelectedBg && j >= this.selectedRange[1] && j <= this.selectedRange[3] ? '#E1E1E1' : '#FFFFFF'
 				}
 			}, x, 0)
 		}
@@ -149,7 +150,7 @@ export default class Point extends Base {
      * 绘制body区域左上角冻结的空白区域
      * @param
      */
-	 private pointLeftTopByFrozenOnBody = () => {
+	private pointLeftTopByFrozenOnBody = () => {
         const frozenRowCount = this.frozenRowCount
         const frozenColCount = this.frozenColCount
         if (!frozenRowCount || !frozenColCount) {
@@ -367,7 +368,7 @@ export default class Point extends Base {
 	/**
      * 绘制冻结行
      */
-	 private pointFrozenRow = (startColIndex, endColIndex) => {
+	private pointFrozenRow = (startColIndex, endColIndex) => {
         const isFrozenRowCount = this.frozenRowCount > 0
         if (!isFrozenRowCount) return
         const canvasContext = this.options.canvasContext
@@ -470,29 +471,31 @@ export default class Point extends Base {
         canvasContext.fillStyle = customStyle || fillStyle
         canvasContext.fillRect(x, y, width, height)
     }
-	// 绘制border
+	// 绘制border #e1e1e1
 	private pointCellBorder = () => {
+        const scrollLeft = this.scrollBar.getHorizontal().scrollLeft
+        const scrollTop = this.scrollBar.getVertical().scrollTop
 		const canvasContext = this.options.canvasContext
 		const selectedRange = this.selectedRange
-
+        canvasContext.lineWidth = 2
         canvasContext.beginPath()
-		// 左
-        // canvasContext.moveTo(lineX + cell.width + 0.5, lineY + 0.5)
-        // canvasContext.lineTo(lineX + cell.width + 0.5, lineY + cell.height + 0.5)
+		// 下
 		for (let j = selectedRange[1]; j <= selectedRange[3]; j++) {
-			// 下
-			let x = this.colDataMap[j].x
+			let x = this.colDataMap[j].x - scrollLeft
 			let y = this.yOffset
-			// let width = this.getCellInfo()
 			canvasContext.moveTo(x + 0.5, this.yOffset + 0.5)
 			canvasContext.lineTo(x + this.colDataMap[j].width + 0.5, y+ 0.5)
 		}
-
+        // 左边
 		for (let i = selectedRange[0]; i <= selectedRange[2]; i++) {
-
+            let y = this.rowDataMap[i].y - scrollTop
+			let x = this.xOffset
+            canvasContext.moveTo(x + 0.5, y + 0.5)
+            canvasContext.lineTo(x + 0.5, y + this.rowDataMap[i].height + 0.5)
 		}
-        canvasContext.strokeStyle = "yellow"
+        canvasContext.strokeStyle = BORDER_COLOR
         canvasContext.closePath()
         canvasContext.stroke()
+        canvasContext.lineWidth = 1
 	}
 }
