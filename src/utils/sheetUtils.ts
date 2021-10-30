@@ -1,4 +1,4 @@
- // 初始化时指向同一个对象，节省内存
+// 初始化时指向同一个对象，节省内存
 const emptyCell = {
     value: '',
     empty: true
@@ -44,7 +44,7 @@ export function setSheetDataByCount(
                 x: startX,
                 width: colWidth
             })
-            startX += colWidth 
+            startX += colWidth
         }
     }
     // 如果当前sheet没有数据
@@ -85,7 +85,7 @@ export function setSheetDataByCount(
             sheetData.push(new Array(colCount).fill(emptyCell))
         }
     }
-    
+
     return sheetData
 }
 
@@ -264,7 +264,7 @@ export function getCellWidthHeight(row: number, col: number, sheet: any) {
         width: sheet.colDataMap[col].width,
         height: sheet.rowDataMap[row].height,
         x: sheet.colDataMap[col].x,
-        y: sheet.colDataMap[col].y
+        y: sheet.rowDataMap[row].y
     }
 }
 
@@ -446,6 +446,77 @@ export function getRowNumByPageY(offsetY: number, sheet: any) {
         height = rowDataMap[i].y + rowDataMap[i].height
         if (height >= y) {
             return i
+        }
+    }
+}
+
+
+/**
+ * @desc 根据坐标位置查找当前坐标是否位于topOrder中
+ * @param x 
+ * @param y 
+ * @param pointRange 
+ */
+ export function findTopOrderCellByXY(x: number, y: number, sheet: any) {
+    // 是否是topOrder区域
+    if (sheet.yOffset > 0) {
+        if (y < 0 || y > sheet.yOffset) {
+            return -1
+        }
+    }else {
+        return -1
+    }
+    const {pointRange} = sheet
+    const scrollLeft = sheet.scrollBar.getHorizontal().scrollLeft
+    const scrollTop = sheet.scrollBar.getVertical().scrollTop
+    let startColIndex = 0
+    let endColIndex = pointRange.endColIndex
+    y += scrollTop
+    x += scrollLeft
+
+    for (let j = startColIndex; j <= endColIndex; j++) {
+        // 这里需要用当前单元格的宽高和坐标比较
+        const cellWH = getCellWidthHeight(0, j, sheet)
+        if (x >= cellWH.x - 5 && x <= cellWH.x + 5) {
+            return j - 1
+        }
+    }
+    return -1
+}
+
+export function findLeftOrderCellByXY (x: number, y: number, sheet: any) {
+    if (sheet.xOffset > 0) {
+        if (x < 0 || x > sheet.xOffset) {
+            return -1
+        }
+    } else {
+        return -1
+    }
+    const {sheetData, pointRange} = sheet
+    const scrollLeft = sheet.scrollBar.getHorizontal().scrollLeft
+    const scrollTop = sheet.scrollBar.getVertical().scrollTop
+    let startRowIndex = 0
+    let endRowIndex = pointRange.endRowIndex
+    y += scrollTop
+    x += scrollLeft
+
+    for (let i = startRowIndex; i <= endRowIndex; i++) {
+        const row = sheetData[i]
+        if (!row) {
+            return -1
+        }
+        const first = sheet.getCellInfo(i, 0)
+        if (y >= first.y - 4 &&  y <= first.y + 4) {
+            return i - 1
+        }
+    }
+    return -1;
+}
+
+export function inTopOrder(x, y, sheet) {
+    if (sheet.yOffset > 0) {
+        if (y >= 0 && y <= sheet.yOffset) {
+
         }
     }
 }

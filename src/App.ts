@@ -25,6 +25,15 @@ data[1][1].style = {
 	color: 'red',
 	backgroundColor: 'green'
 }
+data[1][3].value = 1234.52234
+data[1][3].type = 'number'
+data[1][3].format = '###.##'
+
+data[1][4].value = '2021/10/30'
+data[1][4].type = 'date'
+data[1][4].format = 'YYYY-MM-DD'
+
+
 const mG = new MonkeyGrid({
 	container: document.getElementById('tableBox'),
 	width: 700,

@@ -301,7 +301,8 @@ export function findCellByXY(x: number, y: number, sheet: any, isFindPointerOrig
         if (!row) {
             return false
         }
-        const first = sheet.getCellInfo(i, 0)
+        const first = getCellWidthHeight(i, 0, sheet)
+        // const first = sheet.getCellInfo(i, 0)
         if (y >= first.y &&  y <= first.y + first.height) {
             for (let j = startColIndex; j <= endColIndex; j++) {
                 // 这里需要用当前单元格的宽高和坐标比较

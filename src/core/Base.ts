@@ -6,7 +6,7 @@ import CreateTextarea from './CreateTextarea'
 import watch from '../event/watch'
 import { ROW_HEIGHT, COL_WIDTH, FOOTER_HEIGHT, RIGHT_SCROLL_WIDTH, LEFT_ORDER_WIDTH, HEADER_ORDER_HEIGHT } from './const'
 import Record from './Record'
-
+import Formatter from './Formatter'
 
 // 10月 - 11月
 
@@ -15,7 +15,7 @@ import Record from './Record'
 // 绘制时，实时计算当前区域，实时计算单元格x、y、width、height，实时计算合并单元格width、height
 // 3. 单元格样式设置setCellStyle
 // 4. 单元格格式设置 数字、日期、字符串、下拉
-// 5. 拖拽选中 超出可视区域时 自动滚动。插入行列，移除行列。选中区域对应行头列头选中效果
+// 5. 插入行列，移除行列。 快捷键 上 下 左 右
 // 6. 二开 自定义render
 // 7. 架构
 // 8. 拖拽行列宽高
@@ -61,6 +61,7 @@ class Base {
             this.textareaInstance.changeSelectedCell(this)
         })
         this.record = new Record({ sheet: this })
+        this.formatterInstance = new Formatter({})
     }
     point: any
     tables: any[]
@@ -105,6 +106,7 @@ class Base {
     textareaInstance: any = null
     isDbClick: boolean = false
     record: any
+    formatterInstance: Formatter
     public addTable = (name: string, row: number, col: number, dataSource: any[]) => {
         const table = new Table({
             name,
@@ -116,8 +118,8 @@ class Base {
         this.tables.push(table)
         this.sheetData = insertTableDataToSheet(row, col, table.getData(), this)
         this.scrollBar.resetScrollBar(this.getScrollHeight(), this.getScrollWidth())
-        this.scrollBar.verticalScrollTo(this.getCellInfo(row, 0).y)
-        this.scrollBar.horizontalScrollTo(this.getCellInfo(0, col).x)
+        this.scrollBar.verticalScrollTo(this.getCellInfo(row, 0).y - this.yOffset)
+        this.scrollBar.horizontalScrollTo(this.getCellInfo(0, col).x - this.xOffset)
         return table
     }
     public getTable = (name: string) => {
@@ -144,6 +146,11 @@ class Base {
             y: rowDataMap[row].y
         }
     }
+    // public getCell = (row: number, col: number) => {
+    //     return {
+    //         ...this.sheetData[row][col],
+    //     }
+    // }
     // 设置单元格样式
     public setCellStyle = (row: number, col: number, style: any) => {
         if (this.sheetData[row][col].empty) {
@@ -152,13 +159,20 @@ class Base {
         this.sheetData[row][col].style = style
         this.nextTick(this.point, 'next-setCellStyle')
     }
-    // 设置单元格 格式
-    public setFormatter = (row: number, col: number, format: string) => {
+    // 设置单元格类型 number date string dropdown
+    public setCellType = (row: number, col: number, type: string) => {
         if (this.sheetData[row][col].empty) {
             this.sheetData[row][col] = {}
         }
-        this.sheetData[row][col].format = format
-        this.nextTick(this.point, 'next-setFormatter')
+        this.sheetData[row][col].type = type
+    }
+    // 设置单元格 格式
+    public setCellFormatter = (row: number, col: number, formatCode: string) => {
+        if (this.sheetData[row][col].empty) {
+            this.sheetData[row][col] = {}
+        }
+        this.sheetData[row][col].format = formatCode
+        this.nextTick(this.point, 'next-setCellStyle')
     }
     public setSheetName = (name: string) => {
         this.sheetName = name
@@ -338,8 +352,8 @@ class Base {
         // 记录操作
         // 当上一次value和当前value不一样时 赋值、记录
         // 注意excel中相同value的更改也会被记录
-        if (oldVal !== value) {
-            this.sheetData[row][col].value = value
+        if (oldVal != value) {
+            this.sheetData[row][col].value = this.formatterInstance.transformValue(value, cell.type)
             if (extend.record) {
                 this.record.add({
                     undo: {

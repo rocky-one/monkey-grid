@@ -27,3 +27,25 @@ function createContainer(attrs: Object): HTMLElement {
     })
     return mgContainer
 }
+
+export function createDragColLine(container: HTMLElement) {
+    const colLine = domCore.createDom('div', {
+        class: 'mg-drag-col-line'
+    })
+    container.appendChild(colLine)
+    return colLine
+}
+
+export function createDragRowLine(container: HTMLElement) {
+    const rowLine = domCore.createDom('div', {
+        class: 'mg-drag-row-line'
+    })
+    container.appendChild(rowLine)
+    return rowLine
+}
+
+export function updateLine(ele: HTMLElement, attrs: any) {
+    Object.keys(attrs).forEach(key => {
+        ele.style[key] = attrs[key]
+    })
+}

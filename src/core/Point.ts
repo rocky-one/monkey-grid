@@ -44,27 +44,27 @@ export default class Point extends Base {
 		this.pointRange.endColIndex = endColIndex
 		// 绘制table部分
 		this.pointBody(startRowIndex, endRowIndex, startColIndex, endColIndex)
-		canvasContext.lineWidth = 1
 		// 冻结列头
 		this.pointFrozenCol(startRowIndex, endRowIndex)
 
 		// 冻结行头
 		this.pointFrozenRow(startColIndex - this.frozenColCount, endColIndex)
 
-		// 头部列标
+		// 头部列标A，B，C....
 		this.pointTopOrder(startColIndex, endColIndex)
+		// 头部选择 背景下划线效果
+		this.pointCellTopBorder()
 
-		// 左上角 冻结头部列标
+		// 左上角 冻结头部列标 A，B,
 		this.pointTopOrder(0, this.frozenColCount - 1, true)
 		
-		// 绘制左侧序号 放在后面 可以覆盖前面的
+		// 绘制左侧序号 1,2,3...
 		this.pointLeftOrder(startRowIndex, endRowIndex)
-        // 头部选择效果
-        this.pointCellBorder()
-
-		// 冻结序号
+		// 左侧选择 背景下划线效果
+		this.pointCellLeftBorder()
+		// 绘制左侧序号 冻结序号情况
 		this.pointLeftOrder(0, this.frozenRowCount - 1, true)
-
+		
 		// 如果有冻结行列，绘制body区域左上角冻结区域
 		this.pointLeftTopByFrozenOnBody()
 
@@ -448,8 +448,8 @@ export default class Point extends Base {
 
         // 单元格背景颜色
         this.paintCellBgColor(lineX, lineY, cell.width, cell.height, cell.style ? cell.style.backgroundColor || '#FFFFFF' : '#FFFFFF')
-
-        if (cell.value) {
+		let value = cell.value
+        if (value) {
             let fontX = x !== undefined ? x + 4 : cell.x - scrollLeft + 4
             let fontY = y !== undefined ? y + (cell.height / 2) + (this.font / 2) : cell.y - scrollTop + (cell.height / 2) + (this.font / 2)
             // 字体
@@ -459,7 +459,10 @@ export default class Point extends Base {
 					${cell.style.fontStyle ? cell.style.fontStyle : 'normal'} ${cell.style.fontVariant ? cell.style.fontVariant : 'normal'} ${cell.style.fontWeight ? cell.style.fontWeight : 'normal'} ${pxToNum(cell.style.fontSize)}px ${cell.style.fontFamily ? cell.style.fontFamily : FONT_FAMILY}
 				`
 			}
-            canvasContext.fillText(cell.value, fontX, fontY)
+			if (cell.type && cell.format && this.formatterInstance[cell.type]) {
+				value = this.formatterInstance[cell.type](value, cell.format)
+			}
+            canvasContext.fillText(value, fontX, fontY)
 			if (cell.style && cell.style.fontSize) {
 				canvasContext.font = `${this.font}px ${FONT_FAMILY}`
 			}
@@ -471,10 +474,9 @@ export default class Point extends Base {
         canvasContext.fillStyle = customStyle || fillStyle
         canvasContext.fillRect(x, y, width, height)
     }
-	// 绘制border #e1e1e1
-	private pointCellBorder = () => {
+	// 绘制 top 选中border
+	private pointCellTopBorder = () => {
         const scrollLeft = this.scrollBar.getHorizontal().scrollLeft
-        const scrollTop = this.scrollBar.getVertical().scrollTop
 		const canvasContext = this.options.canvasContext
 		const selectedRange = this.selectedRange
         canvasContext.lineWidth = 2
@@ -483,9 +485,22 @@ export default class Point extends Base {
 		for (let j = selectedRange[1]; j <= selectedRange[3]; j++) {
 			let x = this.colDataMap[j].x - scrollLeft
 			let y = this.yOffset
-			canvasContext.moveTo(x + 0.5, this.yOffset + 0.5)
+			canvasContext.moveTo(x - 0.5, this.yOffset + 0.5)
 			canvasContext.lineTo(x + this.colDataMap[j].width + 0.5, y+ 0.5)
 		}
+        canvasContext.strokeStyle = BORDER_COLOR
+        canvasContext.closePath()
+        canvasContext.stroke()
+        canvasContext.lineWidth = 1
+	}
+
+	// 绘制 left 选中border
+	private pointCellLeftBorder = () => {
+        const scrollTop = this.scrollBar.getVertical().scrollTop
+		const canvasContext = this.options.canvasContext
+		const selectedRange = this.selectedRange
+        canvasContext.lineWidth = 2
+        canvasContext.beginPath()
         // 左边
 		for (let i = selectedRange[0]; i <= selectedRange[2]; i++) {
             let y = this.rowDataMap[i].y - scrollTop

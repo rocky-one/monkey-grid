@@ -153,7 +153,7 @@ class CreateTextarea {
     blur = (event) => {
         const sheet = this.option.sheet
         sheet.setCellValue(sheet.selectedCell.range[0], sheet.selectedCell.range[1], event.target.innerText)
-        this.isFocus = false
+        this.hide()
     }
     setValue = (value = '') => {
         if (!this.textarea) {
