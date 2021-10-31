@@ -107,6 +107,7 @@ class Base {
     isDbClick: boolean = false
     record: any
     formatterInstance: Formatter
+    originPointer: any = {}
     public addTable = (name: string, row: number, col: number, dataSource: any[]) => {
         const table = new Table({
             name,
@@ -129,12 +130,19 @@ class Base {
     public getSheetData = () => {
         return this.sheetData
     }
+    public gePointer = (row: number, col: number) => {
+        const pointId = this.sheetData[row][col].pointId
+        if (pointId) {
+            return this.originPointer[pointId]
+        }
+        return false
+    }
     // 根据行列坐标获取映射单元格宽高等信息
     public getCellInfo = (row: number, col: number, pointerFlag?: boolean) => {
         const rowDataMap = this.rowDataMap
         const colDataMap = this.colDataMap
         // 获取到指针指向cell
-        const pointer = this.sheetData[row][col].pointer
+        const pointer = this.gePointer(row, col) // this.sheetData[row][col].pointer
         if (pointerFlag && pointer) {
             row = pointer[0]
             col = pointer[1]
@@ -188,10 +196,13 @@ class Base {
         if (this.sheetData[row][col].empty) {
             this.sheetData[row][col] = {}
         }
+        const random = this.sheetData[row][col].originPointId || Math.random()
         this.sheetData[row][col].merge = [rowCount, colCount]
-        if (!this.sheetData[row][col].pointId) {
-            this.sheetData[row][col].pointId = Math.random()
+        if (!this.sheetData[row][col].originPointId) {
+            this.sheetData[row][col].originPointId = random
         }
+        this.originPointer[random] = [row, col]
+        
         const sheetData = this.sheetData
         const endRow = row + rowCount
         const endCol = col + colCount
@@ -199,17 +210,25 @@ class Base {
         for (let i = row; i < endRow; i++) {
             for (let j = col; j < endCol; j++) {
                 if (i === row && j === col) {
-                    if (sheetData[i][j].pointer) {
-                        sheetData[i][j].pointer = null
-                        delete sheetData[i][j].pointer
+                    // if (sheetData[i][j].pointer) {
+                    //     sheetData[i][j].pointer = null
+                    //     delete sheetData[i][j].pointer
+                    // }
+                    if (sheetData[i][j].pointId) {
+                        sheetData[i][j].pointId = null
+                        delete sheetData[i][j].pointId
                     }
                 } else {
                     if (sheetData[i][j].empty) {
                         sheetData[i][j] = {
-                            pointer: [row, col]
+                            // pointer: [row, col],
+                            pointId: random
                         }
                     } else {
-                        sheetData[i][j].pointer = [row, col]
+                        if (!sheetData[i][j].pointId) {
+                            sheetData[i][j].pointId = random
+                        }
+                        // sheetData[i][j].pointer = [row, col]
                     }
                     if (sheetData[i][j].merge) {
                         sheetData[i][j].merge = null
@@ -242,9 +261,10 @@ class Base {
         for (let i = row; i <= endRow; i++) {
             for (let j = col; j <= endCol; j++) {
                 const cell = this.getCellInfo(i, j)
-                if (cell.pointer) {
+                const pointer = this.gePointer(i, j)
+                if (pointer) {
                     // 说明超出边界了
-                    if (row > cell.pointer[0] || endRow < cell.endRow || col > cell.pointer[1] ||  endCol < cell.endCol) {
+                    if (row > pointer[0] || endRow < cell.endRow || col > pointer[1] ||  endCol < cell.endCol) {
                         console.error('当前单元格跨合并区域不能取消合并，请重新选择')
                         return false
                     }
@@ -256,7 +276,8 @@ class Base {
             for (let j = col; j <= endCol; j++) {
                 // this.mergeCells[`${i}${j}`] = null
                 this.sheetData[i][j].merge = null
-                sheetData[i][j].pointer = null
+                sheetData[i][j].originPointId = null
+                sheetData[i][j].pointId = null
             }
         }
         this.point()
@@ -296,13 +317,13 @@ class Base {
             if (oldWidth === width) return
             this.colDataMap[col].width = width
         }
-        this.updataCol(col)
+        this.updateCol(col)
     }
     // 插入一行
     public addRow = (rowIndex: number) => {
-        const nextIndex = rowIndex + 1
+        let nextIndex = rowIndex + 1
         const rowDataMap = this.rowDataMap
-        const newRow = []
+        let newRow = []
         const mergeHeightMap = {}
         if (rowDataMap[nextIndex]) {
             const y = rowDataMap[rowIndex].y
@@ -311,29 +332,106 @@ class Base {
                 y: y + height,
                 height: ROW_HEIGHT
             })
-            const row = this.sheetData[rowIndex]
             const nextRow = this.sheetData[nextIndex]
             for(let j = 0; j < nextRow.length; j++) {
                 const nextCell = nextRow[j]
+                const nextPointer = this.gePointer(nextIndex, j)
+                const rowPointer = this.gePointer(rowIndex, j) || []
                 // 下一行的指针和上一行相同 说明横跨 需要拆解合并行
-                // 还需要修改每个单元格的pointer指向，能不能用指针一改全改，全局指针 111
-                if (nextCell.pointer) {
-                    if (nextCell.pointer[0] === rowIndex || nextCell.pointer[0] === row[j].pointer[0]) {
+                if (nextPointer) {
+                    if (nextPointer[0] === rowIndex || nextPointer[0] === rowPointer[0]) {
                         newRow.push({
-                            pointer: nextCell.pointer
+                            pointId: nextCell.pointId
                         })
-                        if (!mergeHeightMap[`${nextCell.pointer.toString()}`]) {
-                            mergeHeightMap[`${nextCell.pointer.toString()}`] = true
-                            this.sheetData[nextCell.pointer[0]][nextCell.pointer[1]].merge[0] += 1
+                        if (!mergeHeightMap[`${nextPointer.toString()}`]) {
+                            mergeHeightMap[`${nextPointer.toString()}`] = true
+                            this.sheetData[nextPointer[0]][nextPointer[1]].merge[0] += 1
                         }
                     }
                 } else {
                     newRow.push(emptyCell)
                 }
             }
+            const originPointer = this.originPointer
+            Object.keys(originPointer).forEach(key => {
+                if (originPointer[key][0] >= nextIndex) {
+                    originPointer[key][0] += 1
+                }
+            })
+            this.rowCount += 1
+            this.sheetData.splice(nextIndex, 0, newRow)
+            this.updateRow(nextIndex, ROW_HEIGHT)
+        } else {
+            const count = this.rowCount
+            const y = rowDataMap[count - 1].y
+            const height = rowDataMap[count - 1].height
+            rowDataMap.splice(rowDataMap.length, 0, {
+                y: y + height,
+                height: ROW_HEIGHT
+            })
+            newRow = new Array(this.colDataMap.length).fill(emptyCell)
+            nextIndex = count
+            this.rowCount += 1
+            this.sheetData.splice(nextIndex, 0, newRow)
+            this.updateRow(nextIndex - 2)
+            this.scrollBar.verticalScrollTo(this.scrollBar.getVertical().maxScrollTop)
         }
-        this.sheetData.splice(rowIndex, 0, newRow)
-        this.updateRow(rowIndex + 1, ROW_HEIGHT)
+    }
+    // 插入一列
+    public addCol = (colIndex: number) => {
+        let nextIndex = colIndex + 1
+        const colDataMap = this.colDataMap
+        const mergeHeightMap = {}
+        if (colDataMap[nextIndex]) {
+            const x = colDataMap[colIndex].x
+            const width = colDataMap[colIndex].width
+            colDataMap.splice(nextIndex, 0, {
+                x: x + width,
+                width: COL_WIDTH
+            })
+            for(let i = 0; i < this.sheetData.length; i++) {
+                const nextCell = this.sheetData[i][nextIndex]
+                const nextPointer = this.gePointer(i, nextIndex)
+                const rowPointer = this.gePointer(i, nextIndex) || []
+                // 下一行的指针和上一行相同 说明横跨 需要拆解合并行
+                if (nextPointer) {
+                    if (nextPointer[1] === colIndex || nextPointer[1] === rowPointer[1]) {
+                        this.sheetData[i].splice(nextIndex, 0, {
+                            pointId: nextCell.pointId
+                        })
+                        if (!mergeHeightMap[`${nextPointer.toString()}`]) {
+                            mergeHeightMap[`${nextPointer.toString()}`] = true
+                            this.sheetData[nextPointer[0]][nextPointer[1]].merge[1] += 1
+                        }
+                    }
+                } else {
+                    this.sheetData[i].splice(nextIndex, 0, emptyCell)
+                }
+            }
+            const originPointer = this.originPointer
+            Object.keys(originPointer).forEach(key => {
+                if (originPointer[key][1] >= nextIndex) {
+                    originPointer[key][1] += 1
+                }
+            })
+            this.colCount += 1
+            this.updateCol(nextIndex, COL_WIDTH)
+        } else {
+            const count = this.colCount
+            const x = colDataMap[count - 1].x
+            const width = colDataMap[count - 1].width
+            colDataMap.splice(colDataMap.length, 0, {
+                x: x + width,
+                width: COL_WIDTH
+            })
+            nextIndex = count
+            for(let i = 0; i < this.sheetData.length; i++) {
+                this.sheetData[i].splice(nextIndex, 0, emptyCell)
+            }
+            this.colCount += 1
+            this.updateCol(nextIndex - 2)
+            this.scrollBar.horizontalScrollTo(this.scrollBar.getHorizontal().maxScrollLeft)
+        }
     }
     public setSelectedCell = (selectedCell) => {
         this.selectedCell = selectedCell
@@ -350,9 +448,9 @@ class Base {
             startY += this.rowDataMap[i].height
         }
     }
-    private updateColDataMapX = (startCol: number = 0) => {
+    private updateColDataMapX = (startCol: number = 0, addWidth?: number) => {
         const startCell = this.colDataMap[startCol]
-        let startX = startCell.x + startCell.width
+        let startX = startCell.x + (addWidth || startCell.width)
         for (let i = startCol + 1; i < this.colDataMap.length; i++) {
             this.colDataMap[i].x = startX
             startX += this.colDataMap[i].width
@@ -364,8 +462,8 @@ class Base {
         this.scrollBar.resetScrollBar(this.getScrollHeight(), this.getScrollWidth())
         this.nextTick(this.point, 'next-updateRow')
     }
-    private updataCol = (startCol: number = 0) => {
-        this.updateColDataMapX(startCol)
+    private updateCol = (startCol: number = 0, addWidth?: number) => {
+        this.updateColDataMapX(startCol, addWidth)
         this.calcScrollWidthHeight()
         this.scrollBar.resetScrollBar(this.getScrollHeight(), this.getScrollWidth())
         this.nextTick(this.point, 'next-updateCol')
@@ -498,13 +596,15 @@ class Base {
             let lastSelectedRange = [...selectedRange].toString()
             for (let i = selectedRange[0]; i <= selectedRange[2]; i++) {
                 for (let j = selectedRange[1]; j <= selectedRange[3]; j++) {
-                    const cell = this.getCellInfo(i, j)
-                    const pointer = cell.pointer || [i, j]
+                    // const cell = this.getCellInfo(i, j)
+                    const pointer = this.gePointer(i, j) || [i, j]
                     // const mergeCellEnd = mergeCells[`${pointer[0]}${pointer[1]}`]
                     const mergeCellEnd = this.sheetData[pointer[0]][pointer[1]].merge
                     if (mergeCellEnd) {
-                        let mergeStartRow = cell.pointer ? cell.pointer[0] : i
-                        let mergeStartCol = cell.pointer ? cell.pointer[1] : j
+                        // let mergeStartRow = cell.pointer ? cell.pointer[0] : i
+                        // let mergeStartCol = cell.pointer ? cell.pointer[1] : j
+                        let mergeStartRow = pointer[0]
+                        let mergeStartCol = pointer[1]
                         let mergeEndRow = mergeStartRow + mergeCellEnd[0] - 1
                         let mergeEndCol = mergeStartCol + mergeCellEnd[1] - 1
                         if (mergeStartRow < selectedRange[0]) {

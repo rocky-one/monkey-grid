@@ -204,7 +204,6 @@ class MonkeyGrid {
                 sheet.setRowHeight(row, height)
                 this.orderInfo.orderLeftDown = false
             }
-            sheet.addRow(7)
             // sheet.setMergeCellsByRange()
             // setTimeout(() => {
             //     sheet.removeMergeCellsByRange()

@@ -125,17 +125,17 @@ class ScrollBar {
 
         this.vertical.scrollHeight = scrollHeight
         this.updateVertical(calcVerticalSliderSize(this.vertical))
-        setNodeStyle(this.vertical.viewSlider, {
-            height: `${this.vertical.sliderHeight}px`,
-            top: '0'
-        })
+        // setNodeStyle(this.vertical.viewSlider, {
+        //     height: `${this.vertical.sliderHeight}px`,
+        //     top: '0'
+        // })
 
         this.horizontal.scrollWidth = scrollWidth
         this.updateHorizontal(calcHorizontalSliderSize(this.horizontal))
-        setNodeStyle(this.horizontal.viewSlider, {
-            innerWidth: `${this.horizontal.sliderWidth}px`,
-            left: '0'
-        })
+        // setNodeStyle(this.horizontal.viewSlider, {
+        //     innerWidth: `${this.horizontal.sliderWidth}px`,
+        //     left: '0'
+        // })
     }
     public getVertical = () => {
         return this.vertical

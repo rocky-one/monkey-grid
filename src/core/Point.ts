@@ -42,13 +42,13 @@ export default class Point extends Base {
 		this.pointRange.endRowIndex = endRowIndex
 		this.pointRange.startColIndex = startColIndex
 		this.pointRange.endColIndex = endColIndex
+		const pointedMap = {}
 		// 绘制table部分
-		this.pointBody(startRowIndex, endRowIndex, startColIndex, endColIndex)
+		this.pointBody(startRowIndex, endRowIndex, startColIndex, endColIndex, pointedMap)
 		// 冻结列头
-		this.pointFrozenCol(startRowIndex, endRowIndex)
-
+		this.pointFrozenCol(startRowIndex, endRowIndex, pointedMap)
 		// 冻结行头
-		this.pointFrozenRow(startColIndex, endColIndex)
+		this.pointFrozenRow(startColIndex, endColIndex, pointedMap)
 
 		// 头部列标A，B，C....
 		this.pointTopOrder(startColIndex, endColIndex)
@@ -82,7 +82,8 @@ export default class Point extends Base {
 		startRowIndex: number,
 		endRowIndex: number,
 		startColIndex: number,
-		endColIndex: number
+		endColIndex: number,
+		pointedMap: any
 	) => {
 		const canvasContext = this.options.canvasContext
 		canvasContext.beginPath()
@@ -90,7 +91,14 @@ export default class Point extends Base {
 		for (let i = startRowIndex; i <= endRowIndex; i++) {
 			for (let j = startColIndex; j <= endColIndex; j++) {
 				let cell = this.getCellInfo(i, j, true)
-				if (!cell || cell.pointer) continue
+				if (!cell) continue
+				const originPointId = cell.originPointId
+				if (originPointId && pointedMap[originPointId]) {
+					continue
+				}
+				if (originPointId) {
+					pointedMap[originPointId] = true
+				}
 				this.pointCell(cell, undefined, undefined, i, j)
 			}
 		}
@@ -220,7 +228,7 @@ export default class Point extends Base {
                 if (!isFrozenRow) {
                     isFrozenRow = getCellInFrozenByIndex(i, colNum, this) === 'row'
                 }
-                if (cell && !cell.pointer) {
+                if (cell && !this.gePointer(i, colNum)) {
                     selected.height += cell.height
                     if (selected.x === null) {
                         // 如果选中的是冻结区域不需要减去scrollLeft
@@ -254,7 +262,7 @@ export default class Point extends Base {
             for (let j = this.selectedRange[1]; j <= this.selectedRange[3]; j++) {
                 let rowNum = this.selectedRange[0]
                 const cell = this.getCellInfo(rowNum, j)
-                if (cell && !cell.pointer) {
+                if (cell && !this.gePointer(rowNum, j)) {
                     selected.width += cell.width
                 }
             }
@@ -282,8 +290,8 @@ export default class Point extends Base {
             for (let i = this.selectedRange[0]; i <= this.selectedRange[2]; i++) {
                 for (let j = this.selectedRange[1]; j <= this.selectedRange[3]; j++) {
                     if (i != this.selectedCell.range[0] || j != this.selectedCell.range[1]) {
-                        const cell = this.getCellInfo(i, j)
-                        if (!cell.pointer) {
+                        if (!this.gePointer(i, j)) {
+							const cell = this.getCellInfo(i, j)
                             let sl = scrollLeft
                             let st = scrollTop
                             let wid = cell.width
@@ -368,7 +376,7 @@ export default class Point extends Base {
 	/**
      * 绘制冻结行
      */
-	private pointFrozenRow = (startColIndex, endColIndex) => {
+	private pointFrozenRow = (startColIndex, endColIndex, pointedMap) => {
         const isFrozenRowCount = this.frozenRowCount > 0
         if (!isFrozenRowCount) return
         const canvasContext = this.options.canvasContext
@@ -380,7 +388,14 @@ export default class Point extends Base {
             for (let j = startColIndex; j <= endColIndex; j++) {
                 let cell = this.getCellInfo(i, j, true)
                 // 当前单元格已经被绘制过就跳出
-                if (!cell || cell.pointer) continue
+				if (!cell) continue
+				const originPointId = cell.originPointId
+				if (originPointId && pointedMap[originPointId]) {
+					continue
+				}
+				if (originPointId) {
+					pointedMap[originPointId] = true
+				}
 				cell.style = cell.style ? Object.assign({backgroundColor: '#E1FFFF'}, cell.style) : {backgroundColor: '#E1FFFF'}
                 // cell.backgroundColor = cell.backgroundColor || '#E1FFFF'
                 this.pointCell(cell, undefined, cell.y, i, j)
@@ -397,7 +412,7 @@ export default class Point extends Base {
         canvasContext.closePath()
         canvasContext.stroke()
     }
-    private pointFrozenCol = (startRowIndex, endRowIndex) => {
+    private pointFrozenCol = (startRowIndex, endRowIndex, pointedMap: any) => {
         const isFrozenColCount = this.frozenColCount > 0
         if (!isFrozenColCount) return
         const horizontal = this.scrollBar.getHorizontal()
@@ -411,7 +426,14 @@ export default class Point extends Base {
             for (let j = 0; j < this.frozenColCount; j++) {
                 let cell = this.getCellInfo(i, j, true)
                 // 当前单元格已经被绘制过就跳出
-                if (!cell || cell.pointer) continue
+                if (!cell) continue
+				const originPointId = cell.originPointId
+				if (originPointId && pointedMap[originPointId]) {
+					continue
+				}
+				if (originPointId) {
+					pointedMap[originPointId] = true
+				}
                 let x = cell.x
                 let y = cell.y - vertical.scrollTop
                 if (!isFrozenColCount) {

@@ -5,45 +5,6 @@ export function defer(callback) {
     setTimeout(callback, 0)
 }
 
-export function getPointerCell(row: number, col: number, sheetData: any) {
-    const cell = sheetData[row][col]
-    if (cell.pointer) {
-        return sheetData[cell.pointer[0]][cell.pointer[1]]
-    }
-    return cell
-}
-// 初始化数据
-export function initData(data = [], startRow: number, startCol: number, sheet: any) {
-    const xOffset = sheet.xOffset
-    const yOffset = sheet.yOffset
-    const rowHeight = 24
-    const colWidth = 100
-    let startY = yOffset
-    if (startRow > 0) {
-        const yCell = getPointerCell(startRow, 0, sheet.sheetData)
-        startY = yCell.y + yCell.height
-    }
-    let startX = xOffset
-    if (startCol > 0) {
-        const xCell = getPointerCell(startRow, 0, sheet.sheetData)
-        startX = xCell.x + xCell.width
-    }
-    for (let i = 0; i < data.length; i++) {
-        const row = data[i]
-        let x = startX
-        for (let j = 0; j < row.length; j++) {
-            const cell = row[j]
-            // cell.width = cell.width || colWidth
-            // cell.height = cell.height || rowHeight
-            // cell.y = startY
-            // cell.x = x
-            // x += cell.width
-        }
-        startY += rowHeight
-    }
-    return data
-}
-
 export function getExploreType() {
     var explorer = window.navigator.userAgent
     if (explorer.indexOf("MSIE") >= 0) {
@@ -240,7 +201,7 @@ export function inFrozenRowByXY(y: number, frozenRowCount: number, sheetData: an
     for(let i = 0; i < frozenRowCount; i++) {
         const cell = getCellInfo(i, 0)
         if(cell) {
-            if(cell.pointer) {
+            if(cell.pointId) {
                 continue
             }
             y2 += cell.height
@@ -255,7 +216,7 @@ export function inFrozenColByXY(x: number, frozenColCount: number, sheetData: an
     let x2 = getCellInfo(0, 0).x
     for(let i = 0; i < frozenColCount; i++) {
         const cell = getCellInfo(0, i)
-        if(cell.pointer) {
+        if(cell.pointId) {
             continue
         }
         x2 += cell.width
@@ -334,10 +295,9 @@ export function findCellByXY(x: number, y: number, sheet: any, isFindPointerOrig
                         // let mergeCell = sheet.mergeCells[`${i}${j}`] || [1, 1]
                         let mergeCell = sheet.sheetData[i][j].merge || [1, 1]
                         let pointer = [i, j]
-                        if (cell.pointer) {
-                            pointer = cell.pointer
+                        if (sheet.gePointer(i, j)) {
+                            pointer = sheet.gePointer(i, j)
                             cell = sheet.getCellInfo(pointer[0], pointer[1])
-                            // mergeCell = sheet.mergeCells[`${pointer[0]}${pointer[1]}`] || [1, 1]
                             mergeCell = sheet.sheetData[pointer[0]][pointer[1]].merge || [1, 1]
                         }
                         return {

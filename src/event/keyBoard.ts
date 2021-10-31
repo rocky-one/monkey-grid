@@ -30,7 +30,7 @@ keyboardJS.bind('command + c', (e) => {
 	const sheetData = sheet.sheetData
 	let value = ''
 	forEachSheetDataBySelectedRange(selectedRange, sheetData, sheet.getCellInfo, (cell: any, row: number, col: number) => {
-		if (!cell.pointer) {
+		if (!sheet.gePointer(row, col)) {
 			if (col === selectedRange[3]) {
 				value += `${cell.value}\n`
 			} else {

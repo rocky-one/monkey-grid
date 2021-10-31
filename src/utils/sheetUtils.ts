@@ -269,24 +269,6 @@ export function getCellWidthHeight(row: number, col: number, sheet: any) {
     }
 }
 
-export function setLeftTopMergeByFrozen(sheet: any) {
-    const sheetData = sheet.sheetData
-    const frozenRowCount = sheet.frozenRowCount
-    const frozenColCount = sheet.frozenColCount
-
-    for (let i = 0; i < frozenRowCount; i++) {
-        for (let j = 0; j < frozenColCount; j++) {
-            if (i === 0 && j === 0) {
-                sheetData[i][j] = {}
-            } else {
-                sheetData[i][j] = {
-                    pointer: [0, 0]
-                }
-            }
-        }
-    }
-}
-
 export const ABC_MAP = {
     0: 'A',
     1: 'B',
@@ -386,7 +368,7 @@ export function forEachSheetDataBySelectedRange(selectedRange: number[], sheetDa
         for (let i = selectedRange[0]; i <= selectedRange[2]; i++) {
             for (let j = selectedRange[1]; j <= selectedRange[3]; j++) {
                 let cell = getCellInfo(i, j)
-                if (pointerFlag && cell.pointer) {
+                if (pointerFlag && cell.pointId) {
                     cell = getCellInfo(i, j, true)
                 }
                 cb(cell, i, j)
