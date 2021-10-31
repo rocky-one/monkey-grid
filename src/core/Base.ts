@@ -1,6 +1,6 @@
 import Table from './Table'
 import { SheetOptions } from '../interface/SheetInterface'
-import { setSheetDataByCount, insertTableDataToSheet, getCellMergeWidthHeight } from '../utils/sheetUtils'
+import { setSheetDataByCount, insertTableDataToSheet, getCellMergeWidthHeight, emptyCell } from '../utils/sheetUtils'
 import ScrollBar from '../scrollBar/ScrollBar'
 import CreateTextarea from './CreateTextarea'
 import watch from '../event/watch'
@@ -184,7 +184,14 @@ class Base {
         this.calcScrollWidthHeight()
     }
     public setMergeCells = (row: number, col: number, rowCount: number, colCount: number) => {
-        this.mergeCells[`${row}${col}`] = [rowCount, colCount]
+        // this.mergeCells[`${row}${col}`] = [rowCount, colCount]
+        if (this.sheetData[row][col].empty) {
+            this.sheetData[row][col] = {}
+        }
+        this.sheetData[row][col].merge = [rowCount, colCount]
+        if (!this.sheetData[row][col].pointId) {
+            this.sheetData[row][col].pointId = Math.random()
+        }
         const sheetData = this.sheetData
         const endRow = row + rowCount
         const endCol = col + colCount
@@ -204,9 +211,13 @@ class Base {
                     } else {
                         sheetData[i][j].pointer = [row, col]
                     }
-                    if (this.mergeCells[`${i}${j}`]) {
-                        delete this.mergeCells[`${i}${j}`]
+                    if (sheetData[i][j].merge) {
+                        sheetData[i][j].merge = null
+                        delete sheetData[i][j].merge
                     }
+                    // if (this.mergeCells[`${i}${j}`]) {
+                    //     delete this.mergeCells[`${i}${j}`]
+                    // }
                 }
             }
         }
@@ -243,7 +254,8 @@ class Base {
         // 修改指针指向
         for (let i = row; i <= endRow; i++) {
             for (let j = col; j <= endCol; j++) {
-                this.mergeCells[`${i}${j}`] = null
+                // this.mergeCells[`${i}${j}`] = null
+                this.sheetData[i][j].merge = null
                 sheetData[i][j].pointer = null
             }
         }
@@ -286,6 +298,43 @@ class Base {
         }
         this.updataCol(col)
     }
+    // 插入一行
+    public addRow = (rowIndex: number) => {
+        const nextIndex = rowIndex + 1
+        const rowDataMap = this.rowDataMap
+        const newRow = []
+        const mergeHeightMap = {}
+        if (rowDataMap[nextIndex]) {
+            const y = rowDataMap[rowIndex].y
+            const height = rowDataMap[rowIndex].height
+            rowDataMap.splice(nextIndex, 0, {
+                y: y + height,
+                height: ROW_HEIGHT
+            })
+            const row = this.sheetData[rowIndex]
+            const nextRow = this.sheetData[nextIndex]
+            for(let j = 0; j < nextRow.length; j++) {
+                const nextCell = nextRow[j]
+                // 下一行的指针和上一行相同 说明横跨 需要拆解合并行
+                // 还需要修改每个单元格的pointer指向，能不能用指针一改全改，全局指针 111
+                if (nextCell.pointer) {
+                    if (nextCell.pointer[0] === rowIndex || nextCell.pointer[0] === row[j].pointer[0]) {
+                        newRow.push({
+                            pointer: nextCell.pointer
+                        })
+                        if (!mergeHeightMap[`${nextCell.pointer.toString()}`]) {
+                            mergeHeightMap[`${nextCell.pointer.toString()}`] = true
+                            this.sheetData[nextCell.pointer[0]][nextCell.pointer[1]].merge[0] += 1
+                        }
+                    }
+                } else {
+                    newRow.push(emptyCell)
+                }
+            }
+        }
+        this.sheetData.splice(rowIndex, 0, newRow)
+        this.updateRow(rowIndex + 1, ROW_HEIGHT)
+    }
     public setSelectedCell = (selectedCell) => {
         this.selectedCell = selectedCell
     }
@@ -293,9 +342,9 @@ class Base {
         this.selectedRange = selectedRange
     }
     
-    private updateRowDataMapY = (startRow: number = 0) => {
+    private updateRowDataMapY = (startRow: number = 0, addHeight?: number) => {
         const startCell = this.rowDataMap[startRow]
-        let startY = startCell.y + startCell.height
+        let startY =  startCell.y + (addHeight || startCell.height)
         for (let i = startRow + 1; i < this.rowDataMap.length; i++) {
             this.rowDataMap[i].y = startY
             startY += this.rowDataMap[i].height
@@ -309,8 +358,8 @@ class Base {
             startX += this.colDataMap[i].width
         }
     }
-    private updateRow = (row: number = 0) => {
-        this.updateRowDataMapY(row)
+    private updateRow = (row: number = 0, addHeight?: number) => {
+        this.updateRowDataMapY(row, addHeight)
         this.calcScrollWidthHeight()
         this.scrollBar.resetScrollBar(this.getScrollHeight(), this.getScrollWidth())
         this.nextTick(this.point, 'next-updateRow')
@@ -451,7 +500,8 @@ class Base {
                 for (let j = selectedRange[1]; j <= selectedRange[3]; j++) {
                     const cell = this.getCellInfo(i, j)
                     const pointer = cell.pointer || [i, j]
-                    const mergeCellEnd = mergeCells[`${pointer[0]}${pointer[1]}`]
+                    // const mergeCellEnd = mergeCells[`${pointer[0]}${pointer[1]}`]
+                    const mergeCellEnd = this.sheetData[pointer[0]][pointer[1]].merge
                     if (mergeCellEnd) {
                         let mergeStartRow = cell.pointer ? cell.pointer[0] : i
                         let mergeStartCol = cell.pointer ? cell.pointer[1] : j

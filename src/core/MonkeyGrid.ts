@@ -204,6 +204,7 @@ class MonkeyGrid {
                 sheet.setRowHeight(row, height)
                 this.orderInfo.orderLeftDown = false
             }
+            sheet.addRow(7)
             // sheet.setMergeCellsByRange()
             // setTimeout(() => {
             //     sheet.removeMergeCellsByRange()
@@ -241,7 +242,7 @@ class MonkeyGrid {
             if (this.orderInfo.orderTopDown) {
                 updateLine(this.orderInfo.topOrderEle, {
                     display: 'block',
-                    height: `${sheet.clientHeight}px`,
+                    height: `${sheet.clientHeight + sheet.calcFrozenHeight()}px`,
                     top: `${sheet.yOffset}px`,
                     left: `${offsetX}px`
                 })
@@ -260,7 +261,7 @@ class MonkeyGrid {
             if (inTopOrder === -1 && inLeftOrder === -1 && !this.orderInfo.orderTopDown){
                 this.layout.container.style.cursor = 'default'
             }
-        }, 100)
+        }, 80)
     }
     private calcMoveBound = (event: MouseEvent) => {
         const { pageX, pageY } = event

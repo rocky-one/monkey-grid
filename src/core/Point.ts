@@ -30,9 +30,9 @@ export default class Point extends Base {
 		let startColIndex = calcStartColIndex(this)
 		let endColIndex = calcEndColIndex(startColIndex, this.clientWidth, sheetData, this.colDataMap)
 		canvasContext.font = `${this.font}px ${FONT_FAMILY}`
-		startRowIndex = startRowIndex + this.frozenRowCount
+		// startRowIndex = startRowIndex + this.frozenRowCount
 		endRowIndex = endRowIndex + this.frozenRowCount
-		startColIndex = startColIndex + this.frozenColCount
+		// startColIndex = startColIndex + this.frozenColCount
 		endColIndex = endColIndex + this.frozenColCount
 		if (startRowIndex < 0) startRowIndex = 0
 		if (endRowIndex >= this.getRowCount() - 1) endRowIndex = this.getRowCount() - 1
@@ -48,7 +48,7 @@ export default class Point extends Base {
 		this.pointFrozenCol(startRowIndex, endRowIndex)
 
 		// 冻结行头
-		this.pointFrozenRow(startColIndex - this.frozenColCount, endColIndex)
+		this.pointFrozenRow(startColIndex, endColIndex)
 
 		// 头部列标A，B，C....
 		this.pointTopOrder(startColIndex, endColIndex)

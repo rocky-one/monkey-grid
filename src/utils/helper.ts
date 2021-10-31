@@ -94,15 +94,17 @@ export function calcStartRowIndex(sheet: any): number {
     if (scrollTop === 0) return 0
 
     const sheetLen = sheetData.length
-    const top = scrollTop + yOffset
+    const top = scrollTop // + yOffset
+    const frozenInfoHeight = sheet.frozenInfo.row.endY
     let start = 0
     let end = sheetLen - 1
     while (start <= end) {
         let mid = Math.floor(start + (end - start) / 2);
         const cell = sheet.getCellInfo(mid, 0)
-        if (cell.y + cell.height >= top && cell.y <= top) {
+        const y = cell.y - frozenInfoHeight
+        if (y + cell.height >= top && y <= top) {
             return mid;
-        } else if (cell.y < top) {
+        } else if (y < top) {
             start = mid + 1;
         } else {
             end = mid - 1;
@@ -138,20 +140,39 @@ export function calcStartColIndex(sheet: any): number {
     const xOffset = sheet.xOffset
     if (scrollLeft === 0) return 0
     const colLen = sheet.colDataMap.length
-    const left = scrollLeft + xOffset
+    const frozenInfoWidth = sheet.frozenInfo.col.endX
+    const left = scrollLeft // + xOffset
+
     let start = 0
     let end = colLen - 1
     while (start <= end) {
         let mid = Math.floor(start + (end - start) / 2)
         const cell = sheet.getCellInfo(0, mid)
-        if (cell.x + cell.width >= left && cell.x <= left) {
+        const x = cell.x - frozenInfoWidth
+        if (x + cell.width >= left && x < left) {
             return mid;
-        } else if (cell.x < left) {
+        } else if (x < left) {
             start = mid + 1;
         } else {
             end = mid - 1;
         }
     }
+    // const left = scrollLeft + xOffset
+    // let start = 0
+    // let end = colLen - 1
+    // while (start <= end) {
+    //     let mid = Math.floor(start + (end - start) / 2)
+    //     const cell = sheet.getCellInfo(0, mid)
+    //     const x = cell.x
+    //     if (cell.x + cell.width >= left && cell.x < left) {
+    //         console.log(cell, mid, 'cell')
+    //         return mid;
+    //     } else if (cell.x < left) {
+    //         start = mid + 1;
+    //     } else {
+    //         end = mid - 1;
+    //     }
+    // }
 }
 
 /**
@@ -310,12 +331,14 @@ export function findCellByXY(x: number, y: number, sheet: any, isFindPointerOrig
                 if (x >= cellWH.x && x <= cellWH.x + cellWH.width) {
                     let cell = sheet.getCellInfo(i, j)
                     if (isFindPointerOrigin) {
-                        let mergeCell = sheet.mergeCells[`${i}${j}`] || [1, 1]
+                        // let mergeCell = sheet.mergeCells[`${i}${j}`] || [1, 1]
+                        let mergeCell = sheet.sheetData[i][j].merge || [1, 1]
                         let pointer = [i, j]
                         if (cell.pointer) {
                             pointer = cell.pointer
                             cell = sheet.getCellInfo(pointer[0], pointer[1])
-                            mergeCell = sheet.mergeCells[`${pointer[0]}${pointer[1]}`] || [1, 1]
+                            // mergeCell = sheet.mergeCells[`${pointer[0]}${pointer[1]}`] || [1, 1]
+                            mergeCell = sheet.sheetData[pointer[0]][pointer[1]].merge || [1, 1]
                         }
                         return {
                             ...cell,

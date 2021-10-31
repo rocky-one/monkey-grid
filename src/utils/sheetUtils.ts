@@ -1,5 +1,5 @@
 // 初始化时指向同一个对象，节省内存
-const emptyCell = {
+export const emptyCell = {
     value: '',
     empty: true
 }
@@ -238,7 +238,8 @@ export function insertTableDataToSheet(row: number, col: number, tableData: any[
 
 
 export function getCellMergeWidthHeight(row: number, col: number, sheet: any) {
-    const mergeCell = sheet.mergeCells[`${row}${col}`] || [1, 1]
+    // const mergeCell = sheet.mergeCells[`${row}${col}`] || [1, 1]
+    const mergeCell = sheet.sheetData[row][col].merge || [1, 1]
     const endRow = row + (mergeCell[0] - 1)
     const endCol = col + (mergeCell[1] - 1)
     let height = 0
