@@ -108,6 +108,10 @@ class Base {
     record: any
     formatterInstance: Formatter
     originPointer: any = {}
+    keyboardInfo: any = {
+        row: -1,
+        col: -1
+    }
     public addTable = (name: string, row: number, col: number, dataSource: any[]) => {
         const table = new Table({
             name,
@@ -147,11 +151,13 @@ class Base {
             row = pointer[0]
             col = pointer[1]
         }
+        const whInfo = getCellMergeWidthHeight(row, col, this)
         return {
             ...this.sheetData[row][col],
-            ...getCellMergeWidthHeight(row, col, this),
+            ...whInfo,
             x: colDataMap[col].x,
-            y: rowDataMap[row].y
+            y: rowDataMap[row].y,
+            range: [row, col, whInfo.endRow, whInfo.endCol]
         }
     }
     // public getCell = (row: number, col: number) => {
@@ -202,7 +208,6 @@ class Base {
             this.sheetData[row][col].originPointId = random
         }
         this.originPointer[random] = [row, col]
-        
         const sheetData = this.sheetData
         const endRow = row + rowCount
         const endCol = col + colCount
@@ -210,10 +215,6 @@ class Base {
         for (let i = row; i < endRow; i++) {
             for (let j = col; j < endCol; j++) {
                 if (i === row && j === col) {
-                    // if (sheetData[i][j].pointer) {
-                    //     sheetData[i][j].pointer = null
-                    //     delete sheetData[i][j].pointer
-                    // }
                     if (sheetData[i][j].pointId) {
                         sheetData[i][j].pointId = null
                         delete sheetData[i][j].pointId
@@ -221,22 +222,17 @@ class Base {
                 } else {
                     if (sheetData[i][j].empty) {
                         sheetData[i][j] = {
-                            // pointer: [row, col],
                             pointId: random
                         }
                     } else {
                         if (!sheetData[i][j].pointId) {
                             sheetData[i][j].pointId = random
                         }
-                        // sheetData[i][j].pointer = [row, col]
                     }
                     if (sheetData[i][j].merge) {
                         sheetData[i][j].merge = null
                         delete sheetData[i][j].merge
                     }
-                    // if (this.mergeCells[`${i}${j}`]) {
-                    //     delete this.mergeCells[`${i}${j}`]
-                    // }
                 }
             }
         }
@@ -264,7 +260,7 @@ class Base {
                 const pointer = this.gePointer(i, j)
                 if (pointer) {
                     // 说明超出边界了
-                    if (row > pointer[0] || endRow < cell.endRow || col > pointer[1] ||  endCol < cell.endCol) {
+                    if (row > pointer[0] || endRow < cell.endRow || col > pointer[1] || endCol < cell.endCol) {
                         console.error('当前单元格跨合并区域不能取消合并，请重新选择')
                         return false
                     }
@@ -274,7 +270,6 @@ class Base {
         // 修改指针指向
         for (let i = row; i <= endRow; i++) {
             for (let j = col; j <= endCol; j++) {
-                // this.mergeCells[`${i}${j}`] = null
                 this.sheetData[i][j].merge = null
                 sheetData[i][j].originPointId = null
                 sheetData[i][j].pointId = null
@@ -333,7 +328,7 @@ class Base {
                 height: ROW_HEIGHT
             })
             const nextRow = this.sheetData[nextIndex]
-            for(let j = 0; j < nextRow.length; j++) {
+            for (let j = 0; j < nextRow.length; j++) {
                 const nextCell = nextRow[j]
                 const nextPointer = this.gePointer(nextIndex, j)
                 const rowPointer = this.gePointer(rowIndex, j) || []
@@ -389,7 +384,7 @@ class Base {
                 x: x + width,
                 width: COL_WIDTH
             })
-            for(let i = 0; i < this.sheetData.length; i++) {
+            for (let i = 0; i < this.sheetData.length; i++) {
                 const nextCell = this.sheetData[i][nextIndex]
                 const nextPointer = this.gePointer(i, nextIndex)
                 const rowPointer = this.gePointer(i, nextIndex) || []
@@ -425,7 +420,7 @@ class Base {
                 width: COL_WIDTH
             })
             nextIndex = count
-            for(let i = 0; i < this.sheetData.length; i++) {
+            for (let i = 0; i < this.sheetData.length; i++) {
                 this.sheetData[i].splice(nextIndex, 0, emptyCell)
             }
             this.colCount += 1
@@ -439,10 +434,10 @@ class Base {
     public setSelectedRange = (selectedRange: number[]) => {
         this.selectedRange = selectedRange
     }
-    
+
     private updateRowDataMapY = (startRow: number = 0, addHeight?: number) => {
         const startCell = this.rowDataMap[startRow]
-        let startY =  startCell.y + (addHeight || startCell.height)
+        let startY = startCell.y + (addHeight || startCell.height)
         for (let i = startRow + 1; i < this.rowDataMap.length; i++) {
             this.rowDataMap[i].y = startY
             startY += this.rowDataMap[i].height
@@ -663,6 +658,107 @@ class Base {
      */
     public setFrozenColCount = (count: number) => {
         this.frozenColCount = count
+    }
+    public setKeyboardInfo = (info) => {
+        this.keyboardInfo = Object.assign(this.keyboardInfo, info)
+    }
+    public moveSelectedCell = (direction: string, goOn?: false) => {
+        const selectedCell = this.selectedCell;
+        if (!selectedCell) return
+        if (direction === 'up') {
+            const row = selectedCell.range[0] - 1
+            const col = this.keyboardInfo.col
+            if (row < 0) return
+            const cell = { ...this.getCellInfo(row, col, true) }
+            this.setSelectedRange([...cell.range])
+            this.setSelectedCell(cell)
+            this.setKeyboardInfo({
+                row: row
+            })
+            if (this.selectedCell.y - this.frozenInfo.row.endY < this.scrollBar.getVertical().scrollTop) {
+                this.scrollBar.verticalScrollTo(this.selectedCell.y - this.frozenInfo.row.endY)
+            } else {
+                this.point()
+            }
+        } else if (direction === 'down') {
+            let row
+            if (selectedCell.range[0] !== selectedCell.range[2]) {
+                row = selectedCell.range[2] + 1
+            } else {
+                row = selectedCell.range[0] + 1
+            }
+            if (row >= this.rowDataMap.length) return
+
+            const col = this.keyboardInfo.col
+            let cell = { ...this.getCellInfo(row, col, true) }
+            this.setSelectedRange([...cell.range])
+            this.setSelectedCell(cell)
+            this.setKeyboardInfo({
+                row: row
+            })
+            if (this.selectedCell.y + this.selectedCell.height > this.scrollBar.getVertical().scrollTop + this.frozenInfo.row.endY + this.clientHeight) {
+                this.scrollBar.verticalScrollTo(this.selectedCell.height + this.scrollBar.getVertical().scrollTop)
+            } else {
+                this.point()
+            }
+        } else if (direction === 'left') {
+            const col = selectedCell.range[1] - 1
+            const row = this.keyboardInfo.row
+            if (col < 0) return
+            const cell = { ...this.getCellInfo(row, col, true) }
+            this.setSelectedRange([...cell.range])
+            this.setSelectedCell(cell)
+            this.setKeyboardInfo({
+                col: col
+            })
+            if (this.selectedCell.x - this.frozenInfo.col.endX < this.scrollBar.getHorizontal().scrollLeft) {
+                this.scrollBar.horizontalScrollTo(this.selectedCell.x - this.frozenInfo.col.endX)
+            } else {
+                this.point()
+            }
+
+        } else if (direction === 'right') {
+            let col
+            if (selectedCell.range[1] !== selectedCell.range[3]) {
+                col = selectedCell.range[3] + 1
+            } else {
+                col = selectedCell.range[1] + 1
+            }
+            let row = this.keyboardInfo.row
+            if (col >= this.colDataMap.length) {
+                if (!goOn) return
+                // tab键 下一行
+                if (row < this.rowDataMap.length - 1) {
+                    row += 1
+                    col = 0
+                    this.setKeyboardInfo({
+                        row
+                    })
+                    this.scrollBar.horizontalScrollTo(0)
+                // tab键盘 最后一个单元格后跳转到第一个单元格
+                } else {
+                    row = 0
+                    col = 0
+                    this.setKeyboardInfo({
+                        row,
+                        col
+                    })
+                    this.scrollBar.horizontalScrollTo(0)
+                    this.scrollBar.verticalScrollTo(0)
+                }
+            }
+            let cell = { ...this.getCellInfo(row, col, true) }
+            this.setSelectedRange([...cell.range])
+            this.setSelectedCell(cell)
+            this.setKeyboardInfo({
+                col: col
+            })
+            if (this.selectedCell.x + this.selectedCell.width > this.scrollBar.getHorizontal().scrollLeft + this.frozenInfo.col.endX + this.clientWidth) {
+                this.scrollBar.horizontalScrollTo(this.selectedCell.width + this.scrollBar.getHorizontal().scrollLeft)
+            } else {
+                this.point()
+            }
+        }
     }
     private initScroll = () => {
         this.scrollBar = new ScrollBar({

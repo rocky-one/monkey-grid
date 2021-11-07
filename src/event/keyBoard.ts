@@ -67,6 +67,30 @@ keyboardJS.bind('control + y', (e) => {
 	record.redo()
 })
 
+keyboardJS.bind('up', (e) => {
+	keyBoardData.sheet.moveSelectedCell('up')
+})
+
+keyboardJS.bind('down', (e) => {
+	keyBoardData.sheet.moveSelectedCell('down')
+})
+
+keyboardJS.bind('left', (e) => {
+	keyBoardData.sheet.moveSelectedCell('left')
+})
+
+keyboardJS.bind('right', (e) => {
+	keyBoardData.sheet.moveSelectedCell('right')
+})
+
+keyboardJS.bind('tab', (e) => {
+	keyBoardData.sheet.moveSelectedCell('right', true)
+})
+
+keyboardJS.bind('enter', (e) => {
+	e.preventDefault()
+	keyBoardData.sheet.moveSelectedCell('down')
+})
 
 // 当获取到焦点时 不需要响应的键盘按键
 const noInputCodeMap = {
@@ -100,6 +124,7 @@ keyboardJS.bind('', (event) => {
 	if (!keyBoardData.sheet.textareaInstance.isShow && !noInputCodeMap[keyCode] && !getHasShortcutKey()) {
 		keyBoardData.sheet.textareaInstance.setValue('')
 	}
+
 });
 
 function onKeyUp(event: any) {

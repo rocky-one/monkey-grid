@@ -1,7 +1,7 @@
 import { SheetOptions, PointRange } from '../interface/SheetInterface'
 import { calcStartRowIndex, calcEndRowIndex, calcStartColIndex, calcEndColIndex, getCellInFrozenByIndex, pxToNum, getObjectAttrDefault } from '../utils/helper'
 import { LEFT_ORDER_WIDTH, HEADER_ORDER_HEIGHT, FONT_FAMILY, BORDER_COLOR } from './const'
-import { numToABC } from '../utils/sheetUtils'
+import { numToABC, inFrozenOnBody } from '../utils/sheetUtils'
 import Base from './Base'
 
 export default class Point extends Base {
@@ -205,10 +205,12 @@ export default class Point extends Base {
         }
     }
     private pointSelectedRange = () => {
+		if (!this.selectedCell) return
         const scrollLeft = this.scrollBar.getHorizontal().scrollLeft
         const scrollTop = this.scrollBar.getVertical().scrollTop
         const frozenColX = this.calcFrozenWidth(false)
         const frozenRowY = this.calcFrozenHeight(false)
+		const isInFrozenOnBody = inFrozenOnBody(this, this.selectedCell)
         if (this.selectedRange.length) {
             const selected: any = {
                 x: null,
@@ -223,7 +225,7 @@ export default class Point extends Base {
                 let colNum = this.selectedRange[1]
                 const cell = this.getCellInfo(i, colNum)
                 if (!isFrozenCol) {
-                    isFrozenCol = getCellInFrozenByIndex(i, colNum, this) === 'col'
+                    isFrozenCol = getCellInFrozenByIndex(i, colNum, this) === 'col' || isInFrozenOnBody
                 }
                 if (!isFrozenRow) {
                     isFrozenRow = getCellInFrozenByIndex(i, colNum, this) === 'row'
@@ -273,7 +275,8 @@ export default class Point extends Base {
                     selected.width = this.selectedCell.width
                 }
                 // 选中区域超出左侧冻结区域需要隐藏 做截取操作
-            } else if (selected.x < frozenColX) {
+				// 同时保证不是body左上角冻结区域,否则选中区域被覆盖
+            } else if (selected.x < frozenColX && !isInFrozenOnBody) {
                 selected.left = false
                 let cellRightX = selected.x + selected.width
                 if (selected.x - scrollLeft < frozenColX && cellRightX >= frozenColX) {
@@ -370,7 +373,6 @@ export default class Point extends Base {
 
             canvasContext.closePath()
             canvasContext.lineWidth = 1
-
         }
     }
 	/**

@@ -503,3 +503,24 @@ export function inTopOrder(x, y, sheet) {
         }
     }
 }
+
+// 是否body区域 左上角冻结单元格
+export function inFrozenOnBody(sheet: any, cell: any) {
+    if (!cell) return false
+    const frozenRowCount = sheet.frozenRowCount
+    const frozenColCount = sheet.frozenColCount
+    if (!frozenRowCount || !frozenColCount) {
+        return false
+    }
+    const row = cell.range[0]
+    const col = cell.range[1]
+    for (let i = 0; i < frozenRowCount; i++) {
+        for (let j = 0; j < frozenColCount; j++) {
+            if (row === i && col === j) {
+                return true
+            }
+        }
+    }
+
+    return false
+}

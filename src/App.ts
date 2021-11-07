@@ -1,8 +1,8 @@
 import MonkeyGrid from './core/MonkeyGrid';
 // 1. 链表
 // 2. 时间切片
-let rowLen = 300;
-let colLen = 20
+let rowLen = 100;
+let colLen = 10
 const data = [];
 for(let i = 0;i<rowLen;i++){
 	let row = []
@@ -13,6 +13,7 @@ for(let i = 0;i<rowLen;i++){
 	}
 	data.push(row)
 }
+data[0][0].colspan = 2
 data[1][1].rowspan = 12
 data[5][3].rowspan = 1
 data[5][3].colspan = 4

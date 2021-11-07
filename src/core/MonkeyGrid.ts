@@ -163,6 +163,10 @@ class MonkeyGrid {
                 // 避免同一个引用，否则后面修改 sheet.selectedRange 会影响初始的sheet.selectedCell.range
                 sheet.setSelectedRange([...cell.range])
                 sheet.setSelectedCell(cell)
+                sheet.setKeyboardInfo({
+                    row: cell.range[0],
+                    col: cell.range[1]
+                })
             }
             sheet.point()
         }, 0)
