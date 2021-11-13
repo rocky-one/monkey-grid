@@ -1,7 +1,7 @@
 import Table from './Table'
 import { SheetOptions } from '../interface/SheetInterface'
 import { setSheetDataByCount, insertTableDataToSheet, getCellMergeWidthHeight, emptyCell } from '../utils/sheetUtils'
-import ScrollBar from '../scrollBar/ScrollBar'
+import ScrollBar from '../scrollBar/ScrollBarS'
 import CreateTextarea from './CreateTextarea'
 import watch from '../event/watch'
 import { ROW_HEIGHT, COL_WIDTH, FOOTER_HEIGHT, RIGHT_SCROLL_WIDTH, LEFT_ORDER_WIDTH, HEADER_ORDER_HEIGHT } from './const'
@@ -34,6 +34,7 @@ class Base {
             frozenRowCount: 0,
             frozenColCount: 0,
         }, options)
+        this.active = options.active
         this.name = options.name
         this.rowCount = options.rowCount || 100
         this.colCount = options.colCount || 10
@@ -125,9 +126,9 @@ class Base {
         })
         this.tables.push(table)
         this.sheetData = insertTableDataToSheet(row, col, table.getData(), this)
-        this.scrollBar.resetScrollBar(this.getScrollHeight(), this.getScrollWidth())
-        this.scrollBar.verticalScrollTo(this.getCellInfo(row, 0).y - this.yOffset)
-        this.scrollBar.horizontalScrollTo(this.getCellInfo(0, col).x - this.xOffset)
+        this.options.getScroll().resetScrollBar(this.getScrollHeight(), this.getScrollWidth(), this.scrollBar.vertical, this.scrollBar.horizontal)
+        this.options.getScroll().verticalScrollTo(this.getCellInfo(row, 0).y - this.yOffset)
+        this.options.getScroll().horizontalScrollTo(this.getCellInfo(0, col).x - this.xOffset)
         return table
     }
     public getTable = (name: string) => {
@@ -372,7 +373,7 @@ class Base {
             this.rowCount += 1
             this.sheetData.splice(nextIndex, 0, newRow)
             this.updateRow(nextIndex - 2)
-            this.scrollBar.verticalScrollTo(this.scrollBar.getVertical().maxScrollTop)
+            this.options.getScroll().verticalScrollTo(this.scrollBar.getVertical().maxScrollTop)
         }
     }
     // 插入一列
@@ -428,7 +429,7 @@ class Base {
             }
             this.colCount += 1
             this.updateCol(nextIndex - 2)
-            this.scrollBar.horizontalScrollTo(this.scrollBar.getHorizontal().maxScrollLeft)
+            this.options.getScroll().horizontalScrollTo(this.scrollBar.getHorizontal().maxScrollLeft)
         }
     }
     public setSelectedCell = (selectedCell) => {
@@ -457,13 +458,13 @@ class Base {
     private updateRow = (row: number = 0, addHeight?: number) => {
         this.updateRowDataMapY(row, addHeight)
         this.calcScrollWidthHeight()
-        this.scrollBar.resetScrollBar(this.getScrollHeight(), this.getScrollWidth())
+        this.options.getScroll().resetScrollBar(this.getScrollHeight(), this.getScrollWidth(), this.scrollBar.vertical, this.scrollBar.horizontal)
         this.nextTick(this.point, 'next-updateRow')
     }
     private updateCol = (startCol: number = 0, addWidth?: number) => {
         this.updateColDataMapX(startCol, addWidth)
         this.calcScrollWidthHeight()
-        this.scrollBar.resetScrollBar(this.getScrollHeight(), this.getScrollWidth())
+        this.options.getScroll().resetScrollBar(this.getScrollHeight(), this.getScrollWidth(), this.scrollBar.vertical, this.scrollBar.horizontal)
         this.nextTick(this.point, 'next-updateCol')
     }
     private nextTick = (callback: Function, flag: string) => {
@@ -679,7 +680,7 @@ class Base {
                 row: row
             })
             if (this.selectedCell.y - this.frozenInfo.row.endY < this.scrollBar.getVertical().scrollTop) {
-                this.scrollBar.verticalScrollTo(this.selectedCell.y - this.frozenInfo.row.endY)
+                this.options.getScroll().verticalScrollTo(this.selectedCell.y - this.frozenInfo.row.endY)
             } else {
                 this.point()
             }
@@ -700,7 +701,7 @@ class Base {
                 row: row
             })
             if (this.selectedCell.y + this.selectedCell.height > this.scrollBar.getVertical().scrollTop + this.frozenInfo.row.endY + this.clientHeight) {
-                this.scrollBar.verticalScrollTo(this.selectedCell.height + this.scrollBar.getVertical().scrollTop)
+                this.options.getScroll().verticalScrollTo(this.selectedCell.height + this.scrollBar.getVertical().scrollTop)
             } else {
                 this.point()
             }
@@ -715,7 +716,7 @@ class Base {
                 col: col
             })
             if (this.selectedCell.x - this.frozenInfo.col.endX < this.scrollBar.getHorizontal().scrollLeft) {
-                this.scrollBar.horizontalScrollTo(this.selectedCell.x - this.frozenInfo.col.endX)
+                this.options.getScroll().horizontalScrollTo(this.selectedCell.x - this.frozenInfo.col.endX)
             } else {
                 this.point()
             }
@@ -737,7 +738,7 @@ class Base {
                     this.setKeyboardInfo({
                         row
                     })
-                    this.scrollBar.horizontalScrollTo(0)
+                    this.options.getScroll().horizontalScrollTo(0)
                 // tab键盘 最后一个单元格后跳转到第一个单元格
                 } else {
                     row = 0
@@ -746,8 +747,8 @@ class Base {
                         row,
                         col
                     })
-                    this.scrollBar.horizontalScrollTo(0)
-                    this.scrollBar.verticalScrollTo(0)
+                    this.options.getScroll().horizontalScrollTo(0)
+                    this.options.getScroll().verticalScrollTo(0)
                 }
             }
             let cell = { ...this.getCellInfo(row, col, true) }
@@ -757,7 +758,7 @@ class Base {
                 col: col
             })
             if (this.selectedCell.x + this.selectedCell.width > this.scrollBar.getHorizontal().scrollLeft + this.frozenInfo.col.endX + this.clientWidth) {
-                this.scrollBar.horizontalScrollTo(this.selectedCell.width + this.scrollBar.getHorizontal().scrollLeft)
+                this.options.getScroll().horizontalScrollTo(this.selectedCell.width + this.scrollBar.getHorizontal().scrollLeft)
             } else {
                 this.point()
             }
@@ -774,11 +775,11 @@ class Base {
             scrollClientWidth: this.options.layout.footerScrollBox.offsetWidth,
             scrollWidth: this.getScrollWidth(),
             eventBindEle: this.options.layout.container,
-            verticalScrollCb: this.verticalScrollCb,
-            horizontalScrollCb: this.horizontalScrollCb
+            // verticalScrollCb: this.verticalScrollCb,
+            // horizontalScrollCb: this.horizontalScrollCb
         })
     }
-    private verticalScrollCb = (vertical) => {
+    public verticalScrollCb = (vertical) => {
         window.requestAnimationFrame(() => {
             const canvasContext = this.options.canvasContext
             this.options.canvas.width = this.options.canvas.width
@@ -787,7 +788,7 @@ class Base {
             this.point()
         })
     }
-    private horizontalScrollCb = (horizontal) => {
+    public horizontalScrollCb = (horizontal) => {
         window.requestAnimationFrame(() => {
             const canvasContext = this.options.canvasContext
             this.options.canvas.width = this.options.canvas.width

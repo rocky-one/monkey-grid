@@ -62,7 +62,6 @@ addButton.addEventListener('click', () => {
 	// 	[{value: 'gg'}, {value: 'gg11'}],
 	// 	[{value: 'ee'}, {value: 'ee11'}]
 	// ])
-
 	// sheet.setRowHeight(8, 40)
 	// sheet.setColWidth(4, 120)
 	// sheet.removeMergeCells(7, 4, 3, 3)
@@ -73,6 +72,6 @@ addButton.addEventListener('click', () => {
 	// })
 
 	// sheet.addRow(sheet.sheetData.length)
-	sheet.addCol(4)
+	// sheet.addCol(4)
 
 })

@@ -1,5 +1,5 @@
 import { Vertical, Horizontal } from './ScrollInterface'
-import { calcVerticalSliderTop, calcHorizontalSliderLeft } from './calc'
+import { calcVerticalSliderTop, calcHorizontalSliderLeft } from '../utils/calcUtils'
 
 export function updateVerticalSliderTop(vertical: Vertical): Vertical {
     const sliderTop = calcVerticalSliderTop(
@@ -10,10 +10,11 @@ export function updateVerticalSliderTop(vertical: Vertical): Vertical {
         {
             clientHeight: vertical.scrollClientHeight
         },
-        vertical.viewSlider,
+        // vertical.viewSlider,
+        vertical.sliderHeight,
         vertical.scrollTop
     )
-    vertical.viewSlider.style.top = `${sliderTop}px`
+    // vertical.viewSlider.style.top = `${sliderTop}px`
     vertical.sliderTop = sliderTop;
     return vertical
 }
@@ -52,10 +53,11 @@ export function updateHorizotalSliderLeft(horizotal: Horizontal): Horizontal {
         {
             clientWidth: horizotal.scrollClientWidth
         },
-        horizotal.viewSlider,
+        // horizotal.viewSlider,
+        horizotal.sliderWidth,
         horizotal.scrollLeft
     )
-    horizotal.viewSlider.style.left = `${sliderLeft}px`
+    // horizotal.viewSlider.style.left = `${sliderLeft}px`
     horizotal.sliderLeft = sliderLeft;
     return horizotal
 }

@@ -18,6 +18,10 @@ export default class Point extends Base {
 		boundEndCol: 0,
 		boundEndRow: 0
 	}
+    public clearPoint = () => {
+        const canvasContext = this.options.canvasContext
+        canvasContext.clearRect(0, 0, this.options.canvas.width, this.options.canvas.height);
+    }
 	/**
 	* 绘制整个sheet画布
 	*/
@@ -25,7 +29,8 @@ export default class Point extends Base {
         if (!this.active) return
 		const sheetData = this.sheetData
 		const canvasContext = this.options.canvasContext
-        canvasContext.height = canvasContext.height
+        // canvasContext.height = canvasContext.height
+        canvasContext.clearRect(0, 0, this.options.canvas.width, this.options.canvas.height);
 		canvasContext.lineWidth = 1
 		let startRowIndex = calcStartRowIndex(this)
 		let endRowIndex = calcEndRowIndex(startRowIndex, this.clientHeight, sheetData, this.rowDataMap)

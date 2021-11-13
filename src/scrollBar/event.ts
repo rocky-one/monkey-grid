@@ -29,22 +29,22 @@ export function removeMousewheel(ele: HTMLElement, cb: Function): void {
     })
 }
 
-export function mouseDownSlider(verticalEventRecord: VerticalEventRecord, vertical): Function {
+export function mouseDownSlider(verticalEventRecord: VerticalEventRecord, vertical, viewSlider: HTMLElement): Function {
     return function (e: MouseEvent) {
         verticalEventRecord.mouseDownFlag = true
         verticalEventRecord.mouseDownPageX = e.pageX
         verticalEventRecord.mouseDownPageY = e.pageY
         verticalEventRecord.scrollTop = vertical.scrollTop
-        vertical.viewSlider.className += ' mg-scroll-bar-active-v';
+        viewSlider.className += ' mg-scroll-bar-active-v';
     }
 }
 
-export function mouseDownSliderH(horizontalEventRecord: HorizontalEventRecord, horizontal): Function {
+export function mouseDownSliderH(horizontalEventRecord: HorizontalEventRecord, horizontal, viewSlider: HTMLElement): Function {
     return function (e: MouseEvent) {
         horizontalEventRecord.mouseDownFlag = true
         horizontalEventRecord.mouseDownPageX = e.pageX
         horizontalEventRecord.mouseDownPageY = e.pageY
         horizontalEventRecord.scrollLeft = horizontal.scrollLeft
-        horizontal.viewSlider.className += ' mg-scroll-bar-active-h';
+        viewSlider.className += ' mg-scroll-bar-active-h';
     }
 }

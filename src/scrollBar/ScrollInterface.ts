@@ -5,13 +5,13 @@ export interface ContainerV {
     scrollClientHeight: number
     // 内容总高度
     scrollHeight?: number
-    verticalScrollCb: Function
+    // verticalScrollCb: Function
 }
 
 export interface ContainerH {
     clientWidth: number
     scrollClientWidth: number
-    horizontalScrollCb: Function
+    // horizontalScrollCb: Function
     scrollWidth?: number
 }
 

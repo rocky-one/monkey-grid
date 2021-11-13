@@ -1,9 +1,7 @@
 import { createDom, setDomCss } from '../utils/dom'
-import { calcVerticalSliderSize, calcVerticalSliderTop, calcHorizontalSliderSize } from './calc'
 import { Vertical, Horizontal } from './ScrollInterface'
 
 export function createVerticalScroll(vertical: Vertical, ele?: HTMLElement) {
-    // const sliderSize = calcVerticalSliderSize(vertical)
     const vScrollBox = createDom('div')
     setDomCss(vScrollBox, {
         display: vertical.sliderHeight > 0 ? 'block' : 'none',

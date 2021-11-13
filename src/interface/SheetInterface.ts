@@ -1,7 +1,6 @@
-import ScrollBar from "scrollBar/ScrollBar";
 
 export interface SheetOptions {
-    name: string
+    name?: string
     rowCount: number
     colCount: number
     layout: any
@@ -18,6 +17,8 @@ export interface SheetOptions {
     frozenColCount?: number
     rowHeight?: number
     colWidth?: number
+    getScroll?: Function
+    active: boolean
 }
 
 export interface PointRange {
@@ -31,7 +32,7 @@ export interface PointRange {
 
 
 export interface sheetParams {
-    name: string
+    name?: string
     rowCount?: number
     colCount?: number
     frozenRowCount?: number

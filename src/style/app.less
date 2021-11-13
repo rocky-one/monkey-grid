@@ -112,11 +112,12 @@
     .mg-tabs-wapper {
       width: 100%;
       height: 100%;
-      border: 1px solid #ccc;
       .mg-tabs-inner {
+        white-space: nowrap;
+        overflow: hidden;
         .mg-tabs-item {
           display: inline-block;
-          padding: 0 2px;
+          padding: 0 4px;
           height: 100%;
           text-align: center;
           line-height: 28px;
@@ -124,6 +125,7 @@
         }
         .mg-tabs-item-active {
           color: green;
+          background: #fff;
         }
       }
     }

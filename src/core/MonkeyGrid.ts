@@ -2,11 +2,11 @@ import { layout, createDragColLine, createDragRowLine, updateLine } from './layo
 import * as domCore from '../utils/dom'
 import { OptionsInterface } from '../interface/BaseInterface'
 import { sheetParams } from '../interface/SheetInterface'
-import ScrollBar from '../scrollBar/ScrollBar'
+import CreateScroll from '../scrollbar/CreateScroll'
 import Sheet from './Sheet'
 import { mouseDown, mouseMove, mouseUp, removeMouseDown, removeMouseMove, removeMouseUp } from '../event/mouseEvent'
 import { getPixelRatio, getObjectAttrDefault, findCellByXY, inFrozenRowByXY, inFrozenColByXY, throllte } from '../utils/helper'
-import { getColNumByPageX, getRowNumByPageY, findTopOrderCellByXY, findLeftOrderCellByXY, getCellWidthHeight } from '../utils/sheetUtils'
+import { getColNumByPageX, getRowNumByPageY, findTopOrderCellByXY, findLeftOrderCellByXY, getCellWidthHeight, getDefaultSheetName } from '../utils/sheetUtils'
 import watch from '../event/watch'
 import keyBoardInit from '../event/keyBoard'
 import '../style/app.less'
@@ -36,7 +36,6 @@ class MonkeyGrid {
     sheets: any[] = []
     // canvas: HTMLCanvasElement
     canvasContext: any
-    scrollBar: ScrollBar = null
     layout: any
     hooks: Object = {}
     ratio: number = 1
@@ -56,9 +55,10 @@ class MonkeyGrid {
         inLeftOrder: false,
         dragLine: false
     }
+    scroll: any = null
     public addSheet = (params: sheetParams) => {
         const sheet = new Sheet({
-            name: params.name,
+            name: params.name || getDefaultSheetName(this.sheets),
             rowCount: params.rowCount,
             colCount: params.colCount,
             layout: this.layout,
@@ -70,18 +70,38 @@ class MonkeyGrid {
             headerOrder: getObjectAttrDefault(this.options, 'headerOrder', true),
             ratio: this.ratio,
             frozenRowCount: params.frozenRowCount,
-            frozenColCount: params.frozenColCount
+            frozenColCount: params.frozenColCount,
+            active: true,
+            getScroll: () => {
+                return this.scroll
+            }
         })
-        if (this.sheets.length) {
-            this.sheets[this.selectedSheetIndex].active = false;
-            // this.sheets[this.selectedSheetIndex].destroyScroll()
+        if (!this.scroll) {
+            this.scroll = new CreateScroll({
+                verticalEle: this.layout.container,
+                horizontalEle: this.layout.footerScrollBox,
+                vertical: sheet.scrollBar.vertical,
+                horizontal: sheet.scrollBar.horizontal,
+                eventBindEle: this.layout.container,
+                verticalScrollCb: (vertical) => {
+                    this.sheets[this.selectedSheetIndex].scrollBar.vertical = vertical
+                    this.sheets[this.selectedSheetIndex].verticalScrollCb()
+                },
+                horizontalScrollCb: (horizontal) => {
+                    this.sheets[this.selectedSheetIndex].scrollBar.horizontal = horizontal
+                    this.sheets[this.selectedSheetIndex].horizontalScrollCb()
+                }
+            })
         }
-        // this.initScroll(sheet)
-        
-        sheet.active = true;
+        let preSlectedSheetIndex = this.selectedSheetIndex;
         this.sheets.push(sheet)
         this.selectedSheetIndex = this.sheets.length - 1
-        sheet.point()
+        if (preSlectedSheetIndex >= 0) {
+            this.sheets[preSlectedSheetIndex].active = false;
+            this.scroll.resetScrollBar(sheet.getScrollHeight(), sheet.getScrollWidth(), sheet.scrollBar.vertical, sheet.scrollBar.horizontal)
+        } else {
+            sheet.point()
+        } 
         this.updateTabs()
         return sheet
     }
@@ -123,24 +143,6 @@ class MonkeyGrid {
         this.documentMoveFn = this.onDocumentMove()
         mouseMove(document.body, this.documentMoveFn)
 
-    }
-    // 初始化时调用 只new一次
-    // sheet实例中存每个滚动条大小
-    // scrollBar 提供根据滚动条大小更新方法
-    private initScroll = (sheet: any) => {
-        this.scrollBar = new ScrollBar({
-            ele: this.layout.container,
-            horizontalEle: this.layout.footerScrollBox,
-            clientWidth: sheet.clientWidth,
-            clientHeight: sheet.clientHeight,
-            scrollClientHeight: this.options.height - sheet.yOffset,
-            scrollHeight: sheet.getScrollHeight(),
-            scrollClientWidth: this.layout.footerScrollBox.offsetWidth,
-            scrollWidth: sheet.getScrollWidth(),
-            eventBindEle: this.layout.container,
-            verticalScrollCb: sheet.verticalScrollCb,
-            horizontalScrollCb: sheet.horizontalScrollCb
-        })
     }
     private onMouseDown = (event: MouseEvent) => {
         setTimeout(() => {
@@ -203,10 +205,9 @@ class MonkeyGrid {
         setTimeout(() => {
             this.mouseDownFlag = false
             const sheet = this.sheets[this.selectedSheetIndex]
-            sheet.scrollBar.stopAutoScrollIngTopLeft()
-            sheet.scrollBar.stopAutoScrollIngTop()
-            sheet.scrollBar.stopAutoScrollIngLeft()
-
+            this.scroll.stopAutoScrollIngTopLeft()
+            this.scroll.stopAutoScrollIngTop()
+            this.scroll.stopAutoScrollIngLeft()
             if (this.orderInfo.orderTopDown) {
                 updateLine(this.orderInfo.topOrderEle, {
                     left: '-1000px',
@@ -249,7 +250,7 @@ class MonkeyGrid {
             const offsetX = pageX - this.canvasRect.left
             const offsetY = pageY - this.canvasRect.top
             const sheet = this.sheets[this.selectedSheetIndex]
-
+            if (!sheet) return
             if (this.mouseDownFlag) {
                 const cell = findCellByXY(offsetX, offsetY, sheet)
                 if (cell) {
@@ -307,7 +308,7 @@ class MonkeyGrid {
         const rightBound = pageX > this.canvasRect.right
 
         if (downBound && rightBound) {
-            sheet.scrollBar.autoScrollIngTopLeft({
+            this.scroll.autoScrollIngTopLeft({
                 leftSpeed: 24,
                 topSpeed: 24,
                 time: 100
@@ -319,7 +320,7 @@ class MonkeyGrid {
             return
         }
         if (upBound && rightBound) {
-            sheet.scrollBar.autoScrollIngTopLeft({
+            this.scroll.autoScrollIngTopLeft({
                 leftSpeed: 24,
                 topSpeed: -24,
                 time: 100
@@ -331,7 +332,7 @@ class MonkeyGrid {
             return
         }
         if (downBound && leftBound) {
-            sheet.scrollBar.autoScrollIngTopLeft({
+            this.scroll.autoScrollIngTopLeft({
                 leftSpeed: -24,
                 topSpeed: 24,
                 time: 100
@@ -343,7 +344,7 @@ class MonkeyGrid {
             return
         }
         if (upBound && leftBound) {
-            sheet.scrollBar.autoScrollIngTopLeft({
+            this.scroll.autoScrollIngTopLeft({
                 leftSpeed: -24,
                 topSpeed: -24,
                 time: 100
@@ -354,41 +355,41 @@ class MonkeyGrid {
             })
             return
         }
-        sheet.scrollBar.stopAutoScrollIngTopLeft()
+        this.scroll.stopAutoScrollIngTopLeft()
         // 向下超出
         if (downBound) {
-            sheet.scrollBar.autoScrollIngTop(24, 100, () => {
+            this.scroll.autoScrollIngTop(24, 100, () => {
                 sheet.calcCellSelectedRange({
                     range: [sheet.pointRange.endRowIndex, sheet.pointRange.boundEndCol]
                 })
             })
         // 向上超出
         } else if (upBound) {
-            sheet.scrollBar.autoScrollIngTop(-24, 100, () => {
+            this.scroll.autoScrollIngTop(-24, 100, () => {
                 sheet.calcCellSelectedRange({
                     range: [sheet.pointRange.startRowIndex, sheet.pointRange.boundEndCol]
                 })
             })
         } else {
-            sheet.scrollBar.stopAutoScrollIngTop()
+            this.scroll.stopAutoScrollIngTop()
         }
 
         // 向右超出
         if (rightBound) {
-            sheet.scrollBar.autoScrollIngLeft(80, 100, () => {
+            this.scroll.autoScrollIngLeft(80, 100, () => {
                 sheet.calcCellSelectedRange({
                     range: [sheet.pointRange.boundEndRow, sheet.pointRange.endColIndex]
                 })
             })
         // 向左超出
         } else if (leftBound) {
-            sheet.scrollBar.autoScrollIngLeft(-80, 100, () => {
+            this.scroll.autoScrollIngLeft(-80, 100, () => {
                 sheet.calcCellSelectedRange({
                     range: [sheet.pointRange.boundEndRow, sheet.pointRange.startColIndex]
                 })
             })
         } else {
-            sheet.scrollBar.stopAutoScrollIngLeft()
+            this.scroll.stopAutoScrollIngLeft()
         }
     }
     // 创建底部SheetTab
@@ -422,23 +423,51 @@ class MonkeyGrid {
         this.layout.footerBox.appendChild(footerScrollBox)
         this.layout.tabBox = tabBox
         this.layout.footerScrollBox = footerScrollBox
+
         const mgTabsAddBtn:any = document.getElementById('mgTabsAddBtn')
         mgTabsAddBtn.addEventListener('click', () => {
             this.addSheet({
-                name: 'sheet33',
+                name: getDefaultSheetName(this.sheets),
                 rowCount: 20,
                 colCount: 10
             })
         })
+
+        const arrowLeft = document.querySelector('.mg-tabs-arrow-left')
+        arrowLeft.addEventListener('click', () => {
+            console.log('left')
+        })
+
+        const arrowRight = document.querySelector('.mg-tabs-arrow-right')
+        arrowRight.addEventListener('click', () => {
+            console.log('right')
+        })
+    }
+    private onClickTab = (e) => {
+        const index = Number(e.target.getAttribute('data-index'))
+        let preSlectedSheetIndex = this.selectedSheetIndex;
+        this.selectedSheetIndex = index
+        const sheet = this.sheets[index]
+        sheet.active = true;
+        if (preSlectedSheetIndex >= 0) {
+            this.sheets[preSlectedSheetIndex].active = false;
+            
+            this.scroll.resetScrollBar(sheet.getScrollHeight(), sheet.getScrollWidth(), sheet.scrollBar.vertical, sheet.scrollBar.horizontal)
+        } else {
+            sheet.point()
+        } 
+        this.updateTabs()
     }
     private updateTabs = () => {
         const tabsInner = document.querySelectorAll('.mg-tabs-inner')[0];
         if (tabsInner) {
             let html = ''
-            this.sheets.forEach(sheet => {
-                html += `<div class='mg-tabs-item'>${sheet.name}</div>`
+            this.sheets.forEach((sheet, index) => {
+                html += `<div class='mg-tabs-item' data-index=${index}>${sheet.name}</div>`
             })
             tabsInner.innerHTML = html
+            tabsInner.removeEventListener('click', this.onClickTab)
+            tabsInner.addEventListener('click', this.onClickTab)
         }
         this.updateTabsClass()
     }

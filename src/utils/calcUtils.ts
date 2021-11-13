@@ -1,10 +1,8 @@
 import {
-    ContainerV,
-    ContainerH,
     Vertical, Horizontal,
     VerticalEventRecord,
     HorizontalEventRecord
-} from './ScrollInterface'
+} from '../scrollBar/ScrollInterface'
 /**
  * @desc 计算纵向滚动条滑块大小
  */
@@ -38,10 +36,10 @@ export function calcVerticalSliderSize(vertival: Vertical) {
  * @param {*} slider 
  * @param {*} scrollTop 
  */
-export function calcVerticalSliderTop(container, scrollBarContainer, slider, scrollTop = 0) {
+export function calcVerticalSliderTop(container, scrollBarContainer, sliderClientHeight, scrollTop = 0) {
     const canScrollTopPx = container.scrollHeight - container.clientHeight
     const scrollPercentage = scrollTop / canScrollTopPx
-    const canScrollBarPx = scrollBarContainer.clientHeight - slider.clientHeight
+    const canScrollBarPx = scrollBarContainer.clientHeight - sliderClientHeight
     const top = canScrollBarPx * scrollPercentage
     return top
 }
@@ -72,10 +70,10 @@ export function calcHorizontalSliderSize(horizontal: Horizontal) {
  * @param {*} slider 
  * @param {*} scrollLeft 
  */
-export function calcHorizontalSliderLeft(container, scrollBarContainer, slider, scrollLeft = 0) {
+export function calcHorizontalSliderLeft(container, scrollBarContainer, sliderClientWidth, scrollLeft = 0) {
     const canScrollLeftPx = container.scrollWidth - container.clientWidth
     const scrollPercentage = scrollLeft / canScrollLeftPx
-    const canScrollBarPx = scrollBarContainer.clientWidth - slider.clientWidth
+    const canScrollBarPx = scrollBarContainer.clientWidth - sliderClientWidth
     const left = canScrollBarPx * scrollPercentage
     return left
 }

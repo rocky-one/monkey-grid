@@ -73,8 +73,7 @@ export function setSheetDataByCount(
         const startRow = dataRowLen
         const rowMapLast = rowDataMap[rowDataMap.length - 1]
         const colMapLast = colDataMap[colDataMap.length - 1]
-        let startY = rowMapLast.y + colMapLast.height
-
+        let startY = rowMapLast.y + rowMapLast.height
         for (let i = startRow; i < rowCount; i++) {
             rowDataMap.push({
                 y: startY,
@@ -522,4 +521,25 @@ export function inFrozenOnBody(sheet: any, cell: any) {
     }
 
     return false
+}
+
+export function getDefaultSheetName(sheets: any = []) {
+    let name = 'sheet'
+    let nameMap = {}
+    sheets.forEach(sheet => {
+        let arr = sheet.name.split('sheet')
+        if (arr.length > 1) {
+            nameMap[arr[1]] = arr[1]
+        }
+    })
+    const keys = Object.keys(nameMap)
+    for(let i = 1; i <= keys.length; i++) {
+        if (!nameMap[i]) {
+            name += i
+        }
+    }
+    if (name === 'sheet') {
+        name += keys.length + 1
+    }
+    return name
 }
