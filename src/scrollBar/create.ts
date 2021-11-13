@@ -3,10 +3,10 @@ import { calcVerticalSliderSize, calcVerticalSliderTop, calcHorizontalSliderSize
 import { Vertical, Horizontal } from './ScrollInterface'
 
 export function createVerticalScroll(vertical: Vertical, ele?: HTMLElement) {
-    const sliderSize = calcVerticalSliderSize(vertical)
+    // const sliderSize = calcVerticalSliderSize(vertical)
     const vScrollBox = createDom('div')
     setDomCss(vScrollBox, {
-        display: sliderSize.sliderHeight > 0 ? 'block' : 'none',
+        display: vertical.sliderHeight > 0 ? 'block' : 'none',
         position: 'absolute',
         right: 0,
         top: 0,
@@ -23,7 +23,7 @@ export function createVerticalScroll(vertical: Vertical, ele?: HTMLElement) {
         right: "1px",
         top: 0,
         width: '8px',
-        height: `${sliderSize.sliderHeight}px`,
+        height: `${vertical.sliderHeight}px`,
         borderRadius: '8px'
     })
     vScrollBox.appendChild(vSlider)
@@ -31,17 +31,15 @@ export function createVerticalScroll(vertical: Vertical, ele?: HTMLElement) {
 
     return {
         viewScroll: vScrollBox,
-        viewSlider: vSlider,
-        maxScrollTop: vertical.scrollHeight - vertical.clientHeight,
-        ...sliderSize
+        viewSlider: vSlider
     }
 }
 
 export function createHorizontalScroll(horizontal: Horizontal, ele?: HTMLElement) {
-    const sliderSize = calcHorizontalSliderSize(horizontal)
+    // const sliderSize = calcHorizontalSliderSize(horizontal)
     const hScrollBox = createDom('div')
     setDomCss(hScrollBox, {
-        display: sliderSize.sliderWidth > 0 ? 'block' : 'none',
+        display: horizontal.sliderWidth > 0 ? 'block' : 'none',
         position: 'relative',
         width: `${horizontal.scrollClientWidth}px`,
         height: '14px',
@@ -55,7 +53,7 @@ export function createHorizontalScroll(horizontal: Horizontal, ele?: HTMLElement
         position: 'absolute',
         left: '1px',
         top: '1px',
-        width: `${sliderSize.sliderWidth}px`,
+        width: `${horizontal.sliderWidth}px`,
         height: '10px',
         borderRadius: '8px',
         marginTop: '1px'
@@ -66,8 +64,6 @@ export function createHorizontalScroll(horizontal: Horizontal, ele?: HTMLElement
     return {
         viewScroll: hScrollBox,
         viewSlider: hSlider,
-        maxScrollLeft: horizontal.scrollWidth - horizontal.clientWidth,
-        ...sliderSize
     }
 
 }

@@ -2,7 +2,8 @@ import {
     calcVerticalSliderSize,
     calcHorizontalSliderSize,
     getScrollTopBySliderMoveY,
-    getScrollLeftBySliderMoveX
+    getScrollLeftBySliderMoveX,
+    calcVerticalSliderTop
 } from './calc'
 import { createVerticalScroll, createHorizontalScroll, setNodeStyle } from './create'
 import { updateVerticalScroll, updateHorizotalScroll } from './update'
@@ -10,6 +11,16 @@ import { addEvent, removeEvent } from '../utils/event'
 import { mousewheel, removeMousewheel, mouseDownSlider, mouseDownSliderH } from './event'
 import { ScrollBarOptions, Vertical, VerticalEventRecord, HorizontalEventRecord, Horizontal } from './ScrollInterface'
 import './scrollBarStyle.less'
+
+class CreateScroll {
+    constructor(options) {
+        this.options = options;
+    }
+    options: any = {}
+    init = () => {
+        
+    }
+}
 class ScrollBar {
     constructor(options: ScrollBarOptions) {
         this.options = options
@@ -21,8 +32,22 @@ class ScrollBar {
         this.horizontal.scrollWidth = this.options.scrollWidth
         this.horizontal.scrollClientWidth = this.options.scrollClientWidth
 
-        this.updateVertical(createVerticalScroll(this.vertical, this.options.verticalEle || this.options.ele))
-        this.updateHorizontal(createHorizontalScroll(this.horizontal, this.options.horizontalEle || this.options.ele))
+        // 只创建一次dom
+        // 创建多次slider信息实例
+        const sliderVSize = calcVerticalSliderSize(this.vertical);
+        this.updateVertical(sliderVSize)
+        const domObj = createVerticalScroll(this.vertical, this.options.verticalEle || this.options.ele)
+        this.updateVertical(domObj)
+
+
+        const sliderHSize = calcHorizontalSliderSize(this.horizontal)
+        this.updateHorizontal(sliderHSize)
+        const domObjH = createHorizontalScroll(this.horizontal, this.options.horizontalEle || this.options.ele)
+        this.updateHorizontal(domObjH)
+
+        // this.updateVertical(createVerticalScroll(this.vertical, this.options.verticalEle || this.options.ele))
+        // this.updateHorizontal(createHorizontalScroll(this.horizontal, this.options.horizontalEle || this.options.ele))
+
         this.onMousewheel()
         this.onMouseDownVerticalSlider()
         this.onMouseDownHorizontalSlider()

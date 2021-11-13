@@ -124,6 +124,9 @@ class MonkeyGrid {
         mouseMove(document.body, this.documentMoveFn)
 
     }
+    // 初始化时调用 只new一次
+    // sheet实例中存每个滚动条大小
+    // scrollBar 提供根据滚动条大小更新方法
     private initScroll = (sheet: any) => {
         this.scrollBar = new ScrollBar({
             ele: this.layout.container,
