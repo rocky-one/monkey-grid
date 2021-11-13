@@ -1,5 +1,5 @@
-import { PointRange } from '../interface/SheetInterface'
 import {getCellWidthHeight} from './sheetUtils'
+
 // 延迟执行
 export function defer(callback) {
     setTimeout(callback, 0)
@@ -209,6 +209,8 @@ export function inFrozenRowByXY(y: number, frozenRowCount: number, sheetData: an
     }
     return y <= y2
 }
+
+
 export function inFrozenColByXY(x: number, frozenColCount: number, sheetData: any, getCellInfo: Function) {
     if( frozenColCount <= 0) {
         return false
@@ -284,7 +286,6 @@ export function findCellByXY(x: number, y: number, sheet: any, isFindPointerOrig
             return false
         }
         const first = getCellWidthHeight(i, 0, sheet)
-        // const first = sheet.getCellInfo(i, 0)
         if (y >= first.y &&  y <= first.y + first.height) {
             for (let j = startColIndex; j <= endColIndex; j++) {
                 // 这里需要用当前单元格的宽高和坐标比较
@@ -292,7 +293,6 @@ export function findCellByXY(x: number, y: number, sheet: any, isFindPointerOrig
                 if (x >= cellWH.x && x <= cellWH.x + cellWH.width) {
                     let cell = sheet.getCellInfo(i, j)
                     if (isFindPointerOrigin) {
-                        // let mergeCell = sheet.mergeCells[`${i}${j}`] || [1, 1]
                         let mergeCell = sheet.sheetData[i][j].merge || [1, 1]
                         let pointer = [i, j]
                         if (sheet.gePointer(i, j)) {

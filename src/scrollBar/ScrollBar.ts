@@ -9,6 +9,7 @@ import { updateVerticalScroll, updateHorizotalScroll } from './update'
 import { addEvent, removeEvent } from '../utils/event'
 import { mousewheel, removeMousewheel, mouseDownSlider, mouseDownSliderH } from './event'
 import { ScrollBarOptions, Vertical, VerticalEventRecord, HorizontalEventRecord, Horizontal } from './ScrollInterface'
+import './scrollBarStyle.less'
 class ScrollBar {
     constructor(options: ScrollBarOptions) {
         this.options = options
@@ -316,6 +317,7 @@ class ScrollBar {
 
     private mouseUpSlider = (event) => {
         this.verticalEventRecord.mouseDownFlag = false
+        this.vertical.viewSlider.className = 'mg-scroll-bar mg-scroll-bar-v';
     }
     private onMouseUpSlider = () => {
         addEvent(document.body, 'mouseup', this.mouseUpSlider)
@@ -326,6 +328,7 @@ class ScrollBar {
 
     private mouseUpSliderH = () => {
         this.horizontalEventRecord.mouseDownFlag = false
+        this.horizontal.viewSlider.className = 'mg-scroll-bar mg-scroll-bar-h';
     }
     private onMouseUpSliderH = () => {
         addEvent(document.body, 'mouseup', this.mouseUpSliderH)
@@ -341,8 +344,17 @@ class ScrollBar {
         this.removeMouseMoveSlider()
         this.removeMouseUpSlider()
         this.removeMouseUpSliderH()
-        this.options.ele.removeChild(this.vertical.viewScroll)
-        // this.vertical = null
+        if (this.options.verticalEle) {
+            this.options.verticalEle.removeChild(this.vertical.viewScroll)
+        } else {
+            this.options.ele.removeChild(this.vertical.viewScroll)
+        }
+        if (this.options.horizontalEle) {
+            this.options.horizontalEle.removeChild(this.horizontal.viewScroll)
+        } else {
+            this.options.ele.removeChild(this.horizontal.viewScroll)
+        }
+        this.vertical = null
     }
 }
 

@@ -33,17 +33,134 @@
   position: absolute;
   left: 0;
   bottom: 0;
-  background-color: #ccc;
+  background-color: #f5f3f3;
   .mg-footer-tab {
     height: 100%;
-    width: 50%;
+    width: 49%;
+    border-right: 1px solid #ccc;
     float: left;
-    background-color: bisque;
   }
   .mg-footer-scroll {
     float: left;
     width: 50%;
     height: 100%;
-    background-color: cadetblue;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    padding: 0 4px;
+  }
+  .mg-tabs {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 0 50px 0 50px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    .mg-tabs-arrow {
+      width: 40px;
+      height: 100%;
+      position: absolute;
+      left: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      span {
+        display: inline-block;
+      }
+      .mg-tabs-arrow-left {
+        width: 14px;
+        height: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #fff;
+        cursor: pointer;
+        .mg-tabs-arrow-left-item {
+          width: 8px;
+          height: 8px;
+          border-top: 1px solid #ccc;
+          border-left: 1px solid #ccc;
+          transform:rotate(-45deg);
+        }
+      }
+      .mg-tabs-arrow-left:hover .mg-tabs-arrow-left-item {
+        border-color: green;
+      }
+      .mg-tabs-arrow-right {
+        width: 14px;
+        height: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #fff;
+        cursor: pointer;
+        margin-left: 6px;
+        .mg-tabs-arrow-right-item {
+          width: 8px;
+          height: 8px;
+          border-top: 1px solid #ccc;
+          border-left: 1px solid #ccc;
+          transform:rotate(135deg);
+
+        }
+      }
+      .mg-tabs-arrow-right:hover .mg-tabs-arrow-right-item {
+        border-color: green;
+      }
+    }
+    .mg-tabs-wapper {
+      width: 100%;
+      height: 100%;
+      border: 1px solid #ccc;
+      .mg-tabs-inner {
+        .mg-tabs-item {
+          display: inline-block;
+          padding: 0 2px;
+          height: 100%;
+          text-align: center;
+          line-height: 28px;
+          color: rgba(0, 0, 0, 0.8);
+        }
+        .mg-tabs-item-active {
+          color: green;
+        }
+      }
+    }
+    .mg-tabs-add {
+      width: 16px;
+      height: 16px;
+      position: absolute;
+      right: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      border: 2px solid #ccc;
+      cursor: pointer;
+      .mg-tabs-add-line1 {
+        display: inline-block;
+        width: 10px;
+        height: 2px;
+        border-top: 2px solid #ccc;
+        position: absolute;
+        top: 7px;
+        left: 3px;
+      }
+      .mg-tabs-add-line2 {
+        display: inline-block;
+        height: 11px;
+        width: 2px;
+        border-left: 2px solid #ccc;
+        position: absolute;
+        left: 7px;
+      }
+    }
+    .mg-tabs-add:hover {
+      border-color:green
+    }
+    .mg-tabs-add:hover span{
+      border-color:green
+    }
   }
 }

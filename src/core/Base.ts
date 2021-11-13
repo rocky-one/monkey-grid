@@ -34,6 +34,7 @@ class Base {
             frozenRowCount: 0,
             frozenColCount: 0,
         }, options)
+        this.name = options.name
         this.rowCount = options.rowCount || 100
         this.colCount = options.colCount || 10
         this.rowHeight = this.options.rowHeight
@@ -63,6 +64,8 @@ class Base {
         this.record = new Record({ sheet: this })
         this.formatterInstance = new Formatter({})
     }
+    active: boolean
+    name: string
     point: any
     tables: any[]
     rowHeight: number = ROW_HEIGHT
@@ -805,6 +808,7 @@ class Base {
         this.options = null
         this.sheetData = null
         this.mergeCells = null
+        this.scrollBar && this.scrollBar.destroy()
         this.scrollBar = null
     }
 }

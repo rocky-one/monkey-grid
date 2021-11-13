@@ -22,8 +22,10 @@ export default class Point extends Base {
 	* 绘制整个sheet画布
 	*/
 	public point = () => {
+        if (!this.active) return
 		const sheetData = this.sheetData
 		const canvasContext = this.options.canvasContext
+        canvasContext.height = canvasContext.height
 		canvasContext.lineWidth = 1
 		let startRowIndex = calcStartRowIndex(this)
 		let endRowIndex = calcEndRowIndex(startRowIndex, this.clientHeight, sheetData, this.rowDataMap)

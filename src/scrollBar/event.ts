@@ -35,6 +35,7 @@ export function mouseDownSlider(verticalEventRecord: VerticalEventRecord, vertic
         verticalEventRecord.mouseDownPageX = e.pageX
         verticalEventRecord.mouseDownPageY = e.pageY
         verticalEventRecord.scrollTop = vertical.scrollTop
+        vertical.viewSlider.className += ' mg-scroll-bar-active-v';
     }
 }
 
@@ -44,5 +45,6 @@ export function mouseDownSliderH(horizontalEventRecord: HorizontalEventRecord, h
         horizontalEventRecord.mouseDownPageX = e.pageX
         horizontalEventRecord.mouseDownPageY = e.pageY
         horizontalEventRecord.scrollLeft = horizontal.scrollLeft
+        horizontal.viewSlider.className += ' mg-scroll-bar-active-h';
     }
 }

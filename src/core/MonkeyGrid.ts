@@ -72,8 +72,17 @@ class MonkeyGrid {
             frozenRowCount: params.frozenRowCount,
             frozenColCount: params.frozenColCount
         })
+        if (this.sheets.length) {
+            this.sheets[this.selectedSheetIndex].active = false;
+            // this.sheets[this.selectedSheetIndex].destroyScroll()
+        }
+        // this.initScroll(sheet)
+        
+        sheet.active = true;
         this.sheets.push(sheet)
         this.selectedSheetIndex = this.sheets.length - 1
+        sheet.point()
+        this.updateTabs()
         return sheet
     }
     public getSheet = () => {
@@ -82,8 +91,9 @@ class MonkeyGrid {
     public removeSheet = (name: string) => {
         const index = this.sheets.find(item => item.sheetName === name)
         const sheet: any = this.sheets.splice(index, 1)
+        this.updateTabs()
         if (sheet) {
-            sheet.destroy();
+            sheet.destroy()
         }
     }
     public setSelectSheet = () => {
@@ -113,6 +123,21 @@ class MonkeyGrid {
         this.documentMoveFn = this.onDocumentMove()
         mouseMove(document.body, this.documentMoveFn)
 
+    }
+    private initScroll = (sheet: any) => {
+        this.scrollBar = new ScrollBar({
+            ele: this.layout.container,
+            horizontalEle: this.layout.footerScrollBox,
+            clientWidth: sheet.clientWidth,
+            clientHeight: sheet.clientHeight,
+            scrollClientHeight: this.options.height - sheet.yOffset,
+            scrollHeight: sheet.getScrollHeight(),
+            scrollClientWidth: this.layout.footerScrollBox.offsetWidth,
+            scrollWidth: sheet.getScrollWidth(),
+            eventBindEle: this.layout.container,
+            verticalScrollCb: sheet.verticalScrollCb,
+            horizontalScrollCb: sheet.horizontalScrollCb
+        })
     }
     private onMouseDown = (event: MouseEvent) => {
         setTimeout(() => {
@@ -368,7 +393,25 @@ class MonkeyGrid {
         const tabBox = domCore.createDom('div', {
             class: 'mg-footer-tab',
         })
-        tabBox.innerHTML = "sheet1"
+        tabBox.innerHTML = `
+            <div class='mg-tabs'>
+                <div class='mg-tabs-arrow'>
+                    <span class='mg-tabs-arrow-left'>
+                        <div class='mg-tabs-arrow-left-item'></div>
+                    </span>
+                    <span class='mg-tabs-arrow-right'>
+                        <div class='mg-tabs-arrow-right-item'></div>
+                    </span>
+                </div>
+                <div class='mg-tabs-wapper'>
+                    <div class='mg-tabs-inner'></div>
+                </div>
+                <div class='mg-tabs-add' id='mgTabsAddBtn'>
+                    <span class='mg-tabs-add-line1'></span>
+                    <span class='mg-tabs-add-line2'></span>
+                </div>
+            </div>
+        `
         const footerScrollBox = domCore.createDom('div', {
             class: 'mg-footer-scroll',
         })
@@ -376,6 +419,36 @@ class MonkeyGrid {
         this.layout.footerBox.appendChild(footerScrollBox)
         this.layout.tabBox = tabBox
         this.layout.footerScrollBox = footerScrollBox
+        const mgTabsAddBtn:any = document.getElementById('mgTabsAddBtn')
+        mgTabsAddBtn.addEventListener('click', () => {
+            this.addSheet({
+                name: 'sheet33',
+                rowCount: 20,
+                colCount: 10
+            })
+        })
+    }
+    private updateTabs = () => {
+        const tabsInner = document.querySelectorAll('.mg-tabs-inner')[0];
+        if (tabsInner) {
+            let html = ''
+            this.sheets.forEach(sheet => {
+                html += `<div class='mg-tabs-item'>${sheet.name}</div>`
+            })
+            tabsInner.innerHTML = html
+        }
+        this.updateTabsClass()
+    }
+    private updateTabsClass = () => {
+        if (this.sheets.length === 0) return
+        const items = document.querySelectorAll('.mg-tabs-item')
+
+        items.forEach((item, index) => {
+            item.className = 'mg-tabs-item'
+            if(index === this.selectedSheetIndex) {
+                item.className += ' mg-tabs-item-active'
+            }
+        })
     }
     public destroy = () => {
         removeMouseDown(this.layout.canvas, this.onMouseDown)

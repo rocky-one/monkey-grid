@@ -13,16 +13,18 @@ export function createVerticalScroll(vertical: Vertical, ele?: HTMLElement) {
         width: '14px',
         height: `${vertical.scrollClientHeight}px`,
         zIndex: 20,
-        border: '1px solid #ccc'
+        backgroundColor: '#f5f3f3'
     })
-    const vSlider = createDom('div')
+    const vSlider = createDom('div', {
+        class: 'mg-scroll-bar mg-scroll-bar-v'
+    })
     setDomCss(vSlider, {
         position: 'absolute',
         right: "1px",
         top: 0,
-        width: '10px',
+        width: '8px',
         height: `${sliderSize.sliderHeight}px`,
-        border: '1px solid #ccc'
+        borderRadius: '8px'
     })
     vScrollBox.appendChild(vSlider)
     ele && ele.appendChild(vScrollBox)
@@ -41,21 +43,22 @@ export function createHorizontalScroll(horizontal: Horizontal, ele?: HTMLElement
     setDomCss(hScrollBox, {
         display: sliderSize.sliderWidth > 0 ? 'block' : 'none',
         position: 'relative',
-        // left: 0,
-        // top: 0,
         width: `${horizontal.scrollClientWidth}px`,
         height: '14px',
         zIndex: 20,
-        border: '1px solid #ccc'
+        // backgroundColor: '#f5f3f3'
     })
-    const hSlider = createDom('div')
+    const hSlider = createDom('div', {
+        class: 'mg-scroll-bar mg-scroll-bar-h'
+    })
     setDomCss(hSlider, {
         position: 'absolute',
-        left: "1px",
-        top: 0,
+        left: '1px',
+        top: '1px',
         width: `${sliderSize.sliderWidth}px`,
         height: '10px',
-        border: '1px solid #ccc'
+        borderRadius: '8px',
+        marginTop: '1px'
     })
     hScrollBox.appendChild(hSlider)
     ele && ele.appendChild(hScrollBox)
