@@ -7,7 +7,7 @@ import {
     getScrollLeftBySliderMoveX
 } from '../utils/calcUtils'
 
-import { mousewheel, removeMousewheel, mouseDownSlider, mouseDownSliderH } from './event'
+import { mousewheel, removeMousewheel } from './event'
 import { addEvent, removeEvent } from '../utils/event'
 import { updateVerticalScroll, updateHorizotalScroll } from './update'
 import { Vertical, VerticalEventRecord, HorizontalEventRecord, Horizontal } from './ScrollInterface'
@@ -25,8 +25,6 @@ class CreateScroll {
 	horizontal: any = {}
 	domV: any = {}
 	domH: any = {}
-	mouseDownSlider: Function
-    mouseDownSliderH: Function
 	verticalEventRecord: VerticalEventRecord = {
         mouseDownPageX: 0,
         mouseDownPageY: 0,
@@ -57,8 +55,8 @@ class CreateScroll {
 		this.domV = createVerticalScroll(this.vertical, this.options.verticalEle || this.options.ele)
 		this.domH = createHorizontalScroll(this.horizontal, this.options.horizontalEle || this.options.ele)
 		this.onMousewheel()
-		this.onMouseDownVerticalSlider()
-		this.onMouseDownHorizontalSlider()
+		this.initMouseDownVerticalSlider()
+		this.initMouseDownHorizontalSlider()
 		this.onMouseMoveSlider()
 		this.onMouseUpSlider()
 		this.onMouseUpSliderH()
@@ -138,19 +136,31 @@ class CreateScroll {
 		this.domH.viewSlider.style.width = `${this.horizontal.sliderWidth}px`;
 		this.domH.viewSlider.style.left = `${this.horizontal.sliderLeft}px`
 	}
-	private onMouseDownVerticalSlider = () => {
-        this.mouseDownSlider = mouseDownSlider(this.verticalEventRecord, this.vertical, this.domV.viewSlider)
-        addEvent(this.domV.viewSlider, 'mousedown', this.mouseDownSlider)
+	private initMouseDownVerticalSlider = () => {
+        addEvent(this.domV.viewSlider, 'mousedown', this.onMouseDownVerticalSlider)
+    }
+    private onMouseDownVerticalSlider = (e: MouseEvent) => {
+        this.verticalEventRecord.mouseDownFlag = true
+        this.verticalEventRecord.mouseDownPageX = e.pageX
+        this.verticalEventRecord.mouseDownPageY = e.pageY
+        this.verticalEventRecord.scrollTop = this.vertical.scrollTop
+        this.domV.viewSlider.className += ' mg-scroll-bar-active-v';
     }
     private removeMouseDownVerticalSlider = () => {
-        removeEvent(this.domV.viewSlider, 'mousedown', this.mouseDownSlider)
+        removeEvent(this.domV.viewSlider, 'mousedown', this.onMouseDownVerticalSlider)
     }
-    private onMouseDownHorizontalSlider = () => {
-        this.mouseDownSliderH = mouseDownSliderH(this.horizontalEventRecord, this.horizontal, this.domH.viewSlider)
-        addEvent(this.domH.viewSlider, 'mousedown', this.mouseDownSliderH)
+    private initMouseDownHorizontalSlider = () => {
+        addEvent(this.domH.viewSlider, 'mousedown', this.onMouseDownHorizontalSlider)
+    }
+    private onMouseDownHorizontalSlider = (e: MouseEvent) => {
+        this.horizontalEventRecord.mouseDownFlag = true
+        this.horizontalEventRecord.mouseDownPageX = e.pageX
+        this.horizontalEventRecord.mouseDownPageY = e.pageY
+        this.horizontalEventRecord.scrollLeft = this.horizontal.scrollLeft
+        this.domH.viewSlider.className += ' mg-scroll-bar-active-h';
     }
     private removeMouseDownHorizontalSlider = () => {
-        removeEvent(this.domH.viewSlider, 'mousedown', this.mouseDownSliderH)
+        removeEvent(this.domH.viewSlider, 'mousedown', this.onMouseDownHorizontalSlider)
     }
 	private onMouseMoveSlider = () => {
         addEvent(document.body, 'mousemove', this.mouseMoveSlider)
@@ -304,7 +314,6 @@ class CreateScroll {
         }
     }
     public stopAutoScrollIngTop = () => {
-        // if (!this.autoScrollInfo.autoScrollTop) return
         this.autoScrollInfo.topTimer && clearInterval(this.autoScrollInfo.topTimer)
         this.autoScrollInfo.topTimer = null
         this.autoScrollInfo.autoScrollTop = false
@@ -327,7 +336,6 @@ class CreateScroll {
         }
     }
     public stopAutoScrollIngLeft = () => {
-        // if (!this.autoScrollInfo.autoScrollLeft) return
         this.autoScrollInfo.leftTimer && clearInterval(this.autoScrollInfo.leftTimer)
         this.autoScrollInfo.leftTimer = null
         this.autoScrollInfo.autoScrollLeft = false

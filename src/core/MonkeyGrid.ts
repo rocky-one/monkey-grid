@@ -200,7 +200,7 @@ class MonkeyGrid {
             const sheet = this.sheets[this.selectedSheetIndex]
             sheet.isDbClick = false
             this.mouseDownFlag = true
-            if (now - this.mouseDownTime < 300) {
+            if (now - this.mouseDownTime < 200) {
                 sheet.isDbClick = true
                 this.mouseDownFlag = false
             }
@@ -227,7 +227,7 @@ class MonkeyGrid {
                 })
             }
             sheet.point()
-        }, 0)
+        }, 20)
     }
     private onMouseUp = (event: MouseEvent) => {
         setTimeout(() => {
@@ -265,18 +265,13 @@ class MonkeyGrid {
                 sheet.setRowHeight(row, height)
                 this.orderInfo.orderLeftDown = false
             }
-            // sheet.setMergeCellsByRange()
-            // setTimeout(() => {
-            //     sheet.removeMergeCellsByRange()
-            // }, 2000)
-        }, 40)
+        }, 20)
     }
     private onDocumentMove = () => {
-
         return throllte((event: MouseEvent) => {
-            const { pageX, pageY }: any = event
-            const offsetX = pageX - this.canvasRect.left
-            const offsetY = pageY - this.canvasRect.top
+            const { offsetX, offsetY }: any = event
+            // const offsetX = pageX - this.canvasRect.left
+            // const offsetY = pageY - this.canvasRect.top
             const sheet = this.sheets[this.selectedSheetIndex]
             if (!sheet) return
             if (this.mouseDownFlag) {
@@ -324,10 +319,10 @@ class MonkeyGrid {
         }, 80)
     }
     private calcMoveBound = (event: MouseEvent) => {
-        const { pageX, pageY } = event
+        const { pageX, pageY, offsetX, offsetY }: any = event
+        // const offsetX = pageX - this.canvasRect.left
+        // const offsetY = pageY - this.canvasRect.top
         const sheet = this.sheets[this.selectedSheetIndex]
-        const offsetX = pageX - this.canvasRect.left
-        const offsetY = pageY - this.canvasRect.top
         sheet.pointRange.boundEndCol = getColNumByPageX(offsetX, sheet)
         sheet.pointRange.boundEndRow = getRowNumByPageY(offsetY, sheet)
         const upBound = pageY < this.canvasRect.top

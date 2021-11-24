@@ -8,8 +8,10 @@ import { ROW_HEIGHT, COL_WIDTH, FOOTER_HEIGHT, RIGHT_SCROLL_WIDTH, LEFT_ORDER_WI
 import Record from './Record'
 import Formatter from './Formatter'
 
-// 10月 - 11月
+// 1 选中冻结行 选中样式问题
+// 2 选中冻结行 头部border样式被覆盖问题
 
+// 10月 - 11月
 // 1. 回撤， 修改value、复制粘贴、合并单元格(暂时不实现)
 // 2. addTable 边界检测 --- 优化sheetData数据结构，把x,y,width,height提取到映射表中
 // 绘制时，实时计算当前区域，实时计算单元格x、y、width、height，实时计算合并单元格width、height
@@ -494,7 +496,7 @@ class Base {
                 value: ''
             }
         }
-        const oldVal = this.sheetData[row][col]
+        const oldVal = this.sheetData[row][col].value
         // 记录操作
         // 当上一次value和当前value不一样时 赋值、记录
         // 注意excel中相同value的更改也会被记录

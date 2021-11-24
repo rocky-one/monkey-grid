@@ -61,24 +61,27 @@ export default class Point extends Base {
 		this.pointTopOrder(startColIndex, endColIndex)
 		// 头部选择 背景下划线效果
 		this.pointCellTopBorder()
-
-		// 左上角 冻结头部列标 A，B,
-		this.pointTopOrder(0, this.frozenColCount - 1, true)
 		
 		// 绘制左侧序号 1,2,3...
 		this.pointLeftOrder(startRowIndex, endRowIndex)
 		// 左侧选择 背景下划线效果
 		this.pointCellLeftBorder()
+
+        // 左上角 冻结头部列标 A，B,
+		this.pointTopOrder(0, this.frozenColCount - 1, true)
+
 		// 绘制左侧序号 冻结序号情况
 		this.pointLeftOrder(0, this.frozenRowCount - 1, true)
 		
 		// 如果有冻结行列，绘制body区域左上角冻结区域
 		this.pointLeftTopByFrozenOnBody()
 
+        // 头部选择 冻结区域 背景下划线效果
+        this.pointCellTopBorderFrozen()
+
 		// 如果有行列标，绘制左上角空白区域
 		this.pointLeftTopByFrozen()
-
-		// 绘制冻结区域选中效果
+		// 绘制选中效果
 		this.pointSelectedRange()
 
 		if (this.textareaInstance.isShow) {
@@ -524,7 +527,26 @@ export default class Point extends Base {
         canvasContext.stroke()
         canvasContext.lineWidth = 1
 	}
-
+    // 绘制 top 冻结选中border
+    private pointCellTopBorderFrozen = () => {
+        if (this.frozenColCount <= 0) return
+		const canvasContext = this.options.canvasContext
+		const selectedRange = this.selectedRange
+        for (let j = selectedRange[1]; j <= selectedRange[3]; j++) {
+            if (j < this.frozenColCount) {
+                canvasContext.lineWidth = 2
+                canvasContext.beginPath()
+                let x = this.colDataMap[j].x
+                let y = this.yOffset
+                canvasContext.moveTo(x - 0.5, this.yOffset + 0.5)
+                canvasContext.lineTo(x + this.colDataMap[j].width + 0.5, y+ 0.5)
+                canvasContext.strokeStyle = BORDER_COLOR
+                canvasContext.closePath()
+                canvasContext.stroke()
+            }
+		}
+        canvasContext.lineWidth = 1
+    }
 	// 绘制 left 选中border
 	private pointCellLeftBorder = () => {
         const scrollTop = this.scrollBar.getVertical().scrollTop

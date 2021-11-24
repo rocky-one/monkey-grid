@@ -1,6 +1,4 @@
 import { explorerType } from '../utils/helper'
-import { addEvent, removeEvent } from '../utils/event'
-import { VerticalEventRecord, HorizontalEventRecord } from './ScrollInterface'
 
 /**
  * @desc 鼠标滚轮事件
@@ -27,24 +25,4 @@ export function removeMousewheel(ele: HTMLElement, cb: Function): void {
         deltaY = (e.wheelDeltaY) ? e.wheelDeltaY / 120 : - (e.detailY || 0) / 3
         cb && cb(e, { deltaX, deltaY })
     })
-}
-
-export function mouseDownSlider(verticalEventRecord: VerticalEventRecord, vertical, viewSlider: HTMLElement): Function {
-    return function (e: MouseEvent) {
-        verticalEventRecord.mouseDownFlag = true
-        verticalEventRecord.mouseDownPageX = e.pageX
-        verticalEventRecord.mouseDownPageY = e.pageY
-        verticalEventRecord.scrollTop = vertical.scrollTop
-        viewSlider.className += ' mg-scroll-bar-active-v';
-    }
-}
-
-export function mouseDownSliderH(horizontalEventRecord: HorizontalEventRecord, horizontal, viewSlider: HTMLElement): Function {
-    return function (e: MouseEvent) {
-        horizontalEventRecord.mouseDownFlag = true
-        horizontalEventRecord.mouseDownPageX = e.pageX
-        horizontalEventRecord.mouseDownPageY = e.pageY
-        horizontalEventRecord.scrollLeft = horizontal.scrollLeft
-        viewSlider.className += ' mg-scroll-bar-active-h';
-    }
 }
