@@ -8,19 +8,8 @@ import { ROW_HEIGHT, COL_WIDTH, FOOTER_HEIGHT, RIGHT_SCROLL_WIDTH, LEFT_ORDER_WI
 import Record from './Record'
 import Formatter from './Formatter'
 
-// 1 选中冻结行 选中样式问题
-// 2 选中冻结行 头部border样式被覆盖问题
 
-// 10月 - 11月
-// 1. 回撤， 修改value、复制粘贴、合并单元格(暂时不实现)
-// 2. addTable 边界检测 --- 优化sheetData数据结构，把x,y,width,height提取到映射表中
-// 绘制时，实时计算当前区域，实时计算单元格x、y、width、height，实时计算合并单元格width、height
-// 3. 单元格样式设置setCellStyle
-// 4. 单元格格式设置 数字、日期、字符串、下拉
-// 5. 插入行列，移除行列。 快捷键 上 下 左 右
 // 6. 二开 自定义render
-// 7. 架构
-// 8. 拖拽行列宽高
 
 // 12月
 // 1. ssr文档系统
@@ -51,7 +40,7 @@ class Base {
         this.yOffset = this.options.headerOrder ? HEADER_ORDER_HEIGHT : 0
         // 计算可视区域宽高
         this.clientWidth = this.options.width - RIGHT_SCROLL_WIDTH - this.xOffset
-        this.clientHeight = this.options.height - FOOTER_HEIGHT - this.yOffset
+        this.clientHeight = this.options.height - FOOTER_HEIGHT - this.yOffset - 2
         this.setSheetName(this.options.name)
         this.setRowColCount(this.rowCount, this.colCount)
         this.calcClientWidthHeight()

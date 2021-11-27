@@ -26,10 +26,6 @@ export function getExploreType() {
 
 export const explorerType = getExploreType()
 
-export function createOrderName(name: string, list) {
-    return name
-}
-
 export function getPixelRatio(context: any) {
     var backingStore = context.backingStorePixelRatio ||
         context.webkitBackingStorePixelRatio ||
@@ -50,13 +46,11 @@ export function getPixelRatio(context: any) {
 export function calcStartRowIndex(sheet: any): number {
     const sheetData = sheet.sheetData
     const scrollTop = sheet.scrollBar.getVertical().scrollTop
-    const yOffset = sheet.yOffset
-
     if (scrollTop === 0) return 0
 
     const sheetLen = sheetData.length
-    const top = scrollTop // + yOffset
-    const frozenInfoHeight = sheet.frozenInfo.row.endY
+    const top = scrollTop 
+    const frozenInfoHeight = sheet.frozenInfo.row.endY || sheet.yOffset
     let start = 0
     let end = sheetLen - 1
     while (start <= end) {
@@ -98,11 +92,10 @@ export function calcEndRowIndex(startRow: number, containerHeight: number, sheet
  */
 export function calcStartColIndex(sheet: any): number {
     const scrollLeft = sheet.scrollBar.getHorizontal().scrollLeft
-    const xOffset = sheet.xOffset
     if (scrollLeft === 0) return 0
     const colLen = sheet.colDataMap.length
-    const frozenInfoWidth = sheet.frozenInfo.col.endX
-    const left = scrollLeft // + xOffset
+    const frozenInfoWidth = sheet.frozenInfo.col.endX || sheet.xOffset
+    const left = scrollLeft
 
     let start = 0
     let end = colLen - 1
@@ -118,22 +111,6 @@ export function calcStartColIndex(sheet: any): number {
             end = mid - 1;
         }
     }
-    // const left = scrollLeft + xOffset
-    // let start = 0
-    // let end = colLen - 1
-    // while (start <= end) {
-    //     let mid = Math.floor(start + (end - start) / 2)
-    //     const cell = sheet.getCellInfo(0, mid)
-    //     const x = cell.x
-    //     if (cell.x + cell.width >= left && cell.x < left) {
-    //         console.log(cell, mid, 'cell')
-    //         return mid;
-    //     } else if (cell.x < left) {
-    //         start = mid + 1;
-    //     } else {
-    //         end = mid - 1;
-    //     }
-    // }
 }
 
 /**

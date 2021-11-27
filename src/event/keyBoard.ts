@@ -27,9 +27,8 @@ keyboardJS.bind('command + c', (e) => {
 	if (!sheet) return
 	// if (sheet.textareaInstance.isFocus) return
 	const selectedRange = sheet.selectedRange
-	const sheetData = sheet.sheetData
 	let value = ''
-	forEachSheetDataBySelectedRange(selectedRange, sheetData, sheet.getCellInfo, (cell: any, row: number, col: number) => {
+	forEachSheetDataBySelectedRange(selectedRange, sheet.getCellInfo, (cell: any, row: number, col: number) => {
 		if (!sheet.gePointer(row, col)) {
 			if (col === selectedRange[3]) {
 				value += `${cell.value}\n`

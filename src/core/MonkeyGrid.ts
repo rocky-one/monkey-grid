@@ -38,8 +38,8 @@ class MonkeyGrid {
             })),
             onClickAddTab: ()  => {
                 this.addSheet({
-                    rowCount: 20,
-                    colCount: 10
+                    rowCount: 100,
+                    colCount: 20
                 })
             },
             onClickTab: (index) => {

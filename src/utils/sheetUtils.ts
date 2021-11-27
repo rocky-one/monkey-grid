@@ -72,7 +72,6 @@ export function setSheetDataByCount(
     } else {
         const startRow = dataRowLen
         const rowMapLast = rowDataMap[rowDataMap.length - 1]
-        const colMapLast = colDataMap[colDataMap.length - 1]
         let startY = rowMapLast.y + rowMapLast.height
         for (let i = startRow; i < rowCount; i++) {
             rowDataMap.push({
@@ -270,7 +269,7 @@ export function getCellWidthHeight(row: number, col: number, sheet: any) {
 export const ABC_MAP = {
     0: 'A',
     1: 'B',
-    2: 'C',
+    2: 'C',
     3: 'D',
     4: 'E',
     5: 'F',
@@ -361,7 +360,7 @@ const columeHeader_word_index = { 'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5
  * @param sheetData 
  * @param cb 
  */
-export function forEachSheetDataBySelectedRange(selectedRange: number[], sheetData: any, getCellInfo: Function, cb: Function, pointerFlag: boolean = true) {
+export function forEachSheetDataBySelectedRange(selectedRange: number[], getCellInfo: Function, cb: Function, pointerFlag: boolean = true) {
     if (selectedRange.length) {
         for (let i = selectedRange[0]; i <= selectedRange[2]; i++) {
             for (let j = selectedRange[1]; j <= selectedRange[3]; j++) {

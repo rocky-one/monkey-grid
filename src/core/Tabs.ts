@@ -1,4 +1,3 @@
-import * as domCore from '../utils/dom'
 
 interface Tab {
 	name: string

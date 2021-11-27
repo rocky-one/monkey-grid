@@ -1,5 +1,5 @@
 import { SheetOptions, PointRange } from '../interface/SheetInterface'
-import { calcStartRowIndex, calcEndRowIndex, calcStartColIndex, calcEndColIndex, getCellInFrozenByIndex, pxToNum, getObjectAttrDefault } from '../utils/helper'
+import { calcStartRowIndex, calcEndRowIndex, calcStartColIndex, calcEndColIndex, getCellInFrozenByIndex, pxToNum } from '../utils/helper'
 import { LEFT_ORDER_WIDTH, HEADER_ORDER_HEIGHT, FONT_FAMILY, BORDER_COLOR } from './const'
 import { numToABC, inFrozenOnBody } from '../utils/sheetUtils'
 import Base from './Base'
@@ -218,8 +218,8 @@ export default class Point extends Base {
 		if (!this.selectedCell) return
         const scrollLeft = this.scrollBar.getHorizontal().scrollLeft
         const scrollTop = this.scrollBar.getVertical().scrollTop
-        const frozenColX = this.calcFrozenWidth(false)
-        const frozenRowY = this.calcFrozenHeight(false)
+        const frozenColEndX = this.frozenInfo.col.endX
+        const frozenRowEndY = this.frozenInfo.row.endY
 		const isInFrozenOnBody = inFrozenOnBody(this, this.selectedCell)
         if (this.selectedRange.length) {
             const selected: any = {
@@ -238,7 +238,7 @@ export default class Point extends Base {
                     isFrozenCol = getCellInFrozenByIndex(i, colNum, this) === 'col' || isInFrozenOnBody
                 }
                 if (!isFrozenRow) {
-                    isFrozenRow = getCellInFrozenByIndex(i, colNum, this) === 'row'
+                    isFrozenRow = getCellInFrozenByIndex(i, colNum, this) === 'row' || isInFrozenOnBody
                 }
                 if (cell && !this.gePointer(i, colNum)) {
                     selected.height += cell.height
@@ -251,22 +251,28 @@ export default class Point extends Base {
                     }
                 }
             }
-            // 选中区域跨冻结和body，需要减去scrollTop，避免滚动时选中区域高度错误
+            // 选中区域是否在冻结内
             if (isFrozenRow) {
-                selected.height -= scrollTop
-                if (selected.height <= this.selectedCell.height) {
-                    selected.height = this.selectedCell.height
+                // 标记 是否同时跨冻结区域和body区域
+                let isInFrozenColAndBody = false
+                // 需要减去scrollTop，避免滚动时选中区域高度错误
+                if (selected.y + selected.height > frozenRowEndY) {
+                    selected.height -= scrollTop
+                    isInFrozenColAndBody = true
+                }
+                if(isInFrozenColAndBody && selected.y + selected.height <= frozenRowEndY) {
+                    selected.height = frozenRowEndY - selected.y
                 }
                 // 选中区域超出上侧冻结区域需要隐藏 做截取操作
-            } else if (selected.y < frozenRowY) {
+            } else if (selected.y < frozenRowEndY && !isInFrozenOnBody) {
                 selected.top = false
                 let cellBottomY = selected.y + selected.height
-                if (selected.y - scrollTop < frozenRowY && cellBottomY >= frozenRowY) {
-                    let topMore = frozenRowY - selected.y
+                if (selected.y - scrollTop < frozenRowEndY && cellBottomY >= frozenRowEndY) {
+                    let topMore = frozenRowEndY - selected.y
                     let newY = selected.y + topMore
                     selected.y = newY
                     selected.height -= topMore
-                } else if (cellBottomY < frozenRowY) {
+                } else if (cellBottomY < frozenRowEndY) {
                     selected.bottom = false
                 }
             }
@@ -278,23 +284,29 @@ export default class Point extends Base {
                     selected.width += cell.width
                 }
             }
-            // 选中区域跨冻结和body，需要减去scrollLeft，避免滚动时选中区域宽度错误
+            // 选中区域是否在冻结内
             if (isFrozenCol) {
-                selected.width -= scrollLeft
-                if (selected.width <= this.selectedCell.width) {
-                    selected.width = this.selectedCell.width
+                // 标记 是否同时跨冻结区域和body区域
+                let isInFrozenColAndBody = false
+                // 需要减去scrollLeft，避免滚动时选中区域宽度错误 
+                if (selected.x + selected.width > frozenColEndX) {
+                    selected.width -= scrollLeft
+                    isInFrozenColAndBody = true
+                }
+                if(isInFrozenColAndBody && selected.x + selected.width <= frozenColEndX) {
+                    selected.width = frozenColEndX - selected.x
                 }
                 // 选中区域超出左侧冻结区域需要隐藏 做截取操作
 				// 同时保证不是body左上角冻结区域,否则选中区域被覆盖
-            } else if (selected.x < frozenColX && !isInFrozenOnBody) {
+            } else if (selected.x < frozenColEndX && !isInFrozenOnBody) {
                 selected.left = false
                 let cellRightX = selected.x + selected.width
-                if (selected.x - scrollLeft < frozenColX && cellRightX >= frozenColX) {
-                    let leftMore = frozenColX - selected.x
+                if (selected.x - scrollLeft < frozenColEndX && cellRightX >= frozenColEndX) {
+                    let leftMore = frozenColEndX - selected.x
                     let newX = selected.x + leftMore
                     selected.x = newX
                     selected.width -= leftMore
-                } else if (cellRightX < frozenColX) {
+                } else if (cellRightX < frozenColEndX) {
                     selected.right = false
                 }
             }
@@ -317,12 +329,12 @@ export default class Point extends Base {
                                 y -= st
                                 let cellBottomY = cell.y + cell.height
                                 // 往上滚动，当前选中的单元格超过冻结区域时不需要绘制
-                                if (cell.y + hei - st <= frozenRowY) {
+                                if (cell.y + hei - st <= frozenRowEndY) {
                                     continue;
                                     // 往上滚动，卡在冻结区域和body各一半时需要重新计算选中的单元格高度和当前单元格y坐标
-                                } else if (cell.y - st < frozenRowY && cellBottomY - st > frozenRowY) {
-                                    y = frozenRowY
-                                    hei = cellBottomY - st - frozenRowY
+                                } else if (cell.y - st < frozenRowEndY && cellBottomY - st > frozenRowEndY) {
+                                    y = frozenRowEndY
+                                    hei = cellBottomY - st - frozenRowEndY
                                 }
                             }
                             if (getCellInFrozenByIndex(i, j, this) === 'col') {
@@ -331,12 +343,12 @@ export default class Point extends Base {
                                 x -= sl
                                 let cellRightX = cell.x + cell.width
                                 // 往左滚动，当前选中的单元格超过冻结区域时不需要绘制
-                                if (cell.x + wid - sl <= frozenColX) {
+                                if (cell.x + wid - sl <= frozenColEndX) {
                                     continue;
                                     // 往左滚动，卡在冻结区域和body各一半时需要重新计算选中的单元格宽度和当前单元格x坐标
-                                } else if (cell.x - sl < frozenColX && cellRightX - sl > frozenColX) {
-                                    x = frozenColX
-                                    wid = cellRightX - sl - frozenColX
+                                } else if (cell.x - sl < frozenColEndX && cellRightX - sl > frozenColEndX) {
+                                    x = frozenColEndX
+                                    wid = cellRightX - sl - frozenColEndX
                                 }
                             }
                             this.paintCellBgColor(

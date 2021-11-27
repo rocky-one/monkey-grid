@@ -13,7 +13,7 @@ for(let i = 0;i<rowLen;i++){
 	}
 	data.push(row)
 }
-data[0][0].colspan = 2
+// data[0][0].colspan = 2
 data[1][1].rowspan = 12
 data[5][3].rowspan = 1
 data[5][3].colspan = 4
