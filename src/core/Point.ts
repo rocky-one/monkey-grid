@@ -218,8 +218,8 @@ export default class Point extends Base {
 		if (!this.selectedCell) return
         const scrollLeft = this.scrollBar.getHorizontal().scrollLeft
         const scrollTop = this.scrollBar.getVertical().scrollTop
-        const frozenColEndX = this.frozenInfo.col.endX
-        const frozenRowEndY = this.frozenInfo.row.endY
+        const frozenColEndX = this.frozenInfo.col.endX || this.xOffset
+        const frozenRowEndY = this.frozenInfo.row.endY || this.yOffset
 		const isInFrozenOnBody = inFrozenOnBody(this, this.selectedCell)
         if (this.selectedRange.length) {
             const selected: any = {

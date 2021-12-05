@@ -68,6 +68,7 @@ class Tabs {
 	}
 	private onClickTab = (e) => {
 		const index = Number(e.target.getAttribute('data-index'))
+		if (index === this.selectedIndex) return
 		this.options.onClickTab(index)
 		this.selectedIndex = index
 		this.updateTabsClass()
