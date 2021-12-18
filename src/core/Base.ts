@@ -193,7 +193,6 @@ class Base {
         this.calcScrollWidthHeight()
     }
     public setMergeCells = (row: number, col: number, rowCount: number, colCount: number) => {
-        // this.mergeCells[`${row}${col}`] = [rowCount, colCount]
         if (this.sheetData[row][col].empty) {
             this.sheetData[row][col] = {}
         }
@@ -586,13 +585,9 @@ class Base {
             let lastSelectedRange = [...selectedRange].toString()
             for (let i = selectedRange[0]; i <= selectedRange[2]; i++) {
                 for (let j = selectedRange[1]; j <= selectedRange[3]; j++) {
-                    // const cell = this.getCellInfo(i, j)
                     const pointer = this.gePointer(i, j) || [i, j]
-                    // const mergeCellEnd = mergeCells[`${pointer[0]}${pointer[1]}`]
                     const mergeCellEnd = this.sheetData[pointer[0]][pointer[1]].merge
                     if (mergeCellEnd) {
-                        // let mergeStartRow = cell.pointer ? cell.pointer[0] : i
-                        // let mergeStartCol = cell.pointer ? cell.pointer[1] : j
                         let mergeStartRow = pointer[0]
                         let mergeStartCol = pointer[1]
                         let mergeEndRow = mergeStartRow + mergeCellEnd[0] - 1

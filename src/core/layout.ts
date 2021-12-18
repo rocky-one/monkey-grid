@@ -11,6 +11,7 @@ export function layout(container: HTMLElement, width: number, height: number){
     const canvas = domCore.createCanvas({width, height: height - FOOTER_HEIGHT})
     containerBox.appendChild(canvas)
     containerBox.appendChild(footerBox)
+    container.innerHTML = ''
     container.appendChild(containerBox)
 
     return {
