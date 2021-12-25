@@ -40,7 +40,7 @@ class Base {
         this.yOffset = this.options.headerOrder ? HEADER_ORDER_HEIGHT : 0
         // 计算可视区域宽高
         this.clientWidth = this.options.width - RIGHT_SCROLL_WIDTH - this.xOffset
-        this.clientHeight = this.options.height - FOOTER_HEIGHT - this.yOffset - 2
+        this.clientHeight = this.options.height - FOOTER_HEIGHT - this.yOffset - 4
         this.setSheetName(this.options.name)
         this.setRowColCount(this.rowCount, this.colCount)
         this.calcClientWidthHeight()

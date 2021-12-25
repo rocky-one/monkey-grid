@@ -18,7 +18,7 @@ export function createVerticalScroll(vertical: Vertical, ele?: HTMLElement) {
     })
     setDomCss(vSlider, {
         position: 'absolute',
-        right: "1px",
+        right: "2px",
         top: 0,
         width: '8px',
         height: `${vertical.sliderHeight}px`,

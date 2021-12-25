@@ -8,7 +8,7 @@ export function layout(container: HTMLElement, width: number, height: number){
         class: 'mg-footer',
         style: `height:${FOOTER_HEIGHT}px`,
     })
-    const canvas = domCore.createCanvas({width, height: height - FOOTER_HEIGHT})
+    const canvas = domCore.createCanvas({width: width - 2, height: height - FOOTER_HEIGHT - 2})
     containerBox.appendChild(canvas)
     containerBox.appendChild(footerBox)
     container.innerHTML = ''

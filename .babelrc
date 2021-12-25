@@ -1,12 +1,11 @@
 {
   "presets": [
-    "env", "es2015"
+    "env"
   ],
   "plugins": [
     ["@babel/plugin-proposal-decorators", {
       "legacy": true
     }],
-    "@babel/env",
     "@babel/plugin-transform-runtime",
     "react-hot-loader/babel",
     "transform-react-jsx", 
