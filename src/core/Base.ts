@@ -665,8 +665,9 @@ class Base {
             this.setKeyboardInfo({
                 row: row
             })
-            if (this.selectedCell.y - this.frozenInfo.row.endY < this.scrollBar.getVertical().scrollTop) {
-                this.options.getScroll().verticalScrollTo(this.selectedCell.y - this.frozenInfo.row.endY)
+            console.log(4)
+            if (this.selectedCell.y - this.frozenInfo.row.endY - this.yOffset < this.scrollBar.getVertical().scrollTop) {
+                this.options.getScroll().verticalScrollTo(this.selectedCell.y - this.selectedCell.height - this.frozenInfo.row.endY)
             } else {
                 this.point()
             }
