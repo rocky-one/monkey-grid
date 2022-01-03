@@ -518,19 +518,22 @@ export default class Paint extends Base {
             let fontX = x !== undefined ? x + 4 : cell.x - scrollLeft + 4
             let fontY = y !== undefined ? y + (cell.height / 2) + (this.font / 2) : cell.y - scrollTop + (cell.height / 2) + (this.font / 2)
             // 字体
+            let font = `${this.font}px ${FONT_FAMILY}`
             canvasContext.fillStyle = cell.style && cell.style.color || '#000'
 			if (cell.style && cell.style.fontSize) {
-				canvasContext.font = `
+				font = `
 					${cell.style.fontStyle ? cell.style.fontStyle : 'normal'} ${cell.style.fontVariant ? cell.style.fontVariant : 'normal'} ${cell.style.fontWeight ? cell.style.fontWeight : 'normal'} ${pxToNum(cell.style.fontSize)}px ${cell.style.fontFamily ? cell.style.fontFamily : FONT_FAMILY}
 				`
 			}
 			if (cell.type && cell.format && this.formatterInstance[cell.type]) {
 				value = this.formatterInstance[cell.type](value, cell.format)
 			}
-            canvasContext.fillText(value, fontX, fontY)
-			if (cell.style && cell.style.fontSize) {
-				canvasContext.font = `${this.font}px ${FONT_FAMILY}`
-			}
+            this.options.canvas.paintText({
+                x: fontX,
+                y: fontY,
+                text: value,
+                font
+            })
         }
     }
 	// 绘制背景颜色 context: CanvasRenderingContext2D

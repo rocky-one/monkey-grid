@@ -21,6 +21,13 @@ interface PaintRect {
     height: number;
     fillStyle?: string;
 }
+
+interface PaintText {
+    x: number;
+    y: number;
+    text: string;
+    font: string;
+}
 class Canvas {
     constructor(options: CanvasOptions) {
         this.width = options.width
@@ -61,6 +68,10 @@ class Canvas {
     public paintRect = (attrs: PaintRect) => {
         this.canvasContext.fillStyle = attrs.fillStyle || '#FFFFFF'
         this.canvasContext.fillRect(attrs.x, attrs.y, attrs.width, attrs.height)
+    }
+    public paintText = (attrs: PaintText) => {
+        this.canvasContext.font = attrs.font
+        this.canvasContext.fillText(attrs.text, attrs.x, attrs.y)
     }
     public clearCanvas = () => {
         this.canvasContext.clearRect(0, 0, this.canvas.width, this.canvas.height);
