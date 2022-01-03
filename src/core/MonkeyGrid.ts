@@ -5,11 +5,13 @@ import { sheetParams } from '../interface/SheetInterface'
 import CreateScroll from '../scrollbar/CreateScroll'
 import Sheet from './Sheet'
 import Tabs from './Tabs'
+import Canvas from './Canvas'
 import { mouseDown, mouseMove, mouseUp, removeMouseDown, removeMouseMove, removeMouseUp } from '../event/mouseEvent'
 import { getPixelRatio, getObjectAttrDefault, findCellByXY, inFrozenRowByXY, inFrozenColByXY, throllte } from '../utils/helper'
 import { getColNumByPageX, getRowNumByPageY, findTopOrderCellByXY, findLeftOrderCellByXY, getCellWidthHeight, getDefaultSheetName } from '../utils/sheetUtils'
 import watch from '../event/watch'
 import keyBoardInit from '../event/keyBoard'
+import { FOOTER_HEIGHT } from './const'
 import '../style/app.less'
 
 /**
@@ -23,12 +25,17 @@ class MonkeyGrid {
         this.width = options.width || options.container.offsetWidth
         this.height = options.height || options.container.offsetHeight
         this.layout = layout(this.optContainer, this.width, this.height)
+        this.canvasInstance = new Canvas({
+            container: this.layout.container,
+            width: this.width - 2,
+            height: this.height - FOOTER_HEIGHT - 2
+        })
         this.init()
         this.createSheetTabs()
         watch(this, 'selectedSheetIndex', () => {
             keyBoardInit(this.getSheet())
         })
-        this.canvasRect = this.layout.canvas.getBoundingClientRect();
+        this.canvasRect = this.canvasInstance.getCanvasRect();
 
         this.tabsInterface = new Tabs({
             contariner: this.layout.tabBox,
@@ -58,8 +65,6 @@ class MonkeyGrid {
     width: number
     height: number
     sheets: any[] = []
-    // canvas: HTMLCanvasElement
-    canvasContext: any
     layout: any
     hooks: Object = {}
     ratio: number = 1
@@ -81,6 +86,7 @@ class MonkeyGrid {
     }
     scroll: any = null
     tabsInterface: Tabs
+    canvasInstance: Canvas
     public addSheet = (params: sheetParams) => {
         const name = params.name || getDefaultSheetName(this.sheets)
         const sheet = new Sheet({
@@ -88,8 +94,7 @@ class MonkeyGrid {
             rowCount: params.rowCount,
             colCount: params.colCount,
             layout: this.layout,
-            canvas: this.layout.canvas,
-            canvasContext: this.canvasContext,
+            canvas: this.canvasInstance,
             height: this.height,
             width: this.width,
             order: getObjectAttrDefault(this.options, 'order', true),
@@ -126,7 +131,7 @@ class MonkeyGrid {
             this.sheets[preSlectedSheetIndex].active = false;
             this.scroll.resetScrollBar(sheet.getScrollHeight(), sheet.getScrollWidth(), sheet.scrollBar.vertical, sheet.scrollBar.horizontal)
         } else {
-            sheet.point()
+            sheet.paint()
         } 
         this.tabsInterface.addTab({
             name,
@@ -151,26 +156,11 @@ class MonkeyGrid {
 
     }
     private init = () => {
-        const canvasContext = this.layout.canvas.getContext('2d')
-        this.ratio = getPixelRatio(canvasContext)
-        const oldWidth = this.layout.canvas.width
-        const oldHeight = this.layout.canvas.height
-        this.layout.canvas.width = Math.round(oldWidth * this.ratio)
-        this.layout.canvas.height = Math.round(oldHeight * this.ratio)
-        this.layout.canvas.style.width = oldWidth + 'px'
-        this.layout.canvas.style.height = oldHeight + 'px'
-        canvasContext.scale(this.ratio, this.ratio)
-        // canvasContext.translate(ratio, ratio)
-        this.canvasContext = canvasContext
-
-        // this.moveFn = this.onMouseMove()
-        mouseDown(this.layout.canvas, this.onMouseDown)
-        // mouseMove(this.layout.canvas, this.moveFn)
+        this.canvasInstance.on('mousedown', this.onMouseDown)
         mouseUp(document.body, this.onMouseUp)
 
         this.documentMoveFn = this.onDocumentMove()
         mouseMove(document.body, this.documentMoveFn)
-
     }
     private onMouseDown = (event: MouseEvent) => {
         setTimeout(() => {
@@ -194,8 +184,7 @@ class MonkeyGrid {
                 this.orderInfo.orderRow = this.orderInfo.inLeftOrder
                 return
             }
-            // createDragRowLine
-            this.canvasRect = this.layout.canvas.getBoundingClientRect();
+            this.canvasRect = this.canvasInstance.getCanvasRect()
             const now = new Date().getTime()
             const sheet = this.sheets[this.selectedSheetIndex]
             sheet.isDbClick = false
@@ -226,7 +215,7 @@ class MonkeyGrid {
                     col: cell.range[1]
                 })
             }
-            sheet.point()
+            sheet.paint()
         }, 20)
     }
     private onMouseUp = (event: MouseEvent) => {
@@ -278,7 +267,7 @@ class MonkeyGrid {
                 const cell = findCellByXY(offsetX, offsetY, sheet)
                 if (cell) {
                     sheet.calcCellSelectedRange(cell)
-                    sheet.point()
+                    sheet.paint()
                 }
                 this.calcMoveBound(event)
             }
@@ -323,8 +312,8 @@ class MonkeyGrid {
         // const offsetX = pageX - this.canvasRect.left
         // const offsetY = pageY - this.canvasRect.top
         const sheet = this.sheets[this.selectedSheetIndex]
-        sheet.pointRange.boundEndCol = getColNumByPageX(offsetX, sheet)
-        sheet.pointRange.boundEndRow = getRowNumByPageY(offsetY, sheet)
+        sheet.paintRange.boundEndCol = getColNumByPageX(offsetX, sheet)
+        sheet.paintRange.boundEndRow = getRowNumByPageY(offsetY, sheet)
         const upBound = pageY < this.canvasRect.top
         const downBound = pageY > this.canvasRect.bottom
         const leftBound = pageX < this.canvasRect.left
@@ -337,7 +326,7 @@ class MonkeyGrid {
                 time: 100
             }, () => {
                 sheet.calcCellSelectedRange({
-                    range: [sheet.pointRange.endRowIndex, sheet.pointRange.endColIndex]
+                    range: [sheet.paintRange.endRowIndex, sheet.paintRange.endColIndex]
                 })
             })
             return
@@ -349,7 +338,7 @@ class MonkeyGrid {
                 time: 100
             }, () => {
                 sheet.calcCellSelectedRange({
-                    range: [sheet.pointRange.startRowIndex, sheet.pointRange.endColIndex]
+                    range: [sheet.paintRange.startRowIndex, sheet.paintRange.endColIndex]
                 })
             })
             return
@@ -361,7 +350,7 @@ class MonkeyGrid {
                 time: 100
             }, () => {
                 sheet.calcCellSelectedRange({
-                    range: [sheet.pointRange.endRowIndex, sheet.pointRange.startColIndex]
+                    range: [sheet.paintRange.endRowIndex, sheet.paintRange.startColIndex]
                 })
             })
             return
@@ -373,7 +362,7 @@ class MonkeyGrid {
                 time: 100
             }, () => {
                 sheet.calcCellSelectedRange({
-                    range: [sheet.pointRange.startRowIndex, sheet.pointRange.startColIndex]
+                    range: [sheet.paintRange.startRowIndex, sheet.paintRange.startColIndex]
                 })
             })
             return
@@ -383,14 +372,14 @@ class MonkeyGrid {
         if (downBound) {
             this.scroll.autoScrollIngTop(24, 100, () => {
                 sheet.calcCellSelectedRange({
-                    range: [sheet.pointRange.endRowIndex, sheet.pointRange.boundEndCol]
+                    range: [sheet.paintRange.endRowIndex, sheet.paintRange.boundEndCol]
                 })
             })
         // 向上超出
         } else if (upBound) {
             this.scroll.autoScrollIngTop(-24, 100, () => {
                 sheet.calcCellSelectedRange({
-                    range: [sheet.pointRange.startRowIndex, sheet.pointRange.boundEndCol]
+                    range: [sheet.paintRange.startRowIndex, sheet.paintRange.boundEndCol]
                 })
             })
         } else {
@@ -401,14 +390,14 @@ class MonkeyGrid {
         if (rightBound) {
             this.scroll.autoScrollIngLeft(80, 100, () => {
                 sheet.calcCellSelectedRange({
-                    range: [sheet.pointRange.boundEndRow, sheet.pointRange.endColIndex]
+                    range: [sheet.paintRange.boundEndRow, sheet.paintRange.endColIndex]
                 })
             })
         // 向左超出
         } else if (leftBound) {
             this.scroll.autoScrollIngLeft(-80, 100, () => {
                 sheet.calcCellSelectedRange({
-                    range: [sheet.pointRange.boundEndRow, sheet.pointRange.startColIndex]
+                    range: [sheet.paintRange.boundEndRow, sheet.paintRange.startColIndex]
                 })
             })
         } else {
@@ -437,11 +426,12 @@ class MonkeyGrid {
             this.sheets[preSlectedSheetIndex].active = false;
             this.scroll.resetScrollBar(sheet.getScrollHeight(), sheet.getScrollWidth(), sheet.scrollBar.vertical, sheet.scrollBar.horizontal)
         } else {
-            sheet.point()
+            sheet.paint()
         } 
     }
     public destroy = () => {
-        removeMouseDown(this.layout.canvas, this.onMouseDown)
+        // removeMouseDown(this.layout.canvas, this.onMouseDown)
+        this.canvasInstance.off('mousedown')
         removeMouseMove(document.body, this.documentMoveFn)
         removeMouseUp(document.body, this.onMouseUp)
         this.sheets.forEach(s => s.destroy())

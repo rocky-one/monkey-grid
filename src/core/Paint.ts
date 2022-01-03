@@ -1,14 +1,14 @@
-import { SheetOptions, PointRange } from '../interface/SheetInterface'
+import { SheetOptions, PaintRange } from '../interface/SheetInterface'
 import { calcStartRowIndex, calcEndRowIndex, calcStartColIndex, calcEndColIndex, getCellInFrozenByIndex, pxToNum } from '../utils/helper'
 import { LEFT_ORDER_WIDTH, HEADER_ORDER_HEIGHT, FONT_FAMILY, BORDER_COLOR } from './const'
 import { numToABC, inFrozenOnBody } from '../utils/sheetUtils'
 import Base from './Base'
 
-export default class Point extends Base {
+export default class Paint extends Base {
 	constructor(options: SheetOptions) {
         super(options)
 	}
-	pointRange: PointRange = {
+	paintRange: PaintRange = {
 		startRowIndex: 0,
 		endRowIndex: 0,
 		startColIndex: 0,
@@ -18,84 +18,77 @@ export default class Point extends Base {
 		boundEndCol: 0,
 		boundEndRow: 0
 	}
-    public clearPoint = () => {
-        const canvasContext = this.options.canvasContext
-        canvasContext.clearRect(0, 0, this.options.canvas.width, this.options.canvas.height);
-    }
 	/**
 	* 绘制整个sheet画布
 	*/
-	public point = () => {
+	public paint = () => {
         if (!this.active) return
 		const sheetData = this.sheetData
-		const canvasContext = this.options.canvasContext
-        // canvasContext.height = canvasContext.height
-        canvasContext.clearRect(0, 0, this.options.canvas.width, this.options.canvas.height);
+		const canvasContext = this.options.canvas.canvasContext
+        this.options.canvas.clearCanvas()
 		canvasContext.lineWidth = 1
 		let startRowIndex = calcStartRowIndex(this)
 		let endRowIndex = calcEndRowIndex(startRowIndex, this.clientHeight, sheetData, this.rowDataMap)
 		let startColIndex = calcStartColIndex(this)
 		let endColIndex = calcEndColIndex(startColIndex, this.clientWidth, sheetData, this.colDataMap)
 		canvasContext.font = `${this.font}px ${FONT_FAMILY}`
-		// startRowIndex = startRowIndex + this.frozenRowCount
 		endRowIndex = endRowIndex + this.frozenRowCount
-		// startColIndex = startColIndex + this.frozenColCount
 		endColIndex = endColIndex + this.frozenColCount
 		if (startRowIndex < 0) startRowIndex = 0
 		if (endRowIndex >= this.getRowCount() - 1) endRowIndex = this.getRowCount() - 1
 		if (startColIndex < 0) startColIndex = 0
 		if (endColIndex >= this.getColCount()) endColIndex = this.getColCount() - 1
-		this.pointRange.startRowIndex = startRowIndex
-		this.pointRange.endRowIndex = endRowIndex
-		this.pointRange.startColIndex = startColIndex
-		this.pointRange.endColIndex = endColIndex
-		const pointedMap = {}
+		this.paintRange.startRowIndex = startRowIndex
+		this.paintRange.endRowIndex = endRowIndex
+		this.paintRange.startColIndex = startColIndex
+		this.paintRange.endColIndex = endColIndex
+		const paintedMap = {}
 		// 绘制table部分
-		this.pointBody(startRowIndex, endRowIndex, startColIndex, endColIndex, pointedMap)
+		this.paintBody(startRowIndex, endRowIndex, startColIndex, endColIndex, paintedMap)
 		// 冻结列头
-		this.pointFrozenCol(startRowIndex, endRowIndex, pointedMap)
+		this.paintFrozenCol(startRowIndex, endRowIndex, paintedMap)
 		// 冻结行头
-		this.pointFrozenRow(startColIndex, endColIndex, pointedMap)
+		this.paintFrozenRow(startColIndex, endColIndex, paintedMap)
 
 		// 头部列标A，B，C....
-		this.pointTopOrder(startColIndex, endColIndex)
+		this.paintTopOrder(startColIndex, endColIndex)
 		// 头部选择 背景下划线效果
-		this.pointCellTopBorder()
+		this.paintCellTopBorder()
 		
 		// 绘制左侧序号 1,2,3...
-		this.pointLeftOrder(startRowIndex, endRowIndex)
+		this.paintLeftOrder(startRowIndex, endRowIndex)
 		// 左侧选择 背景下划线效果
-		this.pointCellLeftBorder()
+		this.paintCellLeftBorder()
 
         // 左上角 冻结头部列标 A，B,
-		this.pointTopOrder(0, this.frozenColCount - 1, true)
+		this.paintTopOrder(0, this.frozenColCount - 1, true)
 
 		// 绘制左侧序号 冻结序号情况
-		this.pointLeftOrder(0, this.frozenRowCount - 1, true)
+		this.paintLeftOrder(0, this.frozenRowCount - 1, true)
 		
 		// 如果有冻结行列，绘制body区域左上角冻结区域
-		this.pointLeftTopByFrozenOnBody()
+		this.paintLeftTopByFrozenOnBody()
 
         // 头部选择 冻结区域 背景下划线效果
-        this.pointCellTopBorderFrozen()
+        this.paintCellTopBorderFrozen()
 
 		// 如果有行列标，绘制左上角空白区域
-		this.pointLeftTopByFrozen()
+		this.paintLeftTopByFrozen()
 		// 绘制选中效果
-		this.pointSelectedRange()
+		this.paintSelectedRange()
 
 		if (this.textareaInstance.isShow) {
 			this.textareaInstance.updatePosition();
 		}
 	}
-	private pointBody = (
+	private paintBody = (
 		startRowIndex: number,
 		endRowIndex: number,
 		startColIndex: number,
 		endColIndex: number,
-		pointedMap: any
+		paintedMap: any
 	) => {
-		const canvasContext = this.options.canvasContext
+		const canvasContext = this.options.canvas.canvasContext
 		canvasContext.beginPath()
 		// 绘制table部分
 		for (let i = startRowIndex; i <= endRowIndex; i++) {
@@ -103,30 +96,30 @@ export default class Point extends Base {
 				let cell = this.getCellInfo(i, j, true)
 				if (!cell) continue
 				const originPointId = cell.originPointId
-				if (originPointId && pointedMap[originPointId]) {
+				if (originPointId && paintedMap[originPointId]) {
 					continue
 				}
 				if (originPointId) {
-					pointedMap[originPointId] = true
+					paintedMap[originPointId] = true
 				}
-				this.pointCell(cell, undefined, undefined, i, j)
+				this.paintCell(cell, undefined, undefined, i, j)
 			}
 		}
 		canvasContext.strokeStyle = "#ccc"
 		canvasContext.closePath()
 		canvasContext.stroke()
 	}
-	private pointLeftOrder = (startRowIndex: number, endRowIndex: number, frozenRow?: boolean) => {
+	private paintLeftOrder = (startRowIndex: number, endRowIndex: number, frozenRow?: boolean) => {
 		const hasOrder = this.options.order
 		if (!hasOrder) return
 		const hasSelectedBg = this.selectedRange.length
 		const vertical = this.scrollBar.getVertical()
-		const canvasContext = this.options.canvasContext
+		const canvasContext = this.options.canvas.canvasContext
 		canvasContext.beginPath()
 		for (let i = startRowIndex; i <= endRowIndex; i++) {
 			const cell = this.getCellInfo(i, 0)
 			let y = frozenRow ? cell.y : cell.y - vertical.scrollTop
-			this.pointCell({
+			this.paintCell({
 				color: '#000',
 				value: i + 1,
 				width: LEFT_ORDER_WIDTH,
@@ -140,17 +133,17 @@ export default class Point extends Base {
 		canvasContext.closePath()
 		canvasContext.stroke()
 	}
-	private pointTopOrder = (startColIndex, endColIndex, frozen?: boolean) => {
+	private paintTopOrder = (startColIndex, endColIndex, frozen?: boolean) => {
 		const headerOrder = this.options.headerOrder
 		if (!headerOrder) return
 		const hasSelectedBg = this.selectedRange.length
 		const scrollLeft = this.scrollBar.getHorizontal().scrollLeft
-		const canvasContext = this.options.canvasContext
+		const canvasContext = this.options.canvas.canvasContext
 		canvasContext.beginPath()
 		for (let j = startColIndex; j <= endColIndex; j++) {
 			const cell = this.getCellInfo(0, j)
 			let x = frozen ? cell.x : cell.x - scrollLeft
-			this.pointCell({
+			this.paintCell({
 				color: '#000',
 				value: numToABC(j),
 				width: cell.width,
@@ -168,13 +161,13 @@ export default class Point extends Base {
      * 绘制body区域左上角冻结的空白区域
      * @param
      */
-	private pointLeftTopByFrozenOnBody = () => {
+	private paintLeftTopByFrozenOnBody = () => {
         const frozenRowCount = this.frozenRowCount
         const frozenColCount = this.frozenColCount
         if (!frozenRowCount || !frozenColCount) {
             return
         }
-        const canvasContext = this.options.canvasContext
+        const canvasContext = this.options.canvas.canvasContext
         canvasContext.beginPath()
         for (let i = 0; i < frozenRowCount; i++) {
             for (let j = 0; j < frozenColCount; j++) {
@@ -184,7 +177,7 @@ export default class Point extends Base {
 				}
 				cell.width -= 1
 				cell.height -= 1
-                this.pointCell(cell, cell.x + 1, cell.y + 1)
+                this.paintCell(cell, cell.x + 1, cell.y + 1)
             }
         }
         canvasContext.strokeStyle = "#ccc"
@@ -194,9 +187,9 @@ export default class Point extends Base {
     /**
      * 如果有行列标，绘制左上角空白区域
      */
-    private pointLeftTopByFrozen = () => {
+    private paintLeftTopByFrozen = () => {
         if (this.options.order && this.options.headerOrder) {
-            const canvasContext = this.options.canvasContext
+            const canvasContext = this.options.canvas.canvasContext
             canvasContext.beginPath()
             const cell: any = {
                 x: 0,
@@ -208,13 +201,13 @@ export default class Point extends Base {
 				},
                 value: ''
             }
-            this.pointCell(cell, cell.x, cell.y)
+            this.paintCell(cell, cell.x, cell.y)
             canvasContext.strokeStyle = "#ccc"
             canvasContext.closePath()
             canvasContext.stroke()
         }
     }
-    private pointSelectedRange = () => {
+    private paintSelectedRange = () => {
 		if (!this.selectedCell) return
         const scrollLeft = this.scrollBar.getHorizontal().scrollLeft
         const scrollTop = this.scrollBar.getVertical().scrollTop
@@ -310,7 +303,7 @@ export default class Point extends Base {
                     selected.right = false
                 }
             }
-            const canvasContext = this.options.canvasContext
+            const canvasContext = this.options.canvas.canvasContext
 
             for (let i = this.selectedRange[0]; i <= this.selectedRange[2]; i++) {
                 for (let j = this.selectedRange[1]; j <= this.selectedRange[3]; j++) {
@@ -374,25 +367,44 @@ export default class Point extends Base {
 
             // 选中区域边框超出上方冻结区域时 不需要绘制
             if (selected.top !== false) {
-                canvasContext.moveTo(selected.x - 1, selected.y)
-                canvasContext.lineTo(selected.x + selected.width + 2, selected.y)
+                this.options.canvas.paintLine({
+                    x: selected.x - 1,
+                    y: selected.y,
+                    x2: selected.x + selected.width + 2,
+                    y2: selected.y
+                })
             }
 
-            canvasContext.moveTo(selected.x - 1, selected.y + selected.height + 1)
-            canvasContext.lineTo(selected.x + selected.width - 3, selected.y + selected.height + 1)
+            this.options.canvas.paintLine({
+                x: selected.x - 1,
+                y: selected.y + selected.height + 1,
+                x2: selected.x + selected.width - 3,
+                y2: selected.y + selected.height + 1
+            })
 
             if (selected.left !== false) {
-                canvasContext.moveTo(selected.x, selected.y)
-                canvasContext.lineTo(selected.x, selected.y + selected.height)
+                this.options.canvas.paintLine({
+                    x: selected.x,
+                    y: selected.y,
+                    x2: selected.x,
+                    y2: selected.y + selected.height
+                })
             }
-
-            canvasContext.moveTo(selected.x + selected.width + 1, selected.y)
-            canvasContext.lineTo(selected.x + selected.width + 1, selected.y + selected.height - 3)
+            this.options.canvas.paintLine({
+                x: selected.x + selected.width + 1,
+                y: selected.y,
+                x2: selected.x + selected.width + 1,
+                y2: selected.y + selected.height - 3
+            })
             canvasContext.stroke()
 
-            canvasContext.fillStyle = BORDER_COLOR
-            canvasContext.fillRect(selected.x + selected.width - 2, selected.y + selected.height - 2, 5, 5)
-
+            this.options.canvas.paintRect({
+                x: selected.x + selected.width - 2,
+                y: selected.y + selected.height - 2,
+                width: 5,
+                height: 5,
+                fillStyle: BORDER_COLOR
+            })
             canvasContext.closePath()
             canvasContext.lineWidth = 1
         }
@@ -400,10 +412,10 @@ export default class Point extends Base {
 	/**
      * 绘制冻结行
      */
-	private pointFrozenRow = (startColIndex, endColIndex, pointedMap) => {
+	private paintFrozenRow = (startColIndex, endColIndex, paintedMap) => {
         const isFrozenRowCount = this.frozenRowCount > 0
         if (!isFrozenRowCount) return
-        const canvasContext = this.options.canvasContext
+        const canvasContext = this.options.canvas.canvasContext
         // 记住冻结行到达的最大Y坐标，选中区域时用来判断当前鼠标的坐标是否在冻结区域
         let maxY = 0;
         canvasContext.beginPath()
@@ -414,15 +426,14 @@ export default class Point extends Base {
                 // 当前单元格已经被绘制过就跳出
 				if (!cell) continue
 				const originPointId = cell.originPointId
-				if (originPointId && pointedMap[originPointId]) {
+				if (originPointId && paintedMap[originPointId]) {
 					continue
 				}
 				if (originPointId) {
-					pointedMap[originPointId] = true
+					paintedMap[originPointId] = true
 				}
 				cell.style = cell.style ? Object.assign({backgroundColor: '#E1FFFF'}, cell.style) : {backgroundColor: '#E1FFFF'}
-                // cell.backgroundColor = cell.backgroundColor || '#E1FFFF'
-                this.pointCell(cell, undefined, cell.y, i, j)
+                this.paintCell(cell, undefined, cell.y, i, j)
                 // 冻结的最后一行，更新maxY
                 if (i === this.frozenRowCount - 1) {
                     if (cell.y + cell.height > maxY) {
@@ -436,12 +447,12 @@ export default class Point extends Base {
         canvasContext.closePath()
         canvasContext.stroke()
     }
-    private pointFrozenCol = (startRowIndex, endRowIndex, pointedMap: any) => {
+    private paintFrozenCol = (startRowIndex, endRowIndex, paintedMap: any) => {
         const isFrozenColCount = this.frozenColCount > 0
         if (!isFrozenColCount) return
         const horizontal = this.scrollBar.getHorizontal()
         const vertical = this.scrollBar.getVertical()
-        const canvasContext = this.options.canvasContext
+        const canvasContext = this.options.canvas.canvasContext
         // 记住冻结列到达的最大X坐标，选中区域时用来判断当前鼠标的坐标是否在冻结区域
         let maxX = 0;
         canvasContext.beginPath()
@@ -452,11 +463,11 @@ export default class Point extends Base {
                 // 当前单元格已经被绘制过就跳出
                 if (!cell) continue
 				const originPointId = cell.originPointId
-				if (originPointId && pointedMap[originPointId]) {
+				if (originPointId && paintedMap[originPointId]) {
 					continue
 				}
 				if (originPointId) {
-					pointedMap[originPointId] = true
+					paintedMap[originPointId] = true
 				}
                 let x = cell.x
                 let y = cell.y - vertical.scrollTop
@@ -464,7 +475,7 @@ export default class Point extends Base {
                     x -= horizontal.scrollLeft
                 }
 				cell.style = cell.style ? Object.assign({backgroundColor: '#E1FFFF'}, cell.style) : {backgroundColor: '#E1FFFF'}
-                this.pointCell(cell, cell.x, y, i, j)
+                this.paintCell(cell, cell.x, y, i, j)
                 // 冻结的最后一行，更新maxY
                 if (j === this.frozenColCount - 1) {
                     if (cell.x + cell.width > maxX) {
@@ -478,19 +489,27 @@ export default class Point extends Base {
         canvasContext.closePath()
         canvasContext.stroke()
     }
-	private pointCell = (cell: any, x: number, y: number, row?: number, col?: number) => {
+	private paintCell = (cell: any, x: number, y: number, row?: number, col?: number) => {
         const scrollLeft = this.scrollBar.getHorizontal().scrollLeft
         const scrollTop = this.scrollBar.getVertical().scrollTop
-        const canvasContext = this.options.canvasContext
+        const canvasContext = this.options.canvas.canvasContext
         const lineX = x !== undefined ? x : cell.x - scrollLeft
         const lineY = y !== undefined ? y : cell.y - scrollTop
         canvasContext.strokeStyle = '#ccc'
 		// 下
-        canvasContext.moveTo(lineX + 0.5, lineY + cell.height + 0.5)
-        canvasContext.lineTo(lineX + cell.width + 0.5, lineY + cell.height + 0.5)
+        this.options.canvas.paintLine({
+            x: lineX + 0.5,
+            y: lineY + cell.height + 0.5,
+            x2: lineX + cell.width + 0.5,
+            y2: lineY + cell.height + 0.5
+        })
 		// 左
-        canvasContext.moveTo(lineX + cell.width + 0.5, lineY + 0.5)
-        canvasContext.lineTo(lineX + cell.width + 0.5, lineY + cell.height + 0.5)
+        this.options.canvas.paintLine({
+            x: lineX + cell.width + 0.5,
+            y: lineY + 0.5,
+            x2: lineX + cell.width + 0.5,
+            y2: lineY + cell.height + 0.5
+        })
 
         // 单元格背景颜色
         this.paintCellBgColor(lineX, lineY, cell.width, cell.height, cell.style ? cell.style.backgroundColor || '#FFFFFF' : '#FFFFFF')
@@ -516,14 +535,18 @@ export default class Point extends Base {
     }
 	// 绘制背景颜色 context: CanvasRenderingContext2D
     private paintCellBgColor = (x: number, y: number, width: number, height: number, fillStyle: string, customStyle?: string) => {
-        const canvasContext = this.options.canvasContext
-        canvasContext.fillStyle = customStyle || fillStyle
-        canvasContext.fillRect(x, y, width, height)
+        this.options.canvas.paintRect({
+            x,
+            y,
+            width,
+            height,
+            fillStyle: customStyle || fillStyle
+        })
     }
 	// 绘制 top 选中border
-	private pointCellTopBorder = () => {
+	private paintCellTopBorder = () => {
         const scrollLeft = this.scrollBar.getHorizontal().scrollLeft
-		const canvasContext = this.options.canvasContext
+		const canvasContext = this.options.canvas.canvasContext
 		const selectedRange = this.selectedRange
         canvasContext.lineWidth = 2
         canvasContext.beginPath()
@@ -531,8 +554,12 @@ export default class Point extends Base {
 		for (let j = selectedRange[1]; j <= selectedRange[3]; j++) {
 			let x = this.colDataMap[j].x - scrollLeft
 			let y = this.yOffset
-			canvasContext.moveTo(x - 0.5, this.yOffset + 0.5)
-			canvasContext.lineTo(x + this.colDataMap[j].width + 0.5, y+ 0.5)
+            this.options.canvas.paintLine({
+                x: x - 0.5,
+                y: this.yOffset + 0.5,
+                x2: x + this.colDataMap[j].width + 0.5,
+                y2: y+ 0.5
+            })
 		}
         canvasContext.strokeStyle = BORDER_COLOR
         canvasContext.closePath()
@@ -540,9 +567,9 @@ export default class Point extends Base {
         canvasContext.lineWidth = 1
 	}
     // 绘制 top 冻结选中border
-    private pointCellTopBorderFrozen = () => {
+    private paintCellTopBorderFrozen = () => {
         if (this.frozenColCount <= 0) return
-		const canvasContext = this.options.canvasContext
+		const canvasContext = this.options.canvas.canvasContext
 		const selectedRange = this.selectedRange
         for (let j = selectedRange[1]; j <= selectedRange[3]; j++) {
             if (j < this.frozenColCount) {
@@ -550,8 +577,12 @@ export default class Point extends Base {
                 canvasContext.beginPath()
                 let x = this.colDataMap[j].x
                 let y = this.yOffset
-                canvasContext.moveTo(x - 0.5, this.yOffset + 0.5)
-                canvasContext.lineTo(x + this.colDataMap[j].width + 0.5, y+ 0.5)
+                this.options.canvas.paintLine({
+                    x: x - 0.5,
+                    y: this.yOffset + 0.5,
+                    x2: x + this.colDataMap[j].width + 0.5,
+                    y2: y+ 0.5
+                })
                 canvasContext.strokeStyle = BORDER_COLOR
                 canvasContext.closePath()
                 canvasContext.stroke()
@@ -560,9 +591,9 @@ export default class Point extends Base {
         canvasContext.lineWidth = 1
     }
 	// 绘制 left 选中border
-	private pointCellLeftBorder = () => {
+	private paintCellLeftBorder = () => {
         const scrollTop = this.scrollBar.getVertical().scrollTop
-		const canvasContext = this.options.canvasContext
+		const canvasContext = this.options.canvas.canvasContext
 		const selectedRange = this.selectedRange
         canvasContext.lineWidth = 2
         canvasContext.beginPath()
@@ -570,8 +601,12 @@ export default class Point extends Base {
 		for (let i = selectedRange[0]; i <= selectedRange[2]; i++) {
             let y = this.rowDataMap[i].y - scrollTop
 			let x = this.xOffset
-            canvasContext.moveTo(x + 0.5, y + 0.5)
-            canvasContext.lineTo(x + 0.5, y + this.rowDataMap[i].height + 0.5)
+            this.options.canvas.paintLine({
+                x: x + 0.5,
+                y: y + 0.5,
+                x2: x + 0.5,
+                y2: y + this.rowDataMap[i].height + 0.5
+            })
 		}
         canvasContext.strokeStyle = BORDER_COLOR
         canvasContext.closePath()

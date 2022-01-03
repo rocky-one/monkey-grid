@@ -121,21 +121,21 @@ class CreateTextarea {
         data.forEach((vals: any[], i: number) => {
             vals.forEach((v: any, j: number) => {
                 const oldVal = sheet.sheetData[row + i][j + col].value
-                sheet.setCellValue(row + i, j + col, v, {point: false, record: false})
+                sheet.setCellValue(row + i, j + col, v, {paint: false, record: false})
                 setCellValueData.push({
                     row: row + i,
                     col: j + col,
                     oldValue: oldVal,
                     value: v,
                     extend: {
-                        point: true,
+                        paint: true,
                         record: false
                     }
                 })
             })
         })
         this.setValue(data[0][0])
-        sheet.point()
+        sheet.paint()
         sheet.record.add({
             setCellValue: setCellValueData,
             setSelectedCell: {...sheet.selectedCell},
@@ -148,7 +148,7 @@ class CreateTextarea {
             this.show()
         }
         // const sheet = this.option.sheet
-        // sheet.setCellValue(sheet.selectedCell.range[0], sheet.selectedCell.range[1], event.target.innerText, {point: false})
+        // sheet.setCellValue(sheet.selectedCell.range[0], sheet.selectedCell.range[1], event.target.innerText, {paint: false})
     }
     blur = (event) => {
         const sheet = this.option.sheet

@@ -4,8 +4,7 @@ export interface SheetOptions {
     rowCount: number
     colCount: number
     layout: any
-    canvas: HTMLCanvasElement
-    canvasContext: any
+    canvas: any
     height: number
     width: number
     order?: boolean
@@ -21,7 +20,7 @@ export interface SheetOptions {
     active: boolean
 }
 
-export interface PointRange {
+export interface PaintRange {
     startRowIndex: number
     endRowIndex: number
     startColIndex: number

@@ -404,7 +404,7 @@ export function checkHasValueByRange(row: number, col: number, endRow: number, e
 
 export function getColNumByPageX(offsetX: number, sheet: any) {
     const scrollLeft = sheet.scrollBar.getHorizontal().scrollLeft
-    const startColIndex = sheet.pointRange.startColIndex
+    const startColIndex = sheet.paintRange.startColIndex
     const colDataMap = sheet.colDataMap
     const x = offsetX + scrollLeft
     let width = 0
@@ -418,7 +418,7 @@ export function getColNumByPageX(offsetX: number, sheet: any) {
 
 export function getRowNumByPageY(offsetY: number, sheet: any) {
     const scrollTop = sheet.scrollBar.getVertical().scrollTop
-    const startRowIndex = sheet.pointRange.startRowIndex
+    const startRowIndex = sheet.paintRange.startRowIndex
     const rowDataMap = sheet.rowDataMap
     const y = offsetY + scrollTop
     let height = 0
@@ -435,7 +435,7 @@ export function getRowNumByPageY(offsetY: number, sheet: any) {
  * @desc 根据坐标位置查找当前坐标是否位于topOrder中
  * @param x 
  * @param y 
- * @param pointRange 
+ * @param paintRange 
  */
  export function findTopOrderCellByXY(x: number, y: number, sheet: any) {
     // 是否是topOrder区域
@@ -446,11 +446,11 @@ export function getRowNumByPageY(offsetY: number, sheet: any) {
     }else {
         return -1
     }
-    const {pointRange} = sheet
+    const {paintRange} = sheet
     const scrollLeft = sheet.scrollBar.getHorizontal().scrollLeft
     const scrollTop = sheet.scrollBar.getVertical().scrollTop
     let startColIndex = 0
-    let endColIndex = pointRange.endColIndex
+    let endColIndex = paintRange.endColIndex
     y += scrollTop
     x += scrollLeft
 
@@ -472,11 +472,11 @@ export function findLeftOrderCellByXY (x: number, y: number, sheet: any) {
     } else {
         return -1
     }
-    const {sheetData, pointRange} = sheet
+    const {sheetData, paintRange} = sheet
     const scrollLeft = sheet.scrollBar.getHorizontal().scrollLeft
     const scrollTop = sheet.scrollBar.getVertical().scrollTop
     let startRowIndex = 0
-    let endRowIndex = pointRange.endRowIndex
+    let endRowIndex = paintRange.endRowIndex
     y += scrollTop
     x += scrollLeft
 

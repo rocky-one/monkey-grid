@@ -58,7 +58,7 @@ class Base {
     }
     active: boolean
     name: string
-    point: any
+    paint: any
     tables: any[]
     rowHeight: number = ROW_HEIGHT
     colWidth: number = COL_WIDTH
@@ -70,9 +70,9 @@ class Base {
     colDataMap: any[] = []
     mergeCells: any
     font: number = 12
-    pointStartRow: number = 0
-    pointEndRow: number = 0
-    pointStartCol: number = 0
+    paintStartRow: number = 0
+    paintEndRow: number = 0
+    paintStartCol: number = 0
     scrollBar: ScrollBar
     sheetName: string
     clientHeight: number = 0
@@ -137,12 +137,12 @@ class Base {
         return false
     }
     // 根据行列坐标获取映射单元格宽高等信息
-    public getCellInfo = (row: number, col: number, pointerFlag?: boolean) => {
+    public getCellInfo = (row: number, col: number, painterFlag?: boolean) => {
         const rowDataMap = this.rowDataMap
         const colDataMap = this.colDataMap
         // 获取到指针指向cell
-        const pointer = this.gePointer(row, col) // this.sheetData[row][col].pointer
-        if (pointerFlag && pointer) {
+        const pointer = this.gePointer(row, col)
+        if (painterFlag && pointer) {
             row = pointer[0]
             col = pointer[1]
         }
@@ -155,18 +155,13 @@ class Base {
             range: [row, col, whInfo.endRow, whInfo.endCol]
         }
     }
-    // public getCell = (row: number, col: number) => {
-    //     return {
-    //         ...this.sheetData[row][col],
-    //     }
-    // }
     // 设置单元格样式
     public setCellStyle = (row: number, col: number, style: any) => {
         if (this.sheetData[row][col].empty) {
             this.sheetData[row][col] = {}
         }
         this.sheetData[row][col].style = style
-        this.nextTick(this.point, 'next-setCellStyle')
+        this.nextTick(this.paint, 'next-setCellStyle')
     }
     // 设置单元格类型 number date string dropdown
     public setCellType = (row: number, col: number, type: string) => {
@@ -181,7 +176,7 @@ class Base {
             this.sheetData[row][col] = {}
         }
         this.sheetData[row][col].format = formatCode
-        this.nextTick(this.point, 'next-setCellStyle')
+        this.nextTick(this.paint, 'next-setCellStyle')
     }
     public setSheetName = (name: string) => {
         this.sheetName = name
@@ -240,7 +235,7 @@ class Base {
                 selectedRange[2] - selectedRange[0] + 1,
                 selectedRange[3] - selectedRange[1] + 1
             )
-            this.point()
+            this.paint()
         }
     }
     public removeMergeCells = (row: number, col: number, rowCount: number, colCount: number) => {
@@ -269,7 +264,7 @@ class Base {
                 sheetData[i][j].pointId = null
             }
         }
-        this.point()
+        this.paint()
     }
     public removeMergeCellsByRange = () => {
         const selectedRange = this.selectedRange
@@ -449,13 +444,13 @@ class Base {
         this.updateRowDataMapY(row, addHeight)
         this.calcScrollWidthHeight()
         this.options.getScroll().resetScrollBar(this.getScrollHeight(), this.getScrollWidth(), this.scrollBar.vertical, this.scrollBar.horizontal)
-        this.nextTick(this.point, 'next-updateRow')
+        this.nextTick(this.paint, 'next-updateRow')
     }
     private updateCol = (startCol: number = 0, addWidth?: number) => {
         this.updateColDataMapX(startCol, addWidth)
         this.calcScrollWidthHeight()
         this.options.getScroll().resetScrollBar(this.getScrollHeight(), this.getScrollWidth(), this.scrollBar.vertical, this.scrollBar.horizontal)
-        this.nextTick(this.point, 'next-updateCol')
+        this.nextTick(this.paint, 'next-updateCol')
     }
     private nextTick = (callback: Function, flag: string) => {
         if (!this[flag]) {
@@ -474,7 +469,7 @@ class Base {
         col: number,
         value: any,
         extend: any = {
-            point: true,
+            paint: true,
             record: true
         }
     ) => {
@@ -498,7 +493,7 @@ class Base {
                             col,
                             value: oldVal,
                             extend: {
-                                point: true,
+                                paint: true,
                                 record: false
                             }
                         }],
@@ -511,7 +506,7 @@ class Base {
                             col,
                             value,
                             extend: {
-                                point: true,
+                                paint: true,
                                 record: false
                             }
                         }],
@@ -520,7 +515,7 @@ class Base {
                     }
                 })
             }
-            extend.point && this.nextTick(this.point, 'next-setCellValue')
+            extend.paint && this.nextTick(this.paint, 'next-setCellValue')
         }
     }
     // 计算冻结行高
@@ -564,14 +559,14 @@ class Base {
     public setColCount = (colCount: number) => {
         this.colCount = colCount
     }
-    public setPointStartRow = (row: number) => {
-        this.pointStartRow = row
+    public setPaintStartRow = (row: number) => {
+        this.paintStartRow = row
     }
-    public setPointEndRow = (row: number) => {
-        this.pointEndRow = row
+    public setPaintEndRow = (row: number) => {
+        this.paintEndRow = row
     }
-    public setPoinStartCol = (col: number) => {
-        this.pointStartCol = col
+    public setPainStartCol = (col: number) => {
+        this.paintStartCol = col
     }
     public setScrollBar = (scrollBar: ScrollBar) => {
         this.scrollBar = scrollBar
@@ -585,11 +580,11 @@ class Base {
             let lastSelectedRange = [...selectedRange].toString()
             for (let i = selectedRange[0]; i <= selectedRange[2]; i++) {
                 for (let j = selectedRange[1]; j <= selectedRange[3]; j++) {
-                    const pointer = this.gePointer(i, j) || [i, j]
-                    const mergeCellEnd = this.sheetData[pointer[0]][pointer[1]].merge
+                    const painter = this.gePointer(i, j) || [i, j]
+                    const mergeCellEnd = this.sheetData[painter[0]][painter[1]].merge
                     if (mergeCellEnd) {
-                        let mergeStartRow = pointer[0]
-                        let mergeStartCol = pointer[1]
+                        let mergeStartRow = painter[0]
+                        let mergeStartCol = painter[1]
                         let mergeEndRow = mergeStartRow + mergeCellEnd[0] - 1
                         let mergeEndCol = mergeStartCol + mergeCellEnd[1] - 1
                         if (mergeStartRow < selectedRange[0]) {
@@ -665,11 +660,10 @@ class Base {
             this.setKeyboardInfo({
                 row: row
             })
-            console.log(4)
             if (this.selectedCell.y - this.frozenInfo.row.endY - this.yOffset < this.scrollBar.getVertical().scrollTop) {
                 this.options.getScroll().verticalScrollTo(this.selectedCell.y - this.selectedCell.height - this.frozenInfo.row.endY)
             } else {
-                this.point()
+                this.paint()
             }
         } else if (direction === 'down') {
             let row
@@ -690,7 +684,7 @@ class Base {
             if (this.selectedCell.y + this.selectedCell.height > this.scrollBar.getVertical().scrollTop + this.frozenInfo.row.endY + this.clientHeight) {
                 this.options.getScroll().verticalScrollTo(this.selectedCell.height + this.scrollBar.getVertical().scrollTop)
             } else {
-                this.point()
+                this.paint()
             }
         } else if (direction === 'left') {
             const col = selectedCell.range[1] - 1
@@ -705,7 +699,7 @@ class Base {
             if (this.selectedCell.x - this.frozenInfo.col.endX < this.scrollBar.getHorizontal().scrollLeft) {
                 this.options.getScroll().horizontalScrollTo(this.selectedCell.x - this.frozenInfo.col.endX)
             } else {
-                this.point()
+                this.paint()
             }
 
         } else if (direction === 'right') {
@@ -747,7 +741,7 @@ class Base {
             if (this.selectedCell.x + this.selectedCell.width > this.scrollBar.getHorizontal().scrollLeft + this.frozenInfo.col.endX + this.clientWidth) {
                 this.options.getScroll().horizontalScrollTo(this.selectedCell.width + this.scrollBar.getHorizontal().scrollLeft)
             } else {
-                this.point()
+                this.paint()
             }
         }
     }
@@ -768,20 +762,14 @@ class Base {
     }
     public verticalScrollCb = (vertical) => {
         window.requestAnimationFrame(() => {
-            const canvasContext = this.options.canvasContext
-            this.options.canvas.width = this.options.canvas.width
-            canvasContext.scale(this.options.ratio, this.options.ratio)
-            // canvasContext.clearRect(0,0,this.options.canvas.width,this.options.canvas.height);
-            this.point()
+            this.options.canvas.scale()
+            this.paint()
         })
     }
     public horizontalScrollCb = (horizontal) => {
         window.requestAnimationFrame(() => {
-            const canvasContext = this.options.canvasContext
-            this.options.canvas.width = this.options.canvas.width
-            canvasContext.scale(this.options.ratio, this.options.ratio)
-            // canvasContext.clearRect(0,0,this.options.canvas.width,this.options.canvas.height);
-            this.point()
+            this.options.canvas.scale()
+            this.paint()
         })
     }
     public getRowCount() {

@@ -54,7 +54,7 @@ const sheet = mG.addSheet({
 // sheet.setMergeCells(5, 3, 1, 5)
 // sheet.setMergeCells(7, 3, 3, 3)
 sheet.addTable('table1', 0, 0, data)
-sheet.point()
+sheet.paint()
 
 const addButton = document.getElementById('addButton')
 addButton.addEventListener('click', () => {

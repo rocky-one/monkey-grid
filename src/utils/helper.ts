@@ -237,11 +237,11 @@ export function getCellInFrozenByIndex(row: number, col: number, sheet: any) {
  * @desc 根据坐标位置查找当前坐标内的单元格
  * @param x 
  * @param y 
- * @param pointRange 
+ * @param paintRange 
  * @param data 
  */
-export function findCellByXY(x: number, y: number, sheet: any, isFindPointerOrigin: boolean = true) {
-    const {sheetData, pointRange, frozenRowCount, frozenColCount, colDataMap} = sheet
+export function findCellByXY(x: number, y: number, sheet: any, isFindPainterOrigin: boolean = true) {
+    const {sheetData, paintRange, frozenRowCount, frozenColCount, colDataMap} = sheet
     const scrollLeft = sheet.scrollBar.getHorizontal().scrollLeft
     const scrollTop = sheet.scrollBar.getVertical().scrollTop
     let startRowIndex = 0
@@ -255,8 +255,8 @@ export function findCellByXY(x: number, y: number, sheet: any, isFindPointerOrig
     if (frozenFlag !== 'col') {
         x += scrollLeft
     }
-    endColIndex = pointRange.endColIndex
-    endRowIndex = pointRange.endRowIndex
+    endColIndex = paintRange.endColIndex
+    endRowIndex = paintRange.endRowIndex
     for (let i = startRowIndex; i <= endRowIndex; i++) {
         const row = sheetData[i]
         if (!row) {
@@ -269,7 +269,7 @@ export function findCellByXY(x: number, y: number, sheet: any, isFindPointerOrig
                 const cellWH = getCellWidthHeight(i, j, sheet)
                 if (x >= cellWH.x && x <= cellWH.x + cellWH.width) {
                     let cell = sheet.getCellInfo(i, j)
-                    if (isFindPointerOrigin) {
+                    if (isFindPainterOrigin) {
                         let mergeCell = sheet.sheetData[i][j].merge || [1, 1]
                         let pointer = [i, j]
                         if (sheet.gePointer(i, j)) {
