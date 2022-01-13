@@ -9,7 +9,8 @@ declare module '*.less' {
 }
 
 declare interface Window {
-    clipboardData: any
+    clipboardData: any;
+    __MonkeyGrid__Instance: any
 }
 
 declare interface Document {

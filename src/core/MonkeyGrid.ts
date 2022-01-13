@@ -59,6 +59,7 @@ class MonkeyGrid {
 
             }
         })
+        window.__MonkeyGrid__Instance = this
     }
     options: OptionsInterface
     optContainer: HTMLElement

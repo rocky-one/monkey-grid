@@ -423,7 +423,9 @@ class Base {
     public setSelectedRange = (selectedRange: number[]) => {
         this.selectedRange = selectedRange
     }
-
+    public getSelectedRange = () => {
+        return this.selectedRange
+    }
     private updateRowDataMapY = (startRow: number = 0, addHeight?: number) => {
         const startCell = this.rowDataMap[startRow]
         let startY = startCell.y + (addHeight || startCell.height)
