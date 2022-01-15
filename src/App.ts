@@ -73,5 +73,6 @@ addButton.addEventListener('click', () => {
 
 	// sheet.addRow(sheet.sheetData.length)
 	// sheet.addCol(4)
-
+	sheet.setFrozenRowCount(0)
+	sheet.setFrozenColCount(0)
 })

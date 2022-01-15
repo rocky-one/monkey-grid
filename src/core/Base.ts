@@ -39,12 +39,9 @@ class Base {
         this.xOffset = this.options.order ? LEFT_ORDER_WIDTH : 0
         this.yOffset = this.options.headerOrder ? HEADER_ORDER_HEIGHT : 0
         // 计算可视区域宽高
-        this.clientWidth = this.options.width - RIGHT_SCROLL_WIDTH - this.xOffset
-        this.clientHeight = this.options.height - FOOTER_HEIGHT - this.yOffset - 4
-        this.setSheetName(this.options.name)
-        this.setRowColCount(this.rowCount, this.colCount)
-        this.calcClientWidthHeight()
-        this.initScroll()
+        this.clientWidth = this.originClientWidth = this.options.width - RIGHT_SCROLL_WIDTH - this.xOffset
+        this.clientHeight = this.originClientHeight = this.options.height - FOOTER_HEIGHT - this.yOffset - 4
+        this.init()
         this.textareaInstance = new CreateTextarea({
             container: this.options.layout.container,
             sheet: this
@@ -77,6 +74,8 @@ class Base {
     sheetName: string
     clientHeight: number = 0
     clientWidth: number = 0
+    originClientHeight: number = 0
+    originClientWidth: number = 0
     scrollHeight: number = 0
     scrollWidth: number = 0
     frozenRowCount: number = 0
@@ -106,6 +105,12 @@ class Base {
     keyboardInfo: any = {
         row: -1,
         col: -1
+    }
+    public init = () => {
+        this.setSheetName(this.options.name)
+        this.setRowColCount(this.rowCount, this.colCount)
+        this.calcClientWidthHeight()
+        this.initScroll()
     }
     public addTable = (name: string, row: number, col: number, dataSource: any[]) => {
         const table = new Table({
@@ -541,8 +546,8 @@ class Base {
         return 0
     }
     private calcClientWidthHeight = () => {
-        this.clientWidth = this.clientWidth - this.calcFrozenWidth()
-        this.clientHeight = this.clientHeight - this.calcFrozenHeight()
+        this.clientWidth = this.originClientWidth - this.calcFrozenWidth()
+        this.clientHeight = this.originClientHeight - this.calcFrozenHeight()
     }
     // 计算内容区域的宽高 需要减去偏移量以及冻结窗口
     public calcScrollWidthHeight = () => {
@@ -638,13 +643,29 @@ class Base {
      * 设置冻结行
      */
     public setFrozenRowCount = (count: number) => {
+        if (count > this.rowCount) {
+            count = this.rowCount
+        }
+        if (count < 0) {
+            count = 0;
+        }
         this.frozenRowCount = count
+        this.init()
+        this.nextTick(this.paint, 'next-setFrozen')
     }
     /**
      * 设置冻结列
      */
     public setFrozenColCount = (count: number) => {
+        if (count > this.colCount) {
+            count = this.colCount
+        }
+        if (count < 0) {
+            count = 0;
+        }
         this.frozenColCount = count
+        this.init()
+        this.nextTick(this.paint, 'next-setFrozen')
     }
     public setKeyboardInfo = (info) => {
         this.keyboardInfo = Object.assign(this.keyboardInfo, info)
@@ -748,6 +769,9 @@ class Base {
         }
     }
     private initScroll = () => {
+        if (this.scrollBar) {
+            this.scrollBar.destroy()
+        }
         this.scrollBar = new ScrollBar({
             ele: this.options.layout.container,
             horizontalEle: this.options.layout.footerScrollBox,

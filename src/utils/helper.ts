@@ -294,8 +294,8 @@ export function findCellByXY(x: number, y: number, sheet: any, isFindPainterOrig
     return false;
 }
 
-export const pxToNum = (pxString: string) => {
-    const arr = pxString.split('px')
+export const pxToNum = (pxString: string|number) => {
+    const arr = pxString.toString().split('px')
     if (arr.length) {
         return arr[0]
     }

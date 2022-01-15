@@ -1,6 +1,6 @@
 import { SheetOptions, PaintRange } from '../interface/SheetInterface'
 import { calcStartRowIndex, calcEndRowIndex, calcStartColIndex, calcEndColIndex, getCellInFrozenByIndex, pxToNum } from '../utils/helper'
-import { LEFT_ORDER_WIDTH, HEADER_ORDER_HEIGHT, FONT_FAMILY, BORDER_COLOR } from './const'
+import { LEFT_ORDER_WIDTH, HEADER_ORDER_HEIGHT, FONT_FAMILY, BORDER_COLOR, FONT_SIZE } from './const'
 import { numToABC, inFrozenOnBody } from '../utils/sheetUtils'
 import Base from './Base'
 
@@ -414,6 +414,7 @@ export default class Paint extends Base {
      */
 	private paintFrozenRow = (startColIndex, endColIndex, paintedMap) => {
         const isFrozenRowCount = this.frozenRowCount > 0
+        this.frozenInfo.row.endY = 0
         if (!isFrozenRowCount) return
         const canvasContext = this.options.canvas.canvasContext
         // 记住冻结行到达的最大Y坐标，选中区域时用来判断当前鼠标的坐标是否在冻结区域
@@ -449,6 +450,7 @@ export default class Paint extends Base {
     }
     private paintFrozenCol = (startRowIndex, endRowIndex, paintedMap: any) => {
         const isFrozenColCount = this.frozenColCount > 0
+        this.frozenInfo.col.endX = 0
         if (!isFrozenColCount) return
         const horizontal = this.scrollBar.getHorizontal()
         const vertical = this.scrollBar.getVertical()
@@ -520,9 +522,9 @@ export default class Paint extends Base {
             // 字体
             let font = `${this.font}px ${FONT_FAMILY}`
             canvasContext.fillStyle = cell.style && cell.style.color || '#000'
-			if (cell.style && cell.style.fontSize) {
+			if (cell.style) {
 				font = `
-					${cell.style.fontStyle ? cell.style.fontStyle : 'normal'} ${cell.style.fontVariant ? cell.style.fontVariant : 'normal'} ${cell.style.fontWeight ? cell.style.fontWeight : 'normal'} ${pxToNum(cell.style.fontSize)}px ${cell.style.fontFamily ? cell.style.fontFamily : FONT_FAMILY}
+					${cell.style.fontStyle ? cell.style.fontStyle : 'normal'} ${cell.style.fontVariant ? cell.style.fontVariant : 'normal'} ${cell.style.fontWeight ? cell.style.fontWeight : 'normal'} ${pxToNum(cell.style.fontSize || FONT_SIZE)}px ${cell.style.fontFamily ? cell.style.fontFamily : FONT_FAMILY}
 				`
 			}
 			if (cell.type && cell.format && this.formatterInstance[cell.type]) {
