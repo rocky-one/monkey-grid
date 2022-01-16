@@ -24,7 +24,7 @@ class Base {
             colWidth: COL_WIDTH,
             frozenRowCount: 0,
             frozenColCount: 0,
-        }, options)
+        }, {...options})
         this.active = options.active
         this.name = options.name
         this.rowCount = options.rowCount || 100
@@ -109,6 +109,18 @@ class Base {
     public init = () => {
         this.setSheetName(this.options.name)
         this.setRowColCount(this.rowCount, this.colCount)
+        this.calcClientWidthHeight()
+        this.initScroll()
+    }
+    public setSize = (width?: number, height?: number) => {
+        if (width) {
+            this.options.width = width
+        }
+        if (height) {
+            this.options.height = height
+        }
+        this.clientWidth = this.originClientWidth = this.options.width - RIGHT_SCROLL_WIDTH - this.xOffset
+        this.clientHeight = this.originClientHeight = this.options.height - FOOTER_HEIGHT - this.yOffset - 4
         this.calcClientWidthHeight()
         this.initScroll()
     }

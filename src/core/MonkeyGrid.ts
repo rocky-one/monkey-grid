@@ -430,6 +430,19 @@ class MonkeyGrid {
             sheet.paint()
         } 
     }
+    public onResize = (width: number, height: number) => {
+        this.width = width || this.options.container.offsetWidth
+        this.height = height || this.options.container.offsetHeight
+        this.layout.container.style.width = `${this.width}px`
+        this.layout.container.style.height = `${this.height}px`
+
+        const sheet = this.sheets[this.selectedSheetIndex]
+        for(let i = 0; i < this.sheets.length; i++) {
+            this.sheets[i].setSize(this.width, this.height)
+        }
+        this.scroll.resetScrollBar(sheet.getScrollHeight(), sheet.getScrollWidth(), sheet.scrollBar.vertical, sheet.scrollBar.horizontal)
+        this.canvasInstance.setSize(this.width - 2, this.height - FOOTER_HEIGHT - 2)
+    }
     public destroy = () => {
         // removeMouseDown(this.layout.canvas, this.onMouseDown)
         this.canvasInstance.off('mousedown')

@@ -129,11 +129,13 @@ class CreateScroll {
 		}
 	}
 	public updateVPosition = () => {
+        this.domV.viewScroll.style.height = `${this.vertical.scrollClientHeight}px`
 		this.domV.viewSlider.style.height = `${this.vertical.sliderHeight}px`;
 		this.domV.viewSlider.style.top = `${this.vertical.sliderTop}px`
 	}
 	public updateHPosition = () => {
-		this.domH.viewSlider.style.width = `${this.horizontal.sliderWidth}px`;
+        this.domH.viewScroll.style.width = `${this.horizontal.scrollClientWidth}px`
+		this.domH.viewSlider.style.width = `${this.horizontal.sliderWidth}px`
 		this.domH.viewSlider.style.left = `${this.horizontal.sliderLeft}px`
 	}
 	private initMouseDownVerticalSlider = () => {

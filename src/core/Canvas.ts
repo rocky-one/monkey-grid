@@ -76,7 +76,7 @@ class Canvas {
     public clearCanvas = () => {
         this.canvasContext.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
-    public size = (width: number, height: number) => {
+    public setSize = (width: number, height: number) => {
         this.width = width
         this.height = height
         this.clearCanvas()
