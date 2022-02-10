@@ -75,5 +75,6 @@ addButton.addEventListener('click', () => {
 	// sheet.addCol(4)
 	// sheet.setFrozenRowCount(0)
 	// sheet.setFrozenColCount(0)
-	mG.onResize(600, 500)
+	// mG.onResize(600, 500)
+	sheet.setMergeCellsByRange()
 })

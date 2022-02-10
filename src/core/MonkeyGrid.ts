@@ -272,14 +272,16 @@ class MonkeyGrid {
                 }
                 this.calcMoveBound(event)
             }
+            const tagName = (<HTMLElement>event.target).tagName
+
             const inTopOrder = findTopOrderCellByXY(offsetX, offsetY, sheet)
-            if (inTopOrder >= 0) {
+            if (tagName === 'CANVAS' && inTopOrder >= 0) {
                 this.layout.container.style.cursor = 'col-resize'
             }
             this.orderInfo.inTopOrder = inTopOrder
-
+            
             const inLeftOrder = findLeftOrderCellByXY(offsetX, offsetY, sheet)
-            if (inLeftOrder >= 0) {
+            if (tagName === 'CANVAS' && inLeftOrder >= 0) {
                 this.layout.container.style.cursor = 'row-resize'
             }
             this.orderInfo.inLeftOrder = inLeftOrder

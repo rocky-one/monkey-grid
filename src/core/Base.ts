@@ -210,9 +210,7 @@ class Base {
         }
         const random = this.sheetData[row][col].originPointId || Math.random()
         this.sheetData[row][col].merge = [rowCount, colCount]
-        if (!this.sheetData[row][col].originPointId) {
-            this.sheetData[row][col].originPointId = random
-        }
+        this.sheetData[row][col].originPointId = random
         this.originPointer[random] = [row, col]
         const sheetData = this.sheetData
         const endRow = row + rowCount
@@ -231,11 +229,16 @@ class Base {
                             pointId: random
                         }
                     } else {
-                        if (!sheetData[i][j].pointId) {
-                            sheetData[i][j].pointId = random
-                        }
+                        sheetData[i][j].pointId = random
                     }
                     if (sheetData[i][j].merge) {
+                        if (row !== i || col !== j) {
+                            const originPointId = sheetData[i][j].originPointId
+                            if (originPointId) {
+                                this.originPointer[originPointId] = null
+                                delete this.originPointer[originPointId]
+                            }
+                        }
                         sheetData[i][j].merge = null
                         delete sheetData[i][j].merge
                     }
