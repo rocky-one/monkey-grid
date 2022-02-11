@@ -12,7 +12,7 @@ const TEST = NODE_ENV === 'dev';
 export default {
   input: './src/core/MonkeyGrid.ts',
   output: {
-    file: './dist/monkeyGrid/index.js',
+    file: './dist/monkey-grid/index.js',
     name: 'MonkeyGrid',
     format: 'umd',
     // globals: {
@@ -24,7 +24,7 @@ export default {
     resolve({ browser: true }),
     typescript(),
     less({
-      output: './dist/monkeyGrid/style.css'
+      output: './dist/monkey-grid/style.css'
     }),
     commonjs({
       browser: true,

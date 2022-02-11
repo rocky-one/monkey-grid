@@ -137,6 +137,7 @@ class Base {
         this.options.getScroll().resetScrollBar(this.getScrollHeight(), this.getScrollWidth(), this.scrollBar.vertical, this.scrollBar.horizontal)
         this.options.getScroll().verticalScrollTo(this.getCellInfo(row, 0).y - this.yOffset)
         this.options.getScroll().horizontalScrollTo(this.getCellInfo(0, col).x - this.xOffset)
+        this.paint()
         return table
     }
     public getTable = (name: string) => {
