@@ -7,18 +7,29 @@ const data = [];
 for(let i = 0;i<rowLen;i++){
 	let row = []
 	for(let j = 0; j<colLen;j++){
-		row.push({
-			value: `${i},${j}`
-		})
+		// row.push({
+		// 	value: `${i},${j}`
+		// })
+		let cell = {
+            value: `${i},${j}ggggffffddsssddff1234`
+        }
+        if (i % 2 === 0 && j === 0) {
+            cell.rowspan = 2;
+            cell.colspan = 1;
+        }
+		if (j % 2 === 0 && i === 0) {
+			cell.colspan = 2;
+            cell.rowspan = 1;
+		}
+        row.push(cell)
 	}
 	data.push(row)
 }
-// data[0][0].colspan = 2
-data[1][1].rowspan = 12
-data[5][3].rowspan = 1
-data[5][3].colspan = 4
-data[7][3].rowspan = 3
-data[7][3].colspan = 3
+// data[1][1].rowspan = 12
+// data[5][3].rowspan = 1
+// data[5][3].colspan = 4
+// data[7][3].rowspan = 3
+// data[7][3].colspan = 3
 data[1][1].style = {
 	fontSize: '16px',
 	fontWeight: 600,
@@ -47,7 +58,7 @@ const sheet = mG.addSheet({
 	name: 'sheet11',
 	rowCount:rowLen+20,
 	colCount: colLen+10,
-	frozenRowCount: 1,
+	frozenRowCount: 2,
 	frozenColCount: 2
 })
 // sheet.setMergeCells(1, 1, 12, 1)

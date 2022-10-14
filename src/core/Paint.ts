@@ -1,5 +1,5 @@
 import { SheetOptions, PaintRange } from '../interface/SheetInterface'
-import { calcStartRowIndex, calcEndRowIndex, calcStartColIndex, calcEndColIndex, getCellInFrozenByIndex, pxToNum } from '../utils/helper'
+import { calcStartRowIndex, calcEndRowIndex, calcStartColIndex, calcEndColIndex, getCellInFrozenByIndex, pxToNum, splitValueByCellWidth } from '../utils/helper'
 import { LEFT_ORDER_WIDTH, HEADER_ORDER_HEIGHT, FONT_FAMILY, BORDER_COLOR, FONT_SIZE } from './const'
 import { numToABC, inFrozenOnBody } from '../utils/sheetUtils'
 import Base from './Base'
@@ -63,10 +63,10 @@ export default class Paint extends Base {
         // 左上角 冻结头部列标 A，B,
 		this.paintTopOrder(0, this.frozenColCount - 1, true)
 
-		// 绘制左侧序号 冻结序号情况
+		// 绘制左侧序号 冻结序号情况 需要把序列号也冻结
 		this.paintLeftOrder(0, this.frozenRowCount - 1, true)
 		
-		// 如果有冻结行列，绘制body区域左上角冻结区域
+		// 左上角, 如果有冻结行列，绘制body区域左上角冻结区域
 		this.paintLeftTopByFrozenOnBody()
 
         // 头部选择 冻结区域 背景下划线效果
@@ -102,7 +102,7 @@ export default class Paint extends Base {
 				if (originPointId) {
 					paintedMap[originPointId] = true
 				}
-				this.paintCell(cell, undefined, undefined, i, j)
+				this.paintCell(cell, undefined, undefined)
 			}
 		}
 		canvasContext.strokeStyle = "#ccc"
@@ -118,12 +118,13 @@ export default class Paint extends Base {
 		canvasContext.beginPath()
 		for (let i = startRowIndex; i <= endRowIndex; i++) {
 			const cell = this.getCellInfo(i, 0)
+            const height = this.rowDataMap[i].height
 			let y = frozenRow ? cell.y : cell.y - vertical.scrollTop
 			this.paintCell({
 				color: '#000',
 				value: i + 1,
 				width: LEFT_ORDER_WIDTH,
-				height: cell.height,
+				height,
 				style: {
 					backgroundColor: hasSelectedBg && i >= this.selectedRange[0] && i <= this.selectedRange[2] ? '#E1E1E1' : '#FFFFFF'
 				}
@@ -142,11 +143,12 @@ export default class Paint extends Base {
 		canvasContext.beginPath()
 		for (let j = startColIndex; j <= endColIndex; j++) {
 			const cell = this.getCellInfo(0, j)
+            const width = this.colDataMap[j].width
 			let x = frozen ? cell.x : cell.x - scrollLeft
 			this.paintCell({
 				color: '#000',
 				value: numToABC(j),
-				width: cell.width,
+				width,
 				height: HEADER_ORDER_HEIGHT,
 				style: {
 					backgroundColor: hasSelectedBg && j >= this.selectedRange[1] && j <= this.selectedRange[3] ? '#E1E1E1' : '#FFFFFF'
@@ -172,9 +174,7 @@ export default class Paint extends Base {
         for (let i = 0; i < frozenRowCount; i++) {
             for (let j = 0; j < frozenColCount; j++) {
                 const cell = this.getCellInfo(i, j, true)
-				cell.style = {
-					backgroundColor: '#AFEEEE'
-				}
+                cell.style = cell.style ? Object.assign({backgroundColor: '#AFEEEE'}, cell.style) : {backgroundColor: '#AFEEEE'}
 				cell.width -= 1
 				cell.height -= 1
                 this.paintCell(cell, cell.x + 1, cell.y + 1)
@@ -426,15 +426,16 @@ export default class Paint extends Base {
                 let cell = this.getCellInfo(i, j, true)
                 // 当前单元格已经被绘制过就跳出
 				if (!cell) continue
-				const originPointId = cell.originPointId
-				if (originPointId && paintedMap[originPointId]) {
+				const pointId = cell.pointId;
+				if (pointId && paintedMap[pointId]) {
 					continue
 				}
+                const originPointId = cell.originPointId
 				if (originPointId) {
 					paintedMap[originPointId] = true
 				}
 				cell.style = cell.style ? Object.assign({backgroundColor: '#E1FFFF'}, cell.style) : {backgroundColor: '#E1FFFF'}
-                this.paintCell(cell, undefined, cell.y, i, j)
+                this.paintCell(cell, undefined, cell.y)
                 // 冻结的最后一行，更新maxY
                 if (i === this.frozenRowCount - 1) {
                     if (cell.y + cell.height > maxY) {
@@ -462,12 +463,13 @@ export default class Paint extends Base {
         for (let i = startRowIndex; i <= endRowIndex; i++) {
             for (let j = 0; j < this.frozenColCount; j++) {
                 let cell = this.getCellInfo(i, j, true)
-                // 当前单元格已经被绘制过就跳出
                 if (!cell) continue
-				const originPointId = cell.originPointId
-				if (originPointId && paintedMap[originPointId]) {
+                // 当前单元格已经被绘制过就跳出
+                const pointId = cell.pointId;
+				if (pointId && paintedMap[pointId]) {
 					continue
 				}
+                const originPointId = cell.originPointId
 				if (originPointId) {
 					paintedMap[originPointId] = true
 				}
@@ -477,7 +479,7 @@ export default class Paint extends Base {
                     x -= horizontal.scrollLeft
                 }
 				cell.style = cell.style ? Object.assign({backgroundColor: '#E1FFFF'}, cell.style) : {backgroundColor: '#E1FFFF'}
-                this.paintCell(cell, cell.x, y, i, j)
+                this.paintCell(cell, cell.x, y)
                 // 冻结的最后一行，更新maxY
                 if (j === this.frozenColCount - 1) {
                     if (cell.x + cell.width > maxX) {
@@ -491,7 +493,7 @@ export default class Paint extends Base {
         canvasContext.closePath()
         canvasContext.stroke()
     }
-	private paintCell = (cell: any, x: number, y: number, row?: number, col?: number) => {
+	private paintCell = (cell: any, x: number, y: number) => {
         const scrollLeft = this.scrollBar.getHorizontal().scrollLeft
         const scrollTop = this.scrollBar.getVertical().scrollTop
         const canvasContext = this.options.canvas.canvasContext
@@ -512,12 +514,11 @@ export default class Paint extends Base {
             x2: lineX + cell.width + 0.5,
             y2: lineY + cell.height + 0.5
         })
-
         // 单元格背景颜色
         this.paintCellBgColor(lineX, lineY, cell.width, cell.height, cell.style ? cell.style.backgroundColor || '#FFFFFF' : '#FFFFFF')
 		let value = cell.value
         if (value) {
-            let fontX = x !== undefined ? x + 4 : cell.x - scrollLeft + 4
+            let fontX = x !== undefined ? x : cell.x - scrollLeft
             let fontY = y !== undefined ? y + (cell.height / 2) + (this.font / 2) : cell.y - scrollTop + (cell.height / 2) + (this.font / 2)
             // 字体
             let font = `${this.font}px ${FONT_FAMILY}`
@@ -530,6 +531,21 @@ export default class Paint extends Base {
 			if (cell.type && cell.format && this.formatterInstance[cell.type]) {
 				value = this.formatterInstance[cell.type](value, cell.format)
 			}
+            // 获取字体宽度, 先要设置canvas字体
+            this.options.canvas.setFont(font)
+            const fontWidth = this.options.canvas.canvasContext.measureText(value).width
+            if (fontWidth < cell.width) {
+                // 数值类型右对齐
+                if (cell.type === 'number') {
+                    fontX += cell.width - fontWidth - 2
+                } else {
+                    const emtyWidth = (cell.width - fontWidth) / 2
+                    fontX += emtyWidth
+                }
+            } else {
+                value = splitValueByCellWidth(value, cell.width, canvasContext)
+                fontX += 2
+            }
             this.options.canvas.paintText({
                 x: fontX,
                 y: fontY,

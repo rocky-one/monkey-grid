@@ -69,8 +69,10 @@ class Canvas {
         this.canvasContext.fillStyle = attrs.fillStyle || '#FFFFFF'
         this.canvasContext.fillRect(attrs.x, attrs.y, attrs.width, attrs.height)
     }
+    public setFont = (font: any) => {
+        this.canvasContext.font = font
+    }
     public paintText = (attrs: PaintText) => {
-        this.canvasContext.font = attrs.font
         this.canvasContext.fillText(attrs.text, attrs.x, attrs.y)
     }
     public clearCanvas = () => {

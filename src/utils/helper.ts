@@ -301,3 +301,25 @@ export const pxToNum = (pxString: string|number) => {
     }
     return 0
 }
+
+export const splitValueByCellWidth = (value: any, cellWidth: number, canvasContext: any) => {
+    let val = value.toString()
+    let fontWidth = canvasContext.measureText(val).width
+    // 6px 用来添加...省略号
+    let newCellWidth = cellWidth - 6
+    function loop() {
+        const morePercent = (fontWidth - newCellWidth) / fontWidth
+        const splitLen = Math.ceil(val.length * morePercent)
+        val = val.substring(0, val.length - splitLen)
+        fontWidth = canvasContext.measureText(val).width
+        if (fontWidth > newCellWidth) {
+            return loop()
+        }
+        return val + '...';
+    }
+    if (fontWidth > cellWidth) {
+        return loop()
+    } else {
+        return val
+    }
+}
