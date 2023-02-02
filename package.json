@@ -120,7 +120,7 @@
     "uglifyjs-webpack-plugin": "^2.2.0",
     "url-loader": "^0.5.9",
     "webpack": "^4.41.1",
-    "webpack-cli": "^2.1.4",
+    "webpack-cli": "^5.0.1",
     "webpack-dev-server": "^3.1.4",
     "webpack-hot-middleware": "^2.22.2",
     "webpack-merge": "^4.1.0",
