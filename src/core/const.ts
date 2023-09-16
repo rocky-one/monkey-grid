@@ -24,3 +24,9 @@ export const BORDER_COLOR = '#227346'
 
 // 默认字体大小
 export const FONT_SIZE = 12
+
+// 默认行数
+export const ROW_COUNT = 200
+
+// 默认列数
+export const COL_COUNT = 10

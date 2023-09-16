@@ -2,7 +2,7 @@ import {
     Vertical, Horizontal,
     VerticalEventRecord,
     HorizontalEventRecord
-} from '../scrollBar/ScrollInterface'
+} from '../scrollBar/ScrollInterface';
 /**
  * @desc 计算纵向滚动条滑块大小
  */
@@ -12,15 +12,15 @@ export function calcVerticalSliderSize(vertival: Vertical) {
     // container.clientHeight / container.scrollHeight = bar.height / scrollBarContainer.clientHeight
     // container.clientHeight / container.scrollHeight = x / scrollBarContainer.clientHeight  //求x的值
     // x = container.clientHeight * scrollBarContainer.clientHeight / container.scrollHeight
-    const scrollClientHeight = vertival.scrollClientHeight
-    let sliderHeight = 0
+    const scrollClientHeight = vertival.scrollClientHeight;
+    let sliderHeight = 0;
     // 当内容高度大于可视区域高度时才会有滚动条
     if (vertival.scrollHeight > vertival.clientHeight) {
-        sliderHeight = vertival.clientHeight * scrollClientHeight / vertival.scrollHeight
+        sliderHeight = vertival.clientHeight * scrollClientHeight / vertival.scrollHeight;
     }
     // 滑块要给一个最小值
     if (sliderHeight > 0 && sliderHeight < 20) {
-        sliderHeight = 20
+        sliderHeight = 20;
     }
     return {
         sliderHeight,
@@ -37,24 +37,24 @@ export function calcVerticalSliderSize(vertival: Vertical) {
  * @param {*} scrollTop 
  */
 export function calcVerticalSliderTop(container, scrollBarContainer, sliderClientHeight, scrollTop = 0) {
-    const canScrollTopPx = container.scrollHeight - container.clientHeight
-    const scrollPercentage = scrollTop / canScrollTopPx
+    const canScrollTopPx = container.scrollHeight - container.clientHeight;
+    const scrollPercentage = scrollTop / canScrollTopPx;
     const canScrollBarPx = scrollBarContainer.clientHeight - sliderClientHeight
-    const top = canScrollBarPx * scrollPercentage
-    return top
+    const top = canScrollBarPx * scrollPercentage;
+    return top;
 }
 
 /**
  * @desc 计算横行滚动条滑块大小
  */
 export function calcHorizontalSliderSize(horizontal: Horizontal) {
-    const scrollClientWidth = horizontal.scrollClientWidth
-    let sliderWidth = 0
+    const scrollClientWidth = horizontal.scrollClientWidth;
+    let sliderWidth = 0;
     if (horizontal.scrollWidth > horizontal.clientWidth) {
-        sliderWidth = horizontal.clientWidth * scrollClientWidth / horizontal.scrollWidth
+        sliderWidth = horizontal.clientWidth * scrollClientWidth / horizontal.scrollWidth;
     }
     if (sliderWidth > 0 && sliderWidth < 20) {
-        sliderWidth = 20
+        sliderWidth = 20;
     }
     return {
         sliderWidth,
@@ -71,24 +71,24 @@ export function calcHorizontalSliderSize(horizontal: Horizontal) {
  * @param {*} scrollLeft 
  */
 export function calcHorizontalSliderLeft(container, scrollBarContainer, sliderClientWidth, scrollLeft = 0) {
-    const canScrollLeftPx = container.scrollWidth - container.clientWidth
-    const scrollPercentage = scrollLeft / canScrollLeftPx
-    const canScrollBarPx = scrollBarContainer.clientWidth - sliderClientWidth
-    const left = canScrollBarPx * scrollPercentage
-    return left
+    const canScrollLeftPx = container.scrollWidth - container.clientWidth;
+    const scrollPercentage = scrollLeft / canScrollLeftPx;
+    const canScrollBarPx = scrollBarContainer.clientWidth - sliderClientWidth;
+    const left = canScrollBarPx * scrollPercentage;
+    return left;
 }
 
 export function getScrollTopBySliderMoveY(vertical: Vertical, verticalEventRecord: VerticalEventRecord, mouseMoveY: number) {
-    const p = mouseMoveY / vertical.sliderMaxTop
-    const scrollTop = vertical.maxScrollTop * p + verticalEventRecord.scrollTop
+    const p = mouseMoveY / vertical.sliderMaxTop;
+    const scrollTop = vertical.maxScrollTop * p + verticalEventRecord.scrollTop;
 
-    return scrollTop
+    return scrollTop;
 }
 
 
 export function getScrollLeftBySliderMoveX(horizontal: Horizontal, horizontalEventRecord: HorizontalEventRecord, mouseMoveX: number) {
-    const p = mouseMoveX / horizontal.sliderMaxLeft
-    const scrollLeft = horizontal.maxScrollLeft * p + horizontalEventRecord.scrollLeft
+    const p = mouseMoveX / horizontal.sliderMaxLeft;
+    const scrollLeft = horizontal.maxScrollLeft * p + horizontalEventRecord.scrollLeft;
 
-    return scrollLeft
+    return scrollLeft;
 }

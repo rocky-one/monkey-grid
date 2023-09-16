@@ -1,8 +1,8 @@
 import MonkeyGrid from './core/MonkeyGrid';
 // 1. 链表
 // 2. 时间切片
-let rowLen = 100;
-let colLen = 10
+let rowLen = 1000;
+let colLen = 100
 const data = [];
 for(let i = 0;i<rowLen;i++){
 	let row = []
@@ -11,7 +11,7 @@ for(let i = 0;i<rowLen;i++){
 		// 	value: `${i},${j}`
 		// })
 		let cell = {
-            value: `${i},${j}ggggffffddsssddff1234`
+            value: `${i},${j}`
         }
         if (i % 2 === 0 && j === 0) {
             cell.rowspan = 2;
@@ -21,9 +21,9 @@ for(let i = 0;i<rowLen;i++){
 			cell.colspan = 2;
             cell.rowspan = 1;
 		}
-        row.push(cell)
+        row.push(cell);
 	}
-	data.push(row)
+	data.push(row);
 }
 // data[1][1].rowspan = 12
 // data[5][3].rowspan = 1
@@ -37,13 +37,13 @@ data[1][1].style = {
 	color: 'red',
 	backgroundColor: 'green'
 }
-data[1][3].value = 1234.52234
-data[1][3].type = 'number'
-data[1][3].format = '###.##'
+data[1][3].value = 1234.52234;
+data[1][3].type = 'number';
+data[1][3].format = '###.##';
 
-data[1][4].value = '2021/10/30'
-data[1][4].type = 'date'
-data[1][4].format = 'YYYY-MM-DD'
+data[1][4].value = '2021/10/30';
+data[1][4].type = 'date';
+data[1][4].format = 'YYYY-MM-DD';
 
 
 const mG = new MonkeyGrid({
@@ -53,21 +53,21 @@ const mG = new MonkeyGrid({
 	order: true,
 	headerOrder: true,
 	
-})
+});
 const sheet = mG.addSheet({
 	name: 'sheet11',
 	rowCount:rowLen+20,
 	colCount: colLen+10,
 	frozenRowCount: 2,
 	frozenColCount: 2
-})
+});
 // sheet.setMergeCells(1, 1, 12, 1)
 // sheet.setMergeCells(5, 3, 1, 5)
-// sheet.setMergeCells(7, 3, 3, 3)
-sheet.addTable('table1', 0, 0, data)
-sheet.paint()
+// sheet.setMergeCells(7, 3, 3, 3);
+sheet.addTable('table1', 0, 0, data);
+sheet.paint();
 
-const addButton = document.getElementById('addButton')
+const addButton = document.getElementById('addButton');
 addButton.addEventListener('click', () => {
 	// sheet.addTable('table1', 403, 10, [
 	// 	[{value: 'gg'}, {value: 'gg11'}],
@@ -87,5 +87,5 @@ addButton.addEventListener('click', () => {
 	// sheet.setFrozenRowCount(0)
 	// sheet.setFrozenColCount(0)
 	// mG.onResize(600, 500)
-	sheet.setMergeCellsByRange()
-})
+	sheet.setMergeCellsByRange();
+});

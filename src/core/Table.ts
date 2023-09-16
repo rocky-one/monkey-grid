@@ -8,23 +8,23 @@ export interface TableOptions{
 }
 class Table {
     constructor(options: TableOptions) {
-        this.name = options.name
-        this.row = options.row
-        this.col = options.col
-        this.sheet = options.sheet
-        this.dataSource = options.dataSource
+        this.name = options.name;
+        this.row = options.row;
+        this.col = options.col;
+        this.sheet = options.sheet;
+        this.dataSource = options.dataSource;
     }
-    name: string
-    row: number
-    col: number
-    sheet: any
-    dataSource: any[]
+    name: string;
+    row: number;
+    col: number;
+    sheet: any;
+    dataSource: any[];
     public getData = () => {
-        return this.dataSource
+        return this.dataSource;
     }
     public destroy = () => {
-        this.dataSource = null
+        this.dataSource = null;
     }
 }
 
-export default Table
+export default Table;

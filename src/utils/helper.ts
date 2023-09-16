@@ -2,29 +2,29 @@ import {getCellWidthHeight} from './sheetUtils'
 
 // 延迟执行
 export function defer(callback) {
-    setTimeout(callback, 0)
+    setTimeout(callback, 0);
 }
 
 export function getExploreType() {
-    var explorer = window.navigator.userAgent
+    var explorer = window.navigator.userAgent;
     if (explorer.indexOf("MSIE") >= 0) {
-        return 'IE'
+        return 'IE';
     }
     else if (explorer.indexOf("Firefox") >= 0) {
-        return 'Firefox'
+        return 'Firefox';
     }
     else if (explorer.indexOf("Chrome") >= 0) {
-        return 'Chrome'
+        return 'Chrome';
     }
     else if (explorer.indexOf("Opera") >= 0) {
-        return 'Opera'
+        return 'Opera';
     }
     else if (explorer.indexOf("Safari") >= 0) {
-        return 'Safari'
+        return 'Safari';
     }
 }
 
-export const explorerType = getExploreType()
+export const explorerType = getExploreType();
 
 export function getPixelRatio(context: any) {
     var backingStore = context.backingStorePixelRatio ||
@@ -44,19 +44,19 @@ export function getPixelRatio(context: any) {
  * @param rowHeight 
  */
 export function calcStartRowIndex(sheet: any): number {
-    const sheetData = sheet.sheetData
-    const scrollTop = sheet.scrollBar.getVertical().scrollTop
-    if (scrollTop === 0) return 0
+    const sheetData = sheet.sheetData;
+    const scrollTop = sheet.scrollBar.getVertical().scrollTop;
+    if (scrollTop === 0) return 0;
 
-    const sheetLen = sheetData.length
-    const top = scrollTop 
-    const frozenInfoHeight = sheet.frozenInfo.row.endY || sheet.yOffset
-    let start = 0
-    let end = sheetLen - 1
+    const sheetLen = sheetData.length;
+    const top = scrollTop ;
+    const frozenInfoHeight = sheet.frozenInfo.row.endY || sheet.yOffset;
+    let start = 0;
+    let end = sheetLen - 1;
     while (start <= end) {
         let mid = Math.floor(start + (end - start) / 2);
-        const cell = sheet.getCellInfo(mid, 0)
-        const y = cell.y - frozenInfoHeight
+        const cell = sheet.getCellInfo(mid, 0);
+        const y = cell.y - frozenInfoHeight;
         if (y + cell.height >= top && y <= top) {
             return mid;
         } else if (y < top) {
@@ -74,14 +74,14 @@ export function calcStartRowIndex(sheet: any): number {
  * @param sheetData 
  */
 export function calcEndRowIndex(startRow: number, containerHeight: number, sheetData: any[], rowDataMap: any[]): number {
-    let height = 0
+    let height = 0;
     for (let i = startRow + 1; i < sheetData.length; i++) {
-        height += rowDataMap[i].height
+        height += rowDataMap[i].height;
         if (height > containerHeight) {
-            return i
+            return i;
         }
     }
-    return sheetData.length - 1
+    return sheetData.length - 1;
 }
 
 /**
@@ -91,18 +91,18 @@ export function calcEndRowIndex(startRow: number, containerHeight: number, sheet
  * @param colsWidth 这里需要使用列头的宽计算，如果采用cell.width存在colspan的情况计算不对
  */
 export function calcStartColIndex(sheet: any): number {
-    const scrollLeft = sheet.scrollBar.getHorizontal().scrollLeft
-    if (scrollLeft === 0) return 0
-    const colLen = sheet.colDataMap.length
-    const frozenInfoWidth = sheet.frozenInfo.col.endX || sheet.xOffset
-    const left = scrollLeft
+    const scrollLeft = sheet.scrollBar.getHorizontal().scrollLeft;
+    if (scrollLeft === 0) return 0;
+    const colLen = sheet.colDataMap.length;
+    const frozenInfoWidth = sheet.frozenInfo.col.endX || sheet.xOffset;
+    const left = scrollLeft;
 
-    let start = 0
-    let end = colLen - 1
+    let start = 0;
+    let end = colLen - 1;
     while (start <= end) {
-        let mid = Math.floor(start + (end - start) / 2)
-        const cell = sheet.getCellInfo(0, mid)
-        const x = cell.x - frozenInfoWidth
+        let mid = Math.floor(start + (end - start) / 2);
+        const cell = sheet.getCellInfo(0, mid);
+        const x = cell.x - frozenInfoWidth;
         if (x + cell.width >= left && x < left) {
             return mid;
         } else if (x < left) {
@@ -120,16 +120,16 @@ export function calcStartColIndex(sheet: any): number {
  * @param sheetData 
  */
 export function calcEndColIndex(startCol: number, containerWidth: number, sheetData: any[], colDataMap: any[]): number {
-    if (!sheetData[0]) return 0
-    let width = 0
+    if (!sheetData[0]) return 0;
+    let width = 0;
     for (let j = startCol + 1; j < sheetData[0].length; j++) {
-        width += colDataMap[j].width
+        width += colDataMap[j].width;
         if (width > containerWidth) {
-            return j
+            return j;
         }
     }
 
-    return sheetData[0].length - 1
+    return sheetData[0].length - 1;
 }
 
 /**
@@ -140,9 +140,9 @@ export function calcEndColIndex(startCol: number, containerWidth: number, sheetD
  */
 export function getObjectAttrDefault(obj: object, attrName: string, defaultValue: any) {
     if (obj.hasOwnProperty(attrName)) {
-        return obj[attrName]
+        return obj[attrName];
     }
-    return defaultValue
+    return defaultValue;
 }
 
 /**
@@ -151,56 +151,17 @@ export function getObjectAttrDefault(obj: object, attrName: string, defaultValue
  * @param time
  */
 export function throllte(fn: Function, time: number) {
-    let sign = true
+    let sign = true;
     return function () {
-        if (!sign) return
-        let context = this
-        let args = arguments
-        sign = false
+        if (!sign) return;
+        let context = this;
+        let args = arguments;
+        sign = false;
         setTimeout(() => {
-            sign = true
-            fn.apply(context, args)
-        }, time)
+            sign = true;
+            fn.apply(context, args);
+        }, time);
     }
-}
-
-/**
- * @desc 判断当前点击坐标是否在冻结行内部
- * @param y 
- * @param frozenRowCount 
- * @param sheetData 
- */
-export function inFrozenRowByXY(y: number, frozenRowCount: number, sheetData: any, getCellInfo: Function) {
-    if( frozenRowCount <= 0) {
-        return false
-    }
-    let y2 = getCellInfo(0, 0).y
-    for(let i = 0; i < frozenRowCount; i++) {
-        const cell = getCellInfo(i, 0)
-        if(cell) {
-            if(cell.pointId) {
-                continue
-            }
-            y2 += cell.height
-        }
-    }
-    return y <= y2
-}
-
-
-export function inFrozenColByXY(x: number, frozenColCount: number, sheetData: any, getCellInfo: Function) {
-    if( frozenColCount <= 0) {
-        return false
-    }
-    let x2 = getCellInfo(0, 0).x
-    for(let i = 0; i < frozenColCount; i++) {
-        const cell = getCellInfo(0, i)
-        if(cell.pointId) {
-            continue
-        }
-        x2 += cell.width
-    }
-    return x <= x2
 }
 
 /**
@@ -210,10 +171,12 @@ export function inFrozenColByXY(x: number, frozenColCount: number, sheetData: an
  * @param frozenInfo 
  */
 export function getCellInFrozenByXY(x: number, y: number, frozenInfo: any) {
-    if (x > frozenInfo.col.startX && x < frozenInfo.col.endX) {
-        return 'col'
+    if (x > frozenInfo.col.startX && x < frozenInfo.col.endX && y > frozenInfo.row.startY && y < frozenInfo.row.endY) {
+        return 'row-col';
+    } else if (x > frozenInfo.col.startX && x < frozenInfo.col.endX) {
+        return 'col';
     } else if(y > frozenInfo.row.startY && y < frozenInfo.row.endY) {
-        return 'row'
+        return 'row';
     }
 }
 
@@ -226,10 +189,10 @@ export function getCellInFrozenByXY(x: number, y: number, frozenInfo: any) {
  */
 export function getCellInFrozenByIndex(row: number, col: number, sheet: any) {
     if (row < sheet.frozenRowCount) {
-        return 'row'
+        return 'row';
     }
     if (col < sheet.frozenColCount) {
-        return 'col'
+        return 'col';
     }
 }
 
@@ -241,41 +204,41 @@ export function getCellInFrozenByIndex(row: number, col: number, sheet: any) {
  * @param data 
  */
 export function findCellByXY(x: number, y: number, sheet: any, isFindPainterOrigin: boolean = true) {
-    const {sheetData, paintRange, frozenRowCount, frozenColCount, colDataMap} = sheet
-    const scrollLeft = sheet.scrollBar.getHorizontal().scrollLeft
-    const scrollTop = sheet.scrollBar.getVertical().scrollTop
-    let startRowIndex = 0
-    let endRowIndex = frozenRowCount - 1
-    let startColIndex = 0
-    let endColIndex = frozenColCount - 1
-    const frozenFlag = getCellInFrozenByXY(x, y, sheet.frozenInfo)
-    if (frozenFlag !== 'row') {
-        y += scrollTop
+    const {sheetData, paintRange, frozenRowCount, frozenColCount} = sheet;
+    const scrollLeft = sheet.scrollBar.getHorizontal().scrollLeft;
+    const scrollTop = sheet.scrollBar.getVertical().scrollTop;
+    let startRowIndex = 0;
+    let endRowIndex = frozenRowCount - 1;
+    let startColIndex = 0;
+    let endColIndex = frozenColCount - 1;
+    const frozenFlag = getCellInFrozenByXY(x, y, sheet.frozenInfo);
+    if (frozenFlag !== 'row' && frozenFlag !== 'row-col') {
+        y += scrollTop;
     }
-    if (frozenFlag !== 'col') {
-        x += scrollLeft
+    if (frozenFlag !== 'col' && frozenFlag !== 'row-col') {
+        x += scrollLeft;
     }
-    endColIndex = paintRange.endColIndex
-    endRowIndex = paintRange.endRowIndex
+    endColIndex = paintRange.endColIndex;
+    endRowIndex = paintRange.endRowIndex;
     for (let i = startRowIndex; i <= endRowIndex; i++) {
-        const row = sheetData[i]
+        const row = sheetData[i];
         if (!row) {
-            return false
+            return false;
         }
-        const first = getCellWidthHeight(i, 0, sheet)
+        const first = getCellWidthHeight(i, 0, sheet);
         if (y >= first.y &&  y <= first.y + first.height) {
             for (let j = startColIndex; j <= endColIndex; j++) {
                 // 这里需要用当前单元格的宽高和坐标比较
-                const cellWH = getCellWidthHeight(i, j, sheet)
+                const cellWH = getCellWidthHeight(i, j, sheet);
                 if (x >= cellWH.x && x <= cellWH.x + cellWH.width) {
-                    let cell = sheet.getCellInfo(i, j)
+                    let cell = sheet.getCellInfo(i, j);
                     if (isFindPainterOrigin) {
-                        let mergeCell = sheet.sheetData[i][j].merge || [1, 1]
-                        let pointer = [i, j]
+                        let mergeCell = sheet.sheetData[i][j].merge || [1, 1];
+                        let pointer = [i, j];
                         if (sheet.gePointer(i, j)) {
-                            pointer = sheet.gePointer(i, j)
-                            cell = sheet.getCellInfo(pointer[0], pointer[1])
-                            mergeCell = sheet.sheetData[pointer[0]][pointer[1]].merge || [1, 1]
+                            pointer = sheet.gePointer(i, j);
+                            cell = sheet.getCellInfo(pointer[0], pointer[1]);
+                            mergeCell = sheet.sheetData[pointer[0]][pointer[1]].merge || [1, 1];
                         }
                         return {
                             ...cell,
@@ -295,31 +258,31 @@ export function findCellByXY(x: number, y: number, sheet: any, isFindPainterOrig
 }
 
 export const pxToNum = (pxString: string|number) => {
-    const arr = pxString.toString().split('px')
+    const arr = pxString.toString().split('px');
     if (arr.length) {
-        return arr[0]
+        return arr[0];
     }
-    return 0
+    return 0;
 }
 
 export const splitValueByCellWidth = (value: any, cellWidth: number, canvasContext: any) => {
-    let val = value.toString()
-    let fontWidth = canvasContext.measureText(val).width
+    let val = value.toString();
+    let fontWidth = canvasContext.measureText(val).width;
     // 6px 用来添加...省略号
-    let newCellWidth = cellWidth - 6
+    let newCellWidth = cellWidth - 6;
     function loop() {
-        const morePercent = (fontWidth - newCellWidth) / fontWidth
-        const splitLen = Math.ceil(val.length * morePercent)
-        val = val.substring(0, val.length - splitLen)
-        fontWidth = canvasContext.measureText(val).width
+        const morePercent = (fontWidth - newCellWidth) / fontWidth;
+        const splitLen = Math.ceil(val.length * morePercent);
+        val = val.substring(0, val.length - splitLen);
+        fontWidth = canvasContext.measureText(val).width;
         if (fontWidth > newCellWidth) {
-            return loop()
+            return loop();
         }
         return val + '...';
     }
     if (fontWidth > cellWidth) {
-        return loop()
+        return loop();
     } else {
-        return val
+        return val;
     }
 }

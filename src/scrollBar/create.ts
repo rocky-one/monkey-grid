@@ -1,8 +1,8 @@
-import { createDom, setDomCss } from '../utils/dom'
-import { Vertical, Horizontal } from './ScrollInterface'
+import { createDom, setDomCss } from '../utils/dom';
+import { Vertical, Horizontal } from './ScrollInterface';
 
 export function createVerticalScroll(vertical: Vertical, ele?: HTMLElement) {
-    const vScrollBox = createDom('div')
+    const vScrollBox = createDom('div');
     setDomCss(vScrollBox, {
         display: vertical.sliderHeight > 0 ? 'block' : 'none',
         position: 'absolute',
@@ -12,10 +12,10 @@ export function createVerticalScroll(vertical: Vertical, ele?: HTMLElement) {
         height: `${vertical.scrollClientHeight}px`,
         zIndex: 20,
         backgroundColor: '#f5f3f3'
-    })
+    });
     const vSlider = createDom('div', {
         class: 'mg-scroll-bar mg-scroll-bar-v'
-    })
+    });
     setDomCss(vSlider, {
         position: 'absolute',
         right: "2px",
@@ -23,9 +23,9 @@ export function createVerticalScroll(vertical: Vertical, ele?: HTMLElement) {
         width: '8px',
         height: `${vertical.sliderHeight}px`,
         borderRadius: '8px'
-    })
-    vScrollBox.appendChild(vSlider)
-    ele && ele.appendChild(vScrollBox)
+    });
+    vScrollBox.appendChild(vSlider);
+    ele && ele.appendChild(vScrollBox);
 
     return {
         viewScroll: vScrollBox,
@@ -35,7 +35,7 @@ export function createVerticalScroll(vertical: Vertical, ele?: HTMLElement) {
 
 export function createHorizontalScroll(horizontal: Horizontal, ele?: HTMLElement) {
     // const sliderSize = calcHorizontalSliderSize(horizontal)
-    const hScrollBox = createDom('div')
+    const hScrollBox = createDom('div');
     setDomCss(hScrollBox, {
         display: horizontal.sliderWidth > 0 ? 'block' : 'none',
         position: 'relative',
@@ -43,10 +43,10 @@ export function createHorizontalScroll(horizontal: Horizontal, ele?: HTMLElement
         height: '14px',
         zIndex: 20,
         // backgroundColor: '#f5f3f3'
-    })
+    });
     const hSlider = createDom('div', {
         class: 'mg-scroll-bar mg-scroll-bar-h'
-    })
+    });
     setDomCss(hSlider, {
         position: 'absolute',
         left: '1px',
@@ -55,9 +55,9 @@ export function createHorizontalScroll(horizontal: Horizontal, ele?: HTMLElement
         height: '10px',
         borderRadius: '8px',
         marginTop: '1px'
-    })
-    hScrollBox.appendChild(hSlider)
-    ele && ele.appendChild(hScrollBox)
+    });
+    hScrollBox.appendChild(hSlider);
+    ele && ele.appendChild(hScrollBox);
 
     return {
         viewScroll: hScrollBox,
@@ -67,6 +67,6 @@ export function createHorizontalScroll(horizontal: Horizontal, ele?: HTMLElement
 }
 export function setNodeStyle(node: HTMLElement, style: object) {
     Object.keys(style).forEach(key => {
-        node.style[key] = style[key]
-    })
+        node.style[key] = style[key];
+    });
 }

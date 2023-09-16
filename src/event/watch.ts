@@ -11,5 +11,5 @@ export default function watch(obj: any, key: string, cb: Function) {
 				cb && cb()
 			}
 		},
-	})
+	});
 }
