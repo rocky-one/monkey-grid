@@ -48,8 +48,8 @@ data[1][4].format = 'YYYY-MM-DD';
 
 const mG = new MonkeyGrid({
 	container: document.getElementById('tableBox'),
-	width: 700,
-	height: 600,
+	width: 1000,
+	height: 800,
 	order: true,
 	headerOrder: true,
 	
@@ -89,3 +89,26 @@ addButton.addEventListener('click', () => {
 	// mG.onResize(600, 500)
 	sheet.setMergeCellsByRange();
 });
+
+
+function requestData() {
+  return new Promise(resolve => {
+    setTimeout(() => resolve(1), 100);
+  });
+}
+
+async function getDataAll() {
+	const newArr = [1, 2, 3, 4].map(async (num) => {
+		if (num % 2 === 0) {
+			return await requestData();
+		}
+		return num;
+	});
+	const res = await Promise.all(newArr);
+}
+
+async function handleData() {
+	await getDataAll();
+}
+
+handleData();

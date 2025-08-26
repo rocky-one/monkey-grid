@@ -1,4 +1,3 @@
-
 import { createVerticalScroll, createHorizontalScroll } from './create';
 import {
     calcVerticalSliderSize,

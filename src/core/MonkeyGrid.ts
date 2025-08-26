@@ -2,7 +2,7 @@ import { layout, createDragColLine, createDragRowLine, updateLine } from './layo
 import * as domCore from '../utils/dom'
 import { OptionsInterface } from '../interface/BaseInterface'
 import { sheetParams } from '../interface/SheetInterface'
-import CreateScroll from '../scrollbar/CreateScroll'
+import CreateScroll from '../scrollBar/CreateScroll'
 import Paint from './Paint'
 import Tabs from './Tabs'
 import Canvas from './Canvas'
