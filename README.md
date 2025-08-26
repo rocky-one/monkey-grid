@@ -57,6 +57,3 @@ sheet.addTable("tableName", 0, 0, [
 ]);
 
 ```
-
-<!-- ## Documentation
-- [Documentation](http://monkey-grid.com/) -->

@@ -12,7 +12,6 @@
     "baseUrl": "src",
     "declaration": true,
     "esModuleInterop": true,
-
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "build", "scripts"]
